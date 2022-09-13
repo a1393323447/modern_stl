@@ -11,6 +11,5 @@ int main() {
     x = b;
 
     std::cout << c << std::endl << d << std::endl;
-
     return 0;
 }

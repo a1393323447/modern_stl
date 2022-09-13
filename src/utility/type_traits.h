@@ -8,6 +8,9 @@
 #include "global.h"
 
 namespace mstl::utility {
+    /**
+     * 对参数包Ts, 返回其第pos个类型
+     * */
     template <usize pos, typename ...Ts>
     struct ArgAt {
         static_assert(sizeof...(Ts) != 0, "Parameter pack 'Ts' is empty.");
