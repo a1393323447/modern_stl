@@ -45,14 +45,37 @@ void test_map() {
 }
 
 void test_filter() {
-    Array<int, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     auto iter = filter(arr.into_iter(), [](i32& ele) {
         return ele % 2 == 0;
     });
-    auto next = iter.next();
 
+    auto next = iter.next();
     while (next.is_some()) {
         std::cout << next.unwrap() << " ";
+        next = iter.next();
+    }
+    std::cout << std::endl;
+}
+
+void test_combine() {
+    Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+    auto iter = combine(arr.into_iter(),
+        Map, [](auto ele) {
+            return ele * ele;
+        },
+        Map, [](auto ele) {
+            return Pow<usize>{ static_cast<unsigned long long>(ele * ele) };
+        },
+        Filter, [](auto ele) {
+            return ele.pow > 16;
+        }
+    );
+
+    auto next = iter.next();
+    while (next.is_some()) {
+        std::cout << next.unwrap().pow << " ";
         next = iter.next();
     }
     std::cout << std::endl;
@@ -62,5 +85,6 @@ int main() {
     test_into_iter();
     test_map();
     test_filter();
+    test_combine();
     return 0;
 }

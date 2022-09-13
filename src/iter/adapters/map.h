@@ -17,12 +17,12 @@ namespace mstl::iter {
     template<Iterator Iter, typename Func, typename Arg>
     requires std::is_invocable<Func, Arg>::value &&
             (!std::same_as<void, std::invoke_result_t<Func, Arg>>) // 转化后的元素类型不能为 void
-    class Map {
+    class MapIter {
     public:
         /// 转化后的元素类型
         using Item = std::invoke_result_t<Func, Arg>;
 
-        Map(Iter iter, Func func) : iter(iter), func(std::move(func)) {}
+        MapIter(Iter iter, Func func) : iter(iter), func(std::move(func)) {}
 
         Option<Item> next() {
             auto next_item = iter.next();
@@ -34,7 +34,7 @@ namespace mstl::iter {
             }
         }
 
-        Map<Iter, Func, Arg>
+        MapIter<Iter, Func, Arg>
         into_iter() { return *this; }
 
     private:
@@ -43,10 +43,18 @@ namespace mstl::iter {
     };
 
     template<Iterator Iter, typename F>
-    Map<Iter, F, typename Iter::Item>
+    MapIter<Iter, F, typename Iter::Item>
     map(Iter iter, F f) {
         return { iter, f };
     }
+
+    struct MapCombinator {
+        template<Iterator Iter, typename F>
+        static auto
+        get_combine_func() {
+            return map<Iter, F>;
+        }
+    } Map;
 }
 
 #endif //__MODERN_STL_MAP_H__
