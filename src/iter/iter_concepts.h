@@ -25,6 +25,7 @@ namespace mstl::iter {
          * 如果迭代结束, 则返回 Option<Item>::none().
          *
          * <h1>Example</h1>
+         * @code
          * using namespace mstl::collection;
          * using namespace mstl;
          *
@@ -45,6 +46,7 @@ namespace mstl::iter {
          *
          * value = iter.next();
          * assert(value.is_none());
+         * @endcode
          */
         { iter.next() } -> std::same_as<Option<typename Iter::Item>>;
     };
