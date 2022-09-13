@@ -8,9 +8,10 @@
 #include "iter_concepts.h"
 
 namespace mstl::iter {
-    template<FromIterator T>
-    T collect(typename T::IntoIter iter) {
-        return T::from_iter(iter);
+    template<typename FromIter, typename Iter>
+    requires FromIterator<FromIter, Iter>
+    FromIter collect(Iter iter) {
+        return FromIter::from_iter(iter);
     }
 }
 
