@@ -7,9 +7,11 @@
 
 #include "iter_concepts.h"
 
-template<FromIterator T>
-T collect(typename T::IntoIter iter) {
-  return T::from_iter(iter);
+namespace mstl::iter {
+    template<FromIterator T>
+    T collect(typename T::IntoIter iter) {
+        return T::from_iter(iter);
+    }
 }
 
 #endif //__MODERN_STL_ITERATOR_H__

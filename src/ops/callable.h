@@ -8,10 +8,12 @@
 #include <concepts>
 #include <type_traits>
 
-template<typename F, typename R, typename... Args>
-concept Callable = requires {
-    std::invocable<F, Args...>;
-    std::same_as<R, typename std::invoke_result<F, Args...>::type>;
-};
+namespace mstl::ops {
+    template<typename F, typename R, typename... Args>
+    concept Callable = requires {
+        std::invocable<F, Args...>;
+        std::same_as<R, typename std::invoke_result<F, Args...>::type>;
+    };
+}
 
 #endif //__MODERN_STL_FUNCTION_H__
