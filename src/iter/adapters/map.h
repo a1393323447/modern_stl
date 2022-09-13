@@ -27,6 +27,7 @@ namespace mstl::iter {
         Option<Item> next() {
             auto next_item = iter.next();
             if (next_item.is_some()) {
+                // FIXME: 现在的 unwrap 语义不明确
                 return func(next_item.unwrap());
             } else {
                 return Option<Item>::none();

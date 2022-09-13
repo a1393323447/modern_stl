@@ -8,6 +8,8 @@
 #include <global.h>
 #include <iter/iter_concepts.h>
 
+#include <initializer_list>
+
 namespace mstl::collection {
 
     template <typename T, usize N>
@@ -37,6 +39,18 @@ namespace mstl::collection {
     public:
         using Item = T;
         using IntoIter = ArrayIter<T, N>;
+
+        Array(std::initializer_list<T> list) {
+            // FIXME: panic if list.size() > N
+            usize pos = 0;
+            for (T ele: list) {
+                this->values[pos] = ele;
+                pos++;
+                if (pos >= N) [[unlikely]] {
+                    break;
+                }
+            }
+        }
 
         IntoIter into_iter() {
             return IntoIter { values };

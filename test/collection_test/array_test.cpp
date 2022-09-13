@@ -3,20 +3,20 @@
 //
 
 #include <collection/arrary.h>
-#include <iter/adapters/map.h>
 #include <iter/iterator.h>
 #include <iostream>
 
-int main() {
-    using namespace mstl::iter;
-    using namespace mstl::collection;
+using namespace mstl;
+using namespace mstl::iter;
+using namespace mstl::collection;
 
-    Array<int, 10> array{};
+template<typename T>
+struct Pow {
+    T pow;
+};
 
-    for (mstl::usize i = 0; i < array.size(); i++) {
-        array[i] = i;
-    }
-
+void test_into_iter() {
+    Array<i32, 10> array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     auto it = array.into_iter();
     auto next = it.next();
 
@@ -25,18 +25,42 @@ int main() {
         next = it.next();
     }
     std::cout << std::endl;
+}
 
-    auto arr_2 = collect<Array<long, 10>>(map(array.into_iter(), [](int ele) -> long {
-        return ele * ele;
-    }));
+void test_map() {
+    Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    auto arr_2 = collect<Array<Pow<i32>, 10>>(map(
+            arr.into_iter(), [](i32 ele) {
+                return Pow<i32>{ ele * ele };
+            }));
 
-    auto it2 = arr_2.into_iter();
-    auto next2 = it2.next();
+    auto iter = arr_2.into_iter();
+    auto next = iter.next();
 
-    while (next2.is_some()) {
-        std::cout << next2.unwrap() << " ";
-        next2 = it2.next();
+    while (next.is_some()) {
+        std::cout << next.unwrap().pow << " ";
+        next = iter.next();
     }
+    std::cout << std::endl;
+}
 
+void test_filter() {
+    Array<int, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    auto iter = filter(arr.into_iter(), [](i32& ele) {
+        return ele % 2 == 0;
+    });
+    auto next = iter.next();
+
+    while (next.is_some()) {
+        std::cout << next.unwrap() << " ";
+        next = iter.next();
+    }
+    std::cout << std::endl;
+}
+
+int main() {
+    test_into_iter();
+    test_map();
+    test_filter();
     return 0;
 }

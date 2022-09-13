@@ -24,7 +24,9 @@ public:
 
     bool is_none() const { return !this->is_some(); }
 
-    T unwrap() {
+    // FIXME: unwrap 应该获取所有权还要引用?
+    // FIXME: 如何获取 Option<T> 中 T 的引用?
+    T& unwrap() {
         return std::get<T>(*this);
     }
 };

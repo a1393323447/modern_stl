@@ -14,6 +14,9 @@ namespace mstl::ops {
         requires std::invocable<F, Args...>;
         requires std::same_as<R, typename std::invoke_result<F, Args...>::type>;
     };
+
+    template<typename P, typename... Args>
+    concept Predicate = ops::Callable<P, bool, Args...>;
 }
 
 #endif //__MODERN_STL_FUNCTION_H__

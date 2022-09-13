@@ -5,14 +5,10 @@
 #ifndef __MODERN_STL_ITERATOR_H__
 #define __MODERN_STL_ITERATOR_H__
 
-#include "iter_concepts.h"
-
-namespace mstl::iter {
-    template<typename FromIter, typename Iter>
-    requires FromIterator<FromIter, Iter>
-    FromIter collect(Iter iter) {
-        return FromIter::from_iter(iter);
-    }
-}
+#include <ops/callable.h>
+#include <iter/iter_concepts.h>
+#include <iter/utility.h>
+#include <iter/adapters/map.h>
+#include <iter/adapters/filter.h>
 
 #endif //__MODERN_STL_ITERATOR_H__

@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 
 include_directories(src)
 add_executable(modern_stl_test main.cpp)
-add_executable(array_test test/collection_test/array_test.cpp)
+add_executable(array_test test/collection_test/array_test.cpp src/iter/adapters/filter.h src/iter/utility.h)
 
