@@ -8,6 +8,6 @@ struct Iter {
 };
 
 int main() {
-    static_assert(Iterator<Iter>);
+    static_assert(mstl::iter::Iterator<Iter>);
     return 0;
 }
