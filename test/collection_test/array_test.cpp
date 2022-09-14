@@ -82,12 +82,13 @@ void test_combine() {
     }
     std::cout << std::endl;
 
+    i32 limit = 50;
     auto first = combine(arr.into_iter(),
         Map{}, [](auto ele) {
             return ele * ele;
         },
-        FindFirst{}, [](auto ele) {
-            return ele > 50;
+        FindFirst{}, [&](auto ele) {
+            return ele > limit;
         }
     );
 
@@ -96,6 +97,16 @@ void test_combine() {
     } else {
         std::cout << "Can not find \n";
     }
+
+    combine(arr.into_iter(),
+        Filter{}, [](auto ele) {
+            return ele % 2 == 1;
+        },
+        ForEach{}, [](auto ele) {
+            std::cout << ele << " ";
+        }
+    );
+    std::cout << '\n';
 }
 
 int main() {

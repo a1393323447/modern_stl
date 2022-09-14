@@ -12,7 +12,7 @@ namespace mstl::ops {
     template<typename F, typename R, typename... Args>
     concept Callable = requires {
         requires std::invocable<F, Args...>;
-        requires std::same_as<R, typename std::invoke_result<F, Args...>::type>;
+        requires std::same_as<R, std::invoke_result_t<F, Args...>>;
     };
 
     template<typename P, typename... Args>

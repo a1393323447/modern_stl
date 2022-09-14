@@ -6,7 +6,6 @@
 #define MODERN_STL_TUPLE_H
 
 #include <type_traits>
-#include <iostream>
 #include "global.h"
 #include "type_traits.h"
 
