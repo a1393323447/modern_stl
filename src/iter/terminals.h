@@ -57,6 +57,26 @@ namespace mstl::iter {
         }
     };
 
+    template<Iterator Iter, typename F>
+    requires ops::Callable<F, void, typename Iter::Item>
+    void for_each(Iter iter, F lambda) {
+        Option<typename Iter::Item> next = iter.next();
+        while (next.is_some()) {
+            lambda(next.unwrap());
+            next = iter.next();
+        }
+    }
+
+    template<Iterator Iter, typename F>
+    requires ops::Callable<F, void, typename Iter::Item>
+    using ForEachFuncType = void(*)(Iter, F);
+    struct ForEach {
+        template<Iterator Iter, typename F>
+        static ForEachFuncType<Iter, F>
+        get_terminal_func() {
+            return for_each<Iter, F>;
+        }
+    };
 }
 
 #endif //__MODERN_STL_TERMINAL_H__
