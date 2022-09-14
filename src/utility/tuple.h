@@ -6,6 +6,7 @@
 #define MODERN_STL_TUPLE_H
 
 #include <type_traits>
+#include <concepts>
 #include "global.h"
 #include "type_traits.h"
 
@@ -107,7 +108,7 @@ namespace mstl::utility {
                 using nT = std::remove_reference_t<Arg>;            // nT = T, Arg's reference is removed
                 using pT = std::add_pointer_t<nT>;                  // pT = T*, Arg is considered as a pointer to T now.s
                 auto start = reinterpret_cast<pT *>(inner +
-                                                    pos);    // start is T**, which means that a T* will be stored into 'inner'.
+                                                    pos);           // start is T**, which means that a T* will be stored into 'inner'.
                 new(start) pT{&v};                                // construct &v at start(T**)
                 newPos += sizeof(usize);
             } else {  // non-reference
@@ -115,7 +116,7 @@ namespace mstl::utility {
                 new(start) Arg{v};
                 newPos += sizeof(Arg);
             }
-            emplace<Args...>(newPos, vs...);
+            emplace < Args...>(newPos, vs...);
         }
 
         template<typename Arg>
@@ -131,6 +132,26 @@ namespace mstl::utility {
             }
         }
 
+        // 复制构造函数的内部实现
+        template<usize I>
+        void emplace(const Tuple& t) requires (I < sizeof...(Ts)) {
+            usize pos = _private::sum_of_size_of_front_n_types_v<I, Ts...>;
+            using T = ArgAtT<I, Ts...>;
+
+            if constexpr (std::is_reference_v<T>) {
+                using nT = std::remove_reference_t<T>*;
+                auto start = reinterpret_cast<nT*>(inner + pos);
+                new (start) nT{*reinterpret_cast<nT*>(t.inner + pos)};
+            } else {
+                auto start = reinterpret_cast<T*>(inner + pos);
+                new (start) T{get<I>(t)};
+            }
+
+            if constexpr (I < size() - 1) {
+                emplace<I + 1>(t);
+            }
+        }
+
         // 销毁, 对所有类类型对象逐一调用析构函数
         template<typename Arg, typename ...Args>
         void destroy(usize pos = 0) {
@@ -139,27 +160,16 @@ namespace mstl::utility {
             }
 
             if constexpr (sizeof...(Args) != 0) {
-                destroy < Args...>(sizeof(Arg) + pos);
+                destroy < Args...>(
+                        ConditionV<std::is_reference_v<Arg>,
+                                sizeof(usize),
+                                sizeof(Arg)>
+                        + pos);
             }
         }
 
-//        template<usize I>
-//        bool equal_impl(const Tuple& other) {
-//            bool res = get<I>(other) == get<I>(*this);
-//            if (!res) {
-//                return false;
-//            } else {
-//                if constexpr (I != 0) {
-//                    return equal_impl <I - 1>(other);
-//                } else {
-//                    return true;
-//                }
-//            }
-//        }
-
         template<usize I, typename ...Args>
-        bool equal_impl(const Tuple<Args...>& other) const
-        requires requires(ArgAtT<I, Ts...> a, ArgAtT<I, Args...> b){
+        bool equal_impl(const Tuple<Args...> &other) const requires requires(ArgAtT<I, Ts...> a, ArgAtT<I, Args...> b){
             sizeof...(Ts) == sizeof...(Args) + 1;
             a == b;
         } {
@@ -168,7 +178,7 @@ namespace mstl::utility {
                 return false;
             } else {
                 if constexpr (I != 0) {
-                    return equal_impl <I - 1>(other);
+                    return equal_impl < I - 1 > (other);
                 } else {
                     return true;
                 }
@@ -182,6 +192,10 @@ namespace mstl::utility {
 
         ~Tuple() {
             destroy<Ts...>();
+        }
+
+        Tuple(const Tuple& t): inner{0} {
+            emplace<0>(t);
         }
 
         static constexpr usize size() {
@@ -203,11 +217,11 @@ namespace mstl::utility {
         }
 
         template<typename Arg, typename ...Args>
-        bool operator==(const Tuple<Arg, Args...>& other) const {
+        bool operator==(const Tuple<Arg, Args...> &other) const {
             return equal_impl<size() - 1>(other);
         }
 
-        bool operator==(const Tuple& other) const {
+        bool operator==(const Tuple &other) const {
             return equal_impl<size() - 1>(other);
         }
     };
@@ -272,8 +286,8 @@ namespace mstl::utility {
     ArgAtT<I, Arg, Args...> &get(Tuple<Arg, Args...> &tuple) {
         using T = ArgAtT<I, Arg, Args...>;
         if constexpr (std::is_reference_v<T>) {         // when The Pointed Type T is a reference (assume it's A&)
-            using pT = std::remove_reference_t<T>*;     // pT = A*
-            auto start = reinterpret_cast<pT*> (        // start => A**, which means the start position of pointer A*
+            using pT = std::remove_reference_t<T> *;     // pT = A*
+            auto start = reinterpret_cast<pT *> (        // start => A**, which means the start position of pointer A*
                     tuple.inner
                     + _private::sum_of_size_of_front_n_types_v<I, Arg, Args...>
             );
@@ -291,8 +305,8 @@ namespace mstl::utility {
     const ArgAtT<I, Arg, Args...> &get(const Tuple<Arg, Args...> &tuple) {
         using T = ArgAtT<I, Arg, Args...>;
         if constexpr (std::is_reference_v<T>) {         // when The Pointed Type T is a reference (assume it's A&)
-            using pT = std::remove_reference_t<T>*;     // pT = A*
-            auto start = reinterpret_cast<const pT*> (  // start => const A**
+            using pT = std::remove_reference_t<T> *;     // pT = A*
+            auto start = reinterpret_cast<const pT *> (  // start => const A**
                     tuple.inner
                     + _private::sum_of_size_of_front_n_types_v<I, Arg, Args...>
             );
@@ -341,9 +355,9 @@ namespace mstl::utility {
      * @endcode
      * */
     template<typename T, typename ...Ts>
-    Tuple<T&, Ts&...>
-    tie(T& v, Ts& ...vs) {
-        return Tuple<T&, Ts&...>{v, vs...};
+    Tuple<T &, Ts &...>
+    tie(T &v, Ts &...vs) {
+        return Tuple<T &, Ts &...>{v, vs...};
     }
 } // utility
 
