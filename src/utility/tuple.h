@@ -93,7 +93,7 @@ namespace mstl::utility {
         // 在同类型Tuple之间复制
         template<usize I>
         void copy_impl(const Tuple &t) {
-            get<I>(*this) = get<I>(t);
+            get<I>(*this) = get<I>(t);  // 调用此函数是否产生歧义? 目前没有复制构造函数.
 
             if constexpr (I != 0) {
                 copy_impl<I - 1>(t);
@@ -144,9 +144,41 @@ namespace mstl::utility {
             }
         }
 
+//        template<usize I>
+//        bool equal_impl(const Tuple& other) {
+//            bool res = get<I>(other) == get<I>(*this);
+//            if (!res) {
+//                return false;
+//            } else {
+//                if constexpr (I != 0) {
+//                    return equal_impl <I - 1>(other);
+//                } else {
+//                    return true;
+//                }
+//            }
+//        }
+
+        template<usize I, typename ...Args>
+        bool equal_impl(const Tuple<Args...>& other) const
+        requires requires(ArgAtT<I, Ts...> a, ArgAtT<I, Args...> b){
+            sizeof...(Ts) == sizeof...(Args) + 1;
+            a == b;
+        } {
+            bool res = get<I>(other) == get<I>(*this);
+            if (!res) {
+                return false;
+            } else {
+                if constexpr (I != 0) {
+                    return equal_impl <I - 1>(other);
+                } else {
+                    return true;
+                }
+            }
+        }
+
     public:
         Tuple(Ts ...vs) : inner{0} {
-            emplace<Ts...>(0, vs...);
+            emplace<Ts...>(0, vs...);  // std::forward<Ts>(vs)...无效, 为什么?
         }
 
         ~Tuple() {
@@ -169,6 +201,15 @@ namespace mstl::utility {
         constexpr Tuple &operator=(const Tuple<UType, UTypes...> &other) {
             copy_impl<size() - 1>(other);
             return *this;
+        }
+
+        template<typename Arg, typename ...Args>
+        bool operator==(const Tuple<Arg, Args...>& other) const {
+            return equal_impl<size() - 1>(other);
+        }
+
+        bool operator==(const Tuple& other) const {
+            return equal_impl<size() - 1>(other);
         }
     };
 
@@ -272,7 +313,7 @@ namespace mstl::utility {
      *<h3>Example</h3>
      * @code
      * auto t = make_tuple(1, 2.0, 'c');
-     * static_assert(std::same_as<decltype(t), Tuple<int, float, char>);
+     * static_assert(std::same_as<decltype(t), Tuple<int, double, char>);
      * assert(get<2>(t) == 'c');
      * @endcode
      * */
