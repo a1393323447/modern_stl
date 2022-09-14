@@ -48,13 +48,15 @@ namespace mstl::iter {
         return { iter, f };
     }
 
-    struct MapCombinator {
+    template<Iterator Iter, typename  F>
+    using MapFuncType = MapIter<Iter, F, typename Iter::Item>(*)(Iter, F);
+    struct Map {
         template<Iterator Iter, typename F>
-        static auto
+        static MapFuncType<Iter, F>
         get_combine_func() {
             return map<Iter, F>;
         }
-    } Map;
+    };
 }
 
 #endif //__MODERN_STL_MAP_H__

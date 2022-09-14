@@ -26,9 +26,6 @@ namespace mstl::collection {
                 return Option<T>::none();
             }
         }
-        usize size_hint() {
-            return N;
-        }
     private:
         T*    ptr = nullptr;
         usize pos = 0;

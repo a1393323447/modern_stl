@@ -6,7 +6,7 @@
 #define __MODERN_STL_FILTER_H__
 
 #include <iter/iter_concepts.h>
-#include <iter/utility.h>
+#include <iter/terminals.h>
 
 namespace mstl::iter {
     template<Iterator Iter, typename P>
@@ -35,13 +35,16 @@ namespace mstl::iter {
         return { iter, predicate };
     }
 
-    struct FilterCombinator {
+    template<Iterator Iter, typename P>
+    using FilterFuncType = FilterIter<Iter, P>(*)(Iter, P);
+
+    struct Filter {
         template<Iterator Iter, typename F>
-        static auto
+        static FilterFuncType<Iter, F>
         get_combine_func() {
             return filter<Iter, F>;
         }
-    } Filter;
+    };
 }
 
 #endif //__MODERN_STL_FILTER_H__

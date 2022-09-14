@@ -61,24 +61,41 @@ void test_filter() {
 void test_combine() {
     Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
-    auto iter = combine(arr.into_iter(),
-        Map, [](auto ele) {
+    auto pow_arr = combine(arr.into_iter(),
+        Map{}, [](auto ele) {
             return ele * ele;
         },
-        Map, [](auto ele) {
-            return Pow<usize>{ static_cast<unsigned long long>(ele * ele) };
+        Map{}, [](auto ele) {
+            return Pow<usize>{ static_cast<usize>(ele * ele) };
         },
-        Filter, [](auto ele) {
-            return ele.pow > 16;
-        }
+        Filter{}, [](auto ele) {
+            return ele.pow % 2 == 0;
+        },
+        CollectAs<Array<Pow<usize> , 5>>{}
     );
 
+    auto iter = pow_arr.into_iter();
     auto next = iter.next();
     while (next.is_some()) {
         std::cout << next.unwrap().pow << " ";
         next = iter.next();
     }
     std::cout << std::endl;
+
+    auto first = combine(arr.into_iter(),
+        Map{}, [](auto ele) {
+            return ele * ele;
+        },
+        FindFirst{}, [](auto ele) {
+            return ele > 50;
+        }
+    );
+
+    if (first.is_some()) {
+        std::cout << "find " << first.unwrap() << '\n';
+    } else {
+        std::cout << "Can not find \n";
+    }
 }
 
 int main() {

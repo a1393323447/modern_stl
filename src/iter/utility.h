@@ -7,29 +7,63 @@
 
 #include <ops/callable.h>
 #include <iter/iter_concepts.h>
+#include <iter/terminal_concepts.h>
+#include <iter/adapters/combinator_concepts.h>
 
 namespace mstl::iter {
-    template<typename FromIter, typename Iter>
-    requires FromIterator<FromIter, Iter>
-    FromIter collect(Iter iter) {
-        return FromIter::from_iter(iter);
+    /**
+     * combine 递归的基线函数 1: combine 返回组合后的迭代器
+     */
+    template<Iterator Iter, typename Com, typename Lambda>
+    requires combinator::Combinator<Com, Iter, Lambda>
+    decltype(auto) combine(Iter iter, Com, Lambda lambda) {
+        auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
+
+        // 不再递归调用 combine
+        return combinatorFunc(iter, lambda);
     }
 
-    template<Iterator Iter, typename P>
-    requires ops::Predicate<P, typename Iter::Item&>
-    Option<typename Iter::Item>
-    find(Iter& iter, P predicate) {
-        using Item = typename Iter::Item;
-        Option<Item> next_value = iter.next();
-        while (next_value.is_some()) {
-            // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
-            Item item = next_value.unwrap();
-            if (predicate(item)) {
-                break;
-            }
-            next_value = iter.next();
-        }
-        return next_value;
+    /**
+     * combine 递归的基线函数 2: 以 Terminal 结尾
+     */
+    template<Iterator Iter, typename Ter, typename... Args>
+    requires terminal::Terminal<Ter, Iter, Args...>
+    decltype(auto) combine(Iter iter, Ter, Args... args) {
+        auto terminalFunc = Ter::template get_terminal_func<Iter, Args...>();
+
+        // 不再递归调用 combine
+        return terminalFunc(iter, args...);
+    }
+
+    /**
+     * 用于将 Combinator 进行组合, 并可选地以一个 Terminal 结尾
+     *
+     * <h1>Example</h1>
+     * @code
+     * Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+     * auto iter = combine(arr.into_iter(),
+     *     Map{}, [](auto ele) {
+     *         return ele * ele;
+     *     },
+     *     Map{}, [](auto ele) {
+     *         return Pow<usize>{ static_cast<usize>(ele * ele) };
+     *     }
+     * );
+     * auto next = iter.next();
+     * while (next.is_some()) {
+     *     std::cout << next.unwrap().pow << " ";
+     *     next = iter.next();
+     * }
+     * @endcode
+     */
+    template<Iterator Iter, typename Com, typename Lambda, typename... Args>
+    requires combinator::Combinator<Com, Iter, Lambda>
+    decltype(auto) combine(Iter iter, Com, Lambda lambda, Args... args) {
+        // 通过实现了 Combinator 包装类 Com 获取真正的 combinator 函数
+        auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
+
+        // 递归调用 combine 模拟链式调用
+        return combine(combinatorFunc(iter, lambda), args...);
     }
 }
 
