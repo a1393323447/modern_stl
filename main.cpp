@@ -1,13 +1,15 @@
 #include <iostream>
-#include "iter/iterator.h"
-#include "option/option.h"
-
-struct Iter {
-    using Item = int;
-    Option<int> next();
-};
+#include <utility/tuple.h>
 
 int main() {
-    static_assert(mstl::iter::Iterator<Iter>);
+    auto a = mstl::utility::make_tuple();
+    auto b = mstl::utility::make_tuple(1, 2);
+    static_assert(a.size() == 0);
+
+    int c, d;
+    auto x = mstl::utility::tie(c, d);
+    x = b;
+
+    std::cout << c << std::endl << d << std::endl;
     return 0;
 }
