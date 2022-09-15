@@ -46,6 +46,29 @@ namespace mstl::iter {
         return next_value;
     }
 
+    template<Iterator Iter, typename P, bool Likely>
+    requires ops::Predicate<P, typename Iter::Item&>
+    Option<typename Iter::Item>
+    find(Iter& iter, P predicate) noexcept {
+        using Item = typename Iter::Item;
+        Option<Item> next_value = iter.next();
+        while (next_value.is_some()) {
+            // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
+            auto&& item = next_value.unwrap_uncheck();
+            if constexpr (Likely) {
+                if (predicate(item)) [[likely]] {
+                    break;
+                }
+            } else {
+                if (predicate(item)) [[unlikely]] {
+                    break;
+                }
+            }
+            next_value = iter.next();
+        }
+        return next_value;
+    }
+
     template<Iterator Iter, typename P>
     requires ops::Predicate<P, typename Iter::Item&>
     using FindFuncType = Option<typename Iter::Item>(*)(Iter&, P);

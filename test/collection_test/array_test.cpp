@@ -118,8 +118,8 @@ void test_combine_string() {
     };
 
     combine(arr.iter(),
-        Filter{}, [](auto&& str) {
-            return str.size() >= 6;
+        Filter<Likely>{}, [](auto&& str) {
+            return str.size() >= 3;
         },
         Map{}, [](auto&& str) {
             return str + "?";
