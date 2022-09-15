@@ -6,7 +6,6 @@
 #define __MODERN_STL_FUNCTION_H__
 
 #include <concepts>
-#include <type_traits>
 
 namespace mstl::ops {
     template<typename F, typename R, typename... Args>

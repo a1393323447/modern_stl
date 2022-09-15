@@ -16,8 +16,8 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Com, typename Lambda>
     requires combinator::Combinator<Com, Iter, Lambda>
-    decltype(auto) combine(Iter iter, Com, Lambda lambda) {
-        auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
+    decltype(auto) combine(Iter iter, Com, Lambda lambda) noexcept {
+        constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 
         // 不再递归调用 combine
         return combinatorFunc(iter, lambda);
@@ -28,8 +28,8 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Ter, typename... Args>
     requires terminal::Terminal<Ter, Iter, Args...>
-    decltype(auto) combine(Iter iter, Ter, Args... args) {
-        auto terminalFunc = Ter::template get_terminal_func<Iter, Args...>();
+    decltype(auto) combine(Iter iter, Ter, Args... args) noexcept {
+        constexpr auto terminalFunc = Ter::template get_terminal_func<Iter, Args...>();
 
         // 不再递归调用 combine
         return terminalFunc(iter, args...);
@@ -58,9 +58,9 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Com, typename Lambda, typename... Args>
     requires combinator::Combinator<Com, Iter, Lambda>
-    decltype(auto) combine(Iter iter, Com, Lambda lambda, Args... args) {
+    decltype(auto)  combine(Iter iter, Com, Lambda lambda, Args... args) noexcept {
         // 通过实现了 Combinator 包装类 Com 获取真正的 combinator 函数
-        auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
+        constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 
         // 递归调用 combine 模拟链式调用
         return combine(combinatorFunc(iter, lambda), args...);

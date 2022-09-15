@@ -5,6 +5,7 @@
 #include <collection/arrary.h>
 #include <iter/iterator.h>
 #include <iostream>
+#include <string>
 
 using namespace mstl;
 using namespace mstl::iter;
@@ -68,7 +69,7 @@ void test_combine() {
         Map{}, [](auto ele) {
             return Pow<usize>{ static_cast<usize>(ele * ele) };
         },
-        Filter{}, [](auto ele) {
+        Filter{}, [](auto& ele) {
             return ele.pow % 2 == 0;
         },
         CollectAs<Array<Pow<usize> , 5>>{}
@@ -109,10 +110,56 @@ void test_combine() {
     std::cout << '\n';
 }
 
+void test_combine_string() {
+    using namespace std;
+    Array<string, 10> arr = {
+            "First", "Second", "Third", "Fourth", "Fifth",
+            "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"
+    };
+
+    combine(arr.iter(),
+        Filter<Likely>{}, [](auto&& str) {
+            return str.size() >= 3;
+        },
+        Map{}, [](auto&& str) {
+            return str + "?";
+        },
+        ForEach{}, [](const auto& str) {
+            std::cout << str << '\n';
+        }
+    );
+}
+
+void test_array_ref() {
+    using namespace std;
+    Array<string, 10> arr = {
+            "First", "Second", "Third", "Fourth", "Fifth",
+            "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"
+    };
+
+    auto usize_arr = combine(arr.into_iter(),
+        Map{}, [](auto&& str) {
+            return str.size();
+        },
+        CollectAs<Array<usize, 10>>{}
+    );
+
+    combine(usize_arr.iter(),
+        ForEach{}, [](auto&& size) {
+            std::cout << size << " ";
+        }
+    );
+
+    std::cout << '\n';
+}
+
 int main() {
     test_into_iter();
     test_map();
     test_filter();
     test_combine();
+    test_combine_string();
+    test_array_ref();
+
     return 0;
 }

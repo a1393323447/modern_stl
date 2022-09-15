@@ -27,8 +27,27 @@ namespace mstl::collection {
             }
         }
     private:
-        T*    ptr = nullptr;
-        usize pos = 0;
+        T* const ptr = nullptr;
+        usize    pos = 0;
+    };
+
+    template <typename T, usize N>
+    class ArrayIterRef {
+    public:
+        using Item = const T&;
+        explicit ArrayIterRef(T* p): ptr(p) {};
+        Option<const T&> next() {
+            if (pos < N) {
+                auto n = Option<const T&>::some(ptr[pos]);
+                pos++;
+                return n;
+            } else {
+                return Option<const T&>::none();
+            }
+        }
+    private:
+        const T* ptr = nullptr;
+        usize    pos = 0;
     };
 
     template <typename T, usize N>
@@ -36,6 +55,7 @@ namespace mstl::collection {
     public:
         using Item = T;
         using IntoIter = ArrayIter<T, N>;
+        using IterRef  = ArrayIterRef<T, N>;
 
         Array(std::initializer_list<T> list) {
             // FIXME: panic if list.size() > N
@@ -43,7 +63,7 @@ namespace mstl::collection {
             for (T ele: list) {
                 this->values[pos] = ele;
                 pos++;
-                if (pos >= N) [[unlikely]] {
+                if (pos >= N) {
                     break;
                 }
             }
@@ -53,13 +73,17 @@ namespace mstl::collection {
             return IntoIter { values };
         }
 
+        IterRef iter() {
+            return IterRef { values };
+        }
+
         template<iter::Iterator Iter>
         static decltype(auto) from_iter(Iter iter) {
             usize pos = 0;
             Array<typename Iter::Item, N> arr{};
             Option<typename Iter::Item> next = iter.next();
             while (next.is_some()) {
-                arr[pos] = next.unwrap();
+                arr[pos] = next.unwrap_uncheck();
                 next = iter.next();
                 pos++;
             }
@@ -71,12 +95,17 @@ namespace mstl::collection {
             // FIXME: panic if pos >= N
             return values[pos];
         }
-        usize size() { return N; }
+        constexpr usize size() { return N; }
     private:
         Item values[N];
     };
 
     static_assert(iter::Iterator<ArrayIter<int, 10>>);
+    static_assert(std::is_same_v<ArrayIter<int, 10>::Item, int>);
+
+    static_assert(iter::Iterator<ArrayIterRef<int, 10>>);
+    static_assert(std::is_same_v<ArrayIterRef<int, 10>::Item, const int&>);
+
     static_assert(iter::IntoIterator<Array<int, 10>>);
     static_assert(iter::FromIterator<Array<int, 10>, ArrayIter<int, 10>>);
 }

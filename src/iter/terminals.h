@@ -10,7 +10,7 @@
 namespace mstl::iter {
     template<typename FromIter, typename Iter>
     requires FromIterator<FromIter, Iter>
-    FromIter collect(Iter iter) {
+    FromIter collect(Iter iter) noexcept {
         return FromIter::from_iter(iter);
     }
 
@@ -23,8 +23,8 @@ namespace mstl::iter {
     template<typename Container>
     struct CollectAs {
         template<typename Iter>
-        static CollectFunc<Container, Iter>
-        get_terminal_func() {
+        static constexpr CollectFunc<Container, Iter>
+        get_terminal_func() noexcept {
             return collect<Container, Iter>;
         }
     };
@@ -32,14 +32,37 @@ namespace mstl::iter {
     template<Iterator Iter, typename P>
     requires ops::Predicate<P, typename Iter::Item&>
     Option<typename Iter::Item>
-    find(Iter& iter, P predicate) {
+    find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
         Option<Item> next_value = iter.next();
         while (next_value.is_some()) {
             // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
-            Item item = next_value.unwrap();
+            auto&& item = next_value.unwrap_uncheck();
             if (predicate(item)) {
                 break;
+            }
+            next_value = iter.next();
+        }
+        return next_value;
+    }
+
+    template<Iterator Iter, typename P, bool Likely>
+    requires ops::Predicate<P, typename Iter::Item&>
+    Option<typename Iter::Item>
+    find(Iter& iter, P predicate) noexcept {
+        using Item = typename Iter::Item;
+        Option<Item> next_value = iter.next();
+        while (next_value.is_some()) {
+            // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
+            auto&& item = next_value.unwrap_uncheck();
+            if constexpr (Likely) {
+                if (predicate(item)) [[likely]] {
+                    break;
+                }
+            } else {
+                if (predicate(item)) [[unlikely]] {
+                    break;
+                }
             }
             next_value = iter.next();
         }
@@ -51,7 +74,7 @@ namespace mstl::iter {
     using FindFuncType = Option<typename Iter::Item>(*)(Iter&, P);
     struct FindFirst {
         template<Iterator Iter, typename P>
-        static FindFuncType<Iter, P>
+        static constexpr FindFuncType<Iter, P>
         get_terminal_func() {
             return find<Iter, P>;
         }
@@ -59,10 +82,10 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename F>
     requires ops::Callable<F, void, typename Iter::Item>
-    void for_each(Iter iter, F lambda) {
+    void for_each(Iter iter, F lambda) noexcept {
         Option<typename Iter::Item> next = iter.next();
         while (next.is_some()) {
-            lambda(next.unwrap());
+            lambda(next.unwrap_uncheck());
             next = iter.next();
         }
     }
@@ -72,7 +95,7 @@ namespace mstl::iter {
     using ForEachFuncType = void(*)(Iter, F);
     struct ForEach {
         template<Iterator Iter, typename F>
-        static ForEachFuncType<Iter, F>
+        static constexpr ForEachFuncType<Iter, F>
         get_terminal_func() {
             return for_each<Iter, F>;
         }

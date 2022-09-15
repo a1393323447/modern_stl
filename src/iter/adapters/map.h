@@ -15,27 +15,28 @@ namespace mstl::iter {
      * @tparam Arg 转化函数的参数类型
      */
     template<Iterator Iter, typename Func, typename Arg>
-    requires std::is_invocable<Func, Arg>::value &&
+    requires std::invocable<Func, Arg> &&
             (!std::same_as<void, std::invoke_result_t<Func, Arg>>) // 转化后的元素类型不能为 void
     class MapIter {
     public:
         /// 转化后的元素类型
         using Item = std::invoke_result_t<Func, Arg>;
 
-        MapIter(Iter iter, Func func) : iter(iter), func(std::move(func)) {}
+        MapIter(Iter iter, Func func) : iter(iter), func(func) {}
 
-        Option<Item> next() {
+        Option<Item> next() noexcept {
             auto next_item = iter.next();
             if (next_item.is_some()) {
                 // FIXME: 现在的 unwrap 语义不明确
-                return func(next_item.unwrap());
+                Item item = func(next_item.unwrap_uncheck());
+                return Option<Item>::some(item);
             } else {
                 return Option<Item>::none();
             }
         }
 
         MapIter<Iter, Func, Arg>
-        into_iter() { return *this; }
+        into_iter() noexcept { return *this; }
 
     private:
         Iter iter;
@@ -44,7 +45,7 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename F>
     MapIter<Iter, F, typename Iter::Item>
-    map(Iter iter, F f) {
+    map(Iter iter, F f) noexcept {
         return { iter, f };
     }
 
@@ -52,8 +53,8 @@ namespace mstl::iter {
     using MapFuncType = MapIter<Iter, F, typename Iter::Item>(*)(Iter, F);
     struct Map {
         template<Iterator Iter, typename F>
-        static MapFuncType<Iter, F>
-        get_combine_func() {
+        static constexpr MapFuncType<Iter, F>
+        get_combine_func() noexcept {
             return map<Iter, F>;
         }
     };

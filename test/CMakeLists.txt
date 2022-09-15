@@ -1,4 +1,7 @@
 add_executable(array_test collection_test/array_test.cpp)
+add_executable(array_benchmark collection_test/array_benchmark.cpp)
+add_executable(option_test option_test/option_test.cpp)
+
 
 find_package(Boost COMPONENTS unit_test_framework)
 
