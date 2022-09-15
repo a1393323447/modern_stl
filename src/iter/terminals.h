@@ -35,7 +35,7 @@ namespace mstl::iter {
     find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
         Option<Item> next_value = iter.next();
-        while (next_value.is_some()) [[likely]] {
+        while (next_value.is_some()) {
             // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
             auto&& item = next_value.unwrap_uncheck();
             if (predicate(item)) {
@@ -61,7 +61,7 @@ namespace mstl::iter {
     requires ops::Callable<F, void, typename Iter::Item>
     void for_each(Iter iter, F lambda) noexcept {
         Option<typename Iter::Item> next = iter.next();
-        while (next.is_some()) [[likely]] {
+        while (next.is_some()) {
             lambda(next.unwrap_uncheck());
             next = iter.next();
         }

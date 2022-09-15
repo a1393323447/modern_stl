@@ -18,7 +18,7 @@ namespace mstl::collection {
         using Item = T;
         explicit ArrayIter(Item* p): ptr(p) {};
         Option<T> next() {
-            if (pos < N) [[likely]] {
+            if (pos < N) {
                 auto n = Option<T>::some(ptr[pos]);
                 pos++;
                 return n;
@@ -37,7 +37,7 @@ namespace mstl::collection {
         using Item = const T&;
         explicit ArrayIterRef(T* p): ptr(p) {};
         Option<const T&> next() {
-            if (pos < N) [[likely]] {
+            if (pos < N) {
                 auto n = Option<const T&>::some(ptr[pos]);
                 pos++;
                 return n;
@@ -63,7 +63,7 @@ namespace mstl::collection {
             for (T ele: list) {
                 this->values[pos] = ele;
                 pos++;
-                if (pos >= N) [[unlikely]] {
+                if (pos >= N) {
                     break;
                 }
             }
@@ -82,7 +82,7 @@ namespace mstl::collection {
             usize pos = 0;
             Array<typename Iter::Item, N> arr{};
             Option<typename Iter::Item> next = iter.next();
-            while (next.is_some()) [[likely]] {
+            while (next.is_some()) {
                 arr[pos] = next.unwrap_uncheck();
                 next = iter.next();
                 pos++;

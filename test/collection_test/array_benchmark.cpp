@@ -149,7 +149,7 @@ usize non_vec_2(Array<std::string, 1000> arr) {
 
     for(usize i = 0; i < arr.size(); i++) {
         usize cnt = 0;
-        for (auto c: arr[i]) {
+        for (const auto& c: arr[i]) {
             if (c == 'K') {
                 cnt++;
             }

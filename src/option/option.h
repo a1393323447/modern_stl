@@ -33,6 +33,10 @@ namespace mstl {
         }
 
     protected:
+        static constexpr bool
+        has_hold_value() {
+            return true;
+        }
         bool hold_value = false;
         T value;
     };
@@ -45,19 +49,19 @@ namespace mstl {
     public:
         using StoreT = std::remove_cvref_t<T>;
 
-        OptionBase(T ref_value): value(const_cast<StoreT*>(&ref_value)), hold_value(true) {
+        OptionBase(T ref_value): value(const_cast<StoreT*>(&ref_value)) {
             static_assert(
                     std::is_same_v<decltype(const_cast<StoreT*>(&ref_value)), StoreT*>,
                     "Can not cast ref value to a pointer.\n"
             );
         }
-        OptionBase(): hold_value(false) {}
+        OptionBase(): value(nullptr) {}
 
-        bool is_some() const { return hold_value; }
-        bool is_none() const { return !hold_value; }
+        bool is_some() const { return value != nullptr; }
+        bool is_none() const { return !is_some(); }
 
         T unwrap() {
-            if (hold_value) {
+            if (value != nullptr) {
                 return *value;
             } else {
                 std::exit(-1);
@@ -69,7 +73,10 @@ namespace mstl {
         }
 
     protected:
-        bool    hold_value = false;
+        static constexpr bool
+        has_hold_value() {
+            return false;
+        }
         StoreT *value = nullptr;
     };
 
@@ -92,11 +99,15 @@ namespace mstl {
 
         OptionCopyable(const OptionCopyable<T>& other) {
             this->value = other.value;
-            this->hold_value = other.hold_value;
+            if constexpr (OptionCopyable<T>::has_hold_value()) {
+                this->hold_value = other.hold_value;
+            }
         }
         OptionCopyable<T>& operator=(const OptionCopyable<T>& other) {
             this->value = other.value;
-            this->hold_value = other.hold_value;
+            if constexpr (OptionCopyable<T>::has_hold_value()) {
+                this->hold_value = other.hold_value;
+            }
             return *this;
         }
     };
@@ -119,11 +130,15 @@ namespace mstl {
 
         OptionMovable(const OptionMovable<T>&& other) noexcept {
             this->value = std::move(other.value);
-            this->hold_value = other.hold_value;
+            if constexpr (OptionCopyable<T>::has_hold_value()) {
+                this->hold_value = other.hold_value;
+            }
         }
         OptionMovable<T>& operator=(OptionMovable<T>&& other) noexcept {
             this->value = std::move(other.value);
-            this->hold_value = other.hold_value;
+            if constexpr (OptionCopyable<T>::has_hold_value()) {
+                this->hold_value = other.hold_value;
+            }
             return *this;
         }
     };
