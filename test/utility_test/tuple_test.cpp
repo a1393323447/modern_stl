@@ -61,3 +61,8 @@ BOOST_AUTO_TEST_CASE(EQUAL_TEST) {
     Tuple<int&, int&, std::string> f(i, j, k);
     BOOST_CHECK(e == f);
 }
+
+BOOST_AUTO_TEST_CASE(DEFAULT_CONSTRUCT_TEST) {
+    auto a = make_tuple<std::string>();
+    BOOST_CHECK(get<0>(a).empty());
+}

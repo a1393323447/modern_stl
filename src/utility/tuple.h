@@ -336,6 +336,12 @@ namespace mstl::utility {
         return Tuple<T, Ts...>{v, vs...};
     }
 
+    template<std::default_initializable T, std::default_initializable ...Ts>
+    Tuple<T, Ts...>
+    make_tuple() {
+        return Tuple<T, Ts...>{T{}, Ts{}...};
+    }
+
     /**
      * 返回一个空元组的单例
      * */
