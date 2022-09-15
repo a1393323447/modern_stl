@@ -91,7 +91,7 @@ namespace mstl::iter {
     template<bool Likely>
     struct Filter<Likely> {
         template<Iterator Iter, typename F>
-        static constexpr FilterFuncWithGuessType<Iter, F, true>
+        static constexpr FilterFuncWithGuessType<Iter, F, Likely>
         get_combine_func() noexcept {
             return filter<Iter, F, Likely>;
         }
