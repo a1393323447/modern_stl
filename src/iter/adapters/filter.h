@@ -15,14 +15,14 @@ namespace mstl::iter {
     public:
         using Item = typename Iter::Item;
 
-        FilterIter(Iter it, P p): iter(it), predicate(p) { }
+        FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
 
-        Option<Item> next() {
+        Option<Item> next() noexcept {
             return find(this->iter, predicate);
         }
 
         FilterIter<Iter, P>
-        into_iter() { return *this; }
+        into_iter() noexcept { return *this; }
 
     private:
         Iter iter;
@@ -31,7 +31,7 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename P>
     FilterIter<Iter, P>
-    filter(Iter iter, P predicate) {
+    filter(Iter iter, P predicate) noexcept {
         return { iter, predicate };
     }
 
@@ -40,8 +40,8 @@ namespace mstl::iter {
 
     struct Filter {
         template<Iterator Iter, typename F>
-        static FilterFuncType<Iter, F>
-        get_combine_func() {
+        static constexpr FilterFuncType<Iter, F>
+        get_combine_func() noexcept {
             return filter<Iter, F>;
         }
     };

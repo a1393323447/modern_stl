@@ -31,7 +31,7 @@ namespace mstl::iter::combinator {
          *  1. 能够以 (Iter, Lambda) 为函数参数调用
          *  2. Combinator 的返回值也应该是一个迭代器
          */
-        requires std::is_invocable_v<decltype(C::template get_combine_func<Iter, Lambda>()), Iter, Lambda>; // 1
+        requires std::invocable<decltype(C::template get_combine_func<Iter, Lambda>()), Iter, Lambda>; // 1
         requires Iterator<
             std::invoke_result_t<
                 decltype(C::template get_combine_func<Iter, Lambda>()),
