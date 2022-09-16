@@ -51,3 +51,73 @@ int main() {
     return 0;
 }
 ```
+
+## Benchmark
+`mstl` 提供了基于迭代器的零成本抽象:
+
+### 使用迭代器
+```c++
+usize BM_with_iter(Array<std::string, 1000> arr) {
+    usize total_len = 0;
+    combine(arr.iter(),
+        Filter{}, [](const auto& str) {
+            usize cnt = 0;
+            for (auto c: str) {
+                if (c >= 'A' + 13) {
+                    cnt++;
+                }
+            }
+            return cnt >= 10;
+        },
+        Map{}, [](const auto& str) {
+            return str.size();
+        },
+        ForEach{}, [&](usize size) {
+            total_len += size;
+        }
+    );
+
+    return total_len;
+}
+```
+
+### 使用下标
+```c++
+usize BM_with_index(Array<std::string, 1000> arr) {
+    usize total_len = 0;
+
+    for(usize i = 0; i < arr.size(); i++) {
+        usize cnt = 0;
+        for (const auto& c: arr[i]) {
+            if (c == 'A' + 13) {
+                cnt++;
+            }
+        }
+
+        if (cnt >= 10) {
+            total_len += arr[i].size();
+        }
+    }
+
+    return total_len;
+}
+```
+
+### 测试结果
+```text
+Start To Gen Test Data
+Gen All Test Data
+2022-09-16T14:31:45-00:00
+Running F:\C++\modern-stl\cmake-build-release\test\try_benchmark.exe
+Run on (12 X 2611.19 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x6)
+  L1 Instruction 32 KiB (x6)
+  L2 Unified 256 KiB (x6)
+  L3 Unified 12288 KiB (x1)
+------------------------------------------------------------------
+Benchmark                        Time             CPU   Iterations
+------------------------------------------------------------------
+BM_with_iter/real_time      510421 ns       494026 ns         1360
+BM_with_index/real_time     506299 ns       515625 ns         1000
+```

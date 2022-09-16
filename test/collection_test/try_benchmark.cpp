@@ -18,16 +18,16 @@ std::vector<Array<std::string, 1000>> vec{};
 usize non_vec_1(Array<std::string, 1000> arr) {
     usize total_len = 0;
     combine(arr.iter(),
-        Filter{}, [](auto&& str) {
+        Filter{}, [](const auto& str) {
             usize cnt = 0;
             for (auto c: str) {
-                if (c == 'F') {
+                if (c >= 'A' + 13) {
                     cnt++;
                 }
             }
-            return cnt >= 1;
+            return cnt >= 10;
         },
-        Map{}, [](auto&& str) {
+        Map{}, [](const auto& str) {
             return str.size();
         },
         ForEach{}, [&](usize size) {
@@ -44,12 +44,12 @@ usize non_vec_2(Array<std::string, 1000> arr) {
     for(usize i = 0; i < arr.size(); i++) {
         usize cnt = 0;
         for (const auto& c: arr[i]) {
-            if (c == 'F') {
+            if (c == 'A' + 13) {
                 cnt++;
             }
         }
 
-        if (cnt >= 1) {
+        if (cnt >= 10) {
             total_len += arr[i].size();
         }
     }
@@ -65,7 +65,7 @@ void generate_test_data() {
 
     // 值最可能接近平均
     // 标准差影响生成的值距离平均数的分散
-    std::normal_distribution<> d{5,0 };
+    std::normal_distribution<> d{13,0 };
 
     for (usize i = 0; i < 10; i++) {
         Array<std::string, 1000> arr{};
