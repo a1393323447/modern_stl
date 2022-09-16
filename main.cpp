@@ -1,15 +1,57 @@
 #include <iostream>
-#include <utility/tuple.h>
+#include <string>
+#include <vector>
+#include <memory>
 
+struct A{
+    std::string x = "Hello";
+    A() {
+        std::cout << "Default" << std::endl;
+    }
+
+    A(const std::string& s) {
+        x = s;
+        std::cout << "Non-Default" << std::endl;
+    }
+
+    A(const A& r) {
+        x = r.x;
+        std::cout << "Copy" << std::endl;
+    }
+
+    A(A&& r)  noexcept {
+        x = std::move(r.x);
+        std::cout << "Move" << std::endl;
+    }
+
+    ~A() {
+        std::cout << "Deleted" << std::endl;
+    }
+
+    A& operator=(const A& r) {
+        x = r.x;
+        std::cout << "Copy =" << std::endl;
+        return *this;
+    }
+
+    A& operator=(A&& r)  noexcept {
+        x = std::move(r.x);
+        std::cout << "Move =" << std::endl;
+        return *this;
+    }
+};
 int main() {
-    auto a = mstl::utility::make_tuple();
-    auto b = mstl::utility::make_tuple(1, 2);
-    static_assert(a.size() == 0);
+    std::allocator<A> allocator;
 
-    int c, d;
-    auto x = mstl::utility::tie(c, d);
-    x = b;
+    auto arr = allocator.allocate(10);
+    std::construct_at(arr, "He");
+    std::cout << arr[0].x << std::endl;
+    std::destroy_at(arr);
+    allocator.deallocate(arr, 10);
 
-    std::cout << c << std::endl << d << std::endl;
+    int i = 10;
+    int& j = i;
+
+
     return 0;
 }

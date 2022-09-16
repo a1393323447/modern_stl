@@ -1,5 +1,5 @@
 add_executable(array_test collection_test/array_test.cpp)
-add_executable(array_benchmark collection_test/array_benchmark.cpp)
+#add_executable(array_benchmark collection_test/array_benchmark.cpp)
 add_executable(option_test option_test/option_test.cpp)
 
 
@@ -13,5 +13,12 @@ if (Boost_FOUND)
     add_test(
             NAME tuple_test
             COMMAND tuple_test
+    )
+
+    add_executable(vector_test collection_test/vector_test.cpp)
+    target_link_libraries(vector_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME vector_test
+            COMMAND vector_test
     )
 endif()

@@ -24,6 +24,11 @@ namespace mstl::basic {
 
     template<typename T>
     concept RValRefType = std::is_rvalue_reference_v<T>;
+
+    template<typename T>
+    concept Printable = requires (std::ostream& out, const T& val){
+        out << val;
+    };
 }
 
 #endif //__MODERN_STL_BASIC_CONCEPTS_H__
