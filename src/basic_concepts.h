@@ -9,12 +9,10 @@
 
 namespace mstl::basic {
     template<typename T>
-    concept Movable = std::is_move_constructible_v<T> &&
-                      std::is_move_assignable_v<T>;
+    concept Movable = std::movable<T>;
 
     template<typename T>
-    concept CopyAble = std::is_nothrow_copy_constructible_v<T> &&
-                       std::is_copy_assignable_v<T>;
+    concept CopyAble = std::copyable<T>;
 
     template<typename T>
     concept RefType = std::is_reference_v<T>;

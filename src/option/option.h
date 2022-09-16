@@ -7,144 +7,179 @@
 
 #include <cstdlib>
 #include <utility>
+#include <global.h>
 #include <concepts>
 #include <basic_concepts.h>
 
 namespace mstl {
-    template<typename T>
-    class OptionBase {
-    public:
-        OptionBase(T t): value(t), hold_value(true) {}
-        OptionBase(): hold_value(false) {}
+    namespace _private {
+        template<typename T>
+        class OptionBase {
+        public:
+            OptionBase(T t): value(t), hold_value(true) {}
+            OptionBase(): hold_value(false) {}
 
-        bool is_some() const { return hold_value; }
-        bool is_none() const { return !hold_value; }
+            bool is_some() const { return hold_value; }
+            bool is_none() const { return !hold_value; }
 
-        T unwrap() {
-            if (hold_value) {
+            T unwrap() {
+                if (hold_value) {
+                    return std::move(value);
+                } else {
+                    std::exit(-1);
+                }
+            }
+
+            T unwrap_uncheck() {
                 return std::move(value);
-            } else {
-                std::exit(-1);
             }
-        }
 
-        T unwrap_uncheck() {
-            return std::move(value);
-        }
+        protected:
+            static constexpr bool
+            has_hold_value() {
+                return true;
+            }
+            bool hold_value = false;
+            T value;
+        };
 
-    protected:
-        static constexpr bool
-        has_hold_value() {
-            return true;
-        }
-        bool hold_value = false;
-        T value;
-    };
+        template<>
+        class OptionBase<bool> {
+        public:
+            OptionBase(bool t): value(t | HOLD_MASK) {}
+            OptionBase() {}
 
-    /**
-     * Option 只能储存左值引用, 且将其转为指针储存
-     */
-    template<basic::LValRefType T>
-    class OptionBase<T> {
-    public:
-        using StoreT = std::remove_cvref_t<T>;
+            bool is_some() const { return value & HOLD_MASK; }
+            bool is_none() const { return !is_some(); }
 
-        OptionBase(T ref_value): value(const_cast<StoreT*>(&ref_value)) {
-            static_assert(
-                    std::is_same_v<decltype(const_cast<StoreT*>(&ref_value)), StoreT*>,
-                    "Can not cast ref value to a pointer.\n"
-            );
-        }
-        OptionBase(): value(nullptr) {}
+            bool unwrap() {
+                if (is_some()) {
+                    return value & VALUE_MASK;
+                } else {
+                    std::exit(-1);
+                }
+            }
 
-        bool is_some() const { return value != nullptr; }
-        bool is_none() const { return !is_some(); }
+            bool unwrap_uncheck() {
+                return value & VALUE_MASK;
+            }
 
-        T unwrap() {
-            if (value != nullptr) {
+        protected:
+            static constexpr u8 VALUE_MASK = 0b00000001;
+            static constexpr u8 HOLD_MASK  = 0b10000000;
+            static constexpr bool
+            has_hold_value() {
+                return false;
+            }
+            // 0       4      7
+            u8 value = 0; // [ value | hold ]
+        };
+
+        /**
+         * Option 只能储存左值引用, 且将其转为指针储存
+         */
+        template<basic::LValRefType T>
+        class OptionBase<T> {
+        public:
+            using StoreT = std::remove_cvref_t<T>;
+
+            OptionBase(T ref_value): value(const_cast<StoreT*>(&ref_value)) {
+                static_assert(
+                        std::is_same_v<decltype(const_cast<StoreT*>(&ref_value)), StoreT*>,
+                        "Can not cast ref value to a pointer.\n"
+                );
+            }
+            OptionBase(): value(nullptr) {}
+
+            bool is_some() const { return value != nullptr; }
+            bool is_none() const { return !is_some(); }
+
+            T unwrap() {
+                if (value != nullptr) {
+                    return *value;
+                } else {
+                    std::exit(-1);
+                }
+            }
+
+            T unwrap_uncheck() {
                 return *value;
-            } else {
-                std::exit(-1);
             }
-        }
 
-        T unwrap_uncheck() {
-            return *value;
-        }
+        protected:
+            static constexpr bool
+            has_hold_value() {
+                return false;
+            }
+            StoreT *value = nullptr;
+        };
 
-    protected:
-        static constexpr bool
-        has_hold_value() {
-            return false;
-        }
-        StoreT *value = nullptr;
-    };
+        template<basic::RValRefType T>
+        class OptionBase<T> {
+            static_assert(
+                    !basic::RValRefType<T>,
+                    "Option can not store a rvalue reference.\n"
+            );
+        };
 
-    template<basic::RValRefType T>
-    class OptionBase<T> {
-        static_assert(
-                !basic::RValRefType<T>,
-                "Option can not store a rvalue reference.\n"
-        );
-    };
+        template<typename T>
+        class OptionMovable: public OptionBase<T> {};
+
+        template<basic::Movable T>
+        class OptionMovable<T>: public OptionBase<T> {
+        public:
+            OptionMovable(T t): OptionBase<T>(t) {}
+            OptionMovable(): OptionBase<T>() {}
+
+            OptionMovable(const OptionMovable<T>&& other) noexcept {
+                this->value = std::move(other.value);
+                if constexpr (OptionBase<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+            }
+            OptionMovable<T>& operator=(OptionMovable<T>&& other) noexcept {
+                this->value = std::move(other.value);
+                if constexpr (OptionBase<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+                return *this;
+            }
+        };
+
+        template<typename T>
+        class OptionCopyable: public OptionMovable<T> {
+        public:
+            static OptionCopyable<T> some(T t) { return { t }; }
+            static OptionCopyable<T> none() { return { }; }
+        };
+
+        template<basic::CopyAble T>
+        class OptionCopyable<T>: public OptionMovable<T> {
+        public:
+            static OptionCopyable<T> some(T t) { return { t }; }
+            static OptionCopyable<T> none() { return { }; }
+
+            OptionCopyable(T t): OptionMovable<T>(t) {}
+            OptionCopyable(): OptionMovable<T>() {}
+
+            OptionCopyable(const OptionCopyable<T>& other) {
+                this->value = other.value;
+                if constexpr (OptionCopyable<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+            }
+            OptionCopyable<T>& operator=(const OptionCopyable<T>& other) {
+                this->value = other.value;
+                if constexpr (OptionCopyable<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+                return *this;
+            }
+        };
+    }
 
     template<typename T>
-    class OptionCopyable: public OptionBase<T> {};
-
-    template<basic::CopyAble T>
-    class OptionCopyable<T>: public OptionBase<T> {
-    public:
-        OptionCopyable(T t): OptionBase<T>(t) {}
-        OptionCopyable(): OptionBase<T>() {}
-
-        OptionCopyable(const OptionCopyable<T>& other) {
-            this->value = other.value;
-            if constexpr (OptionCopyable<T>::has_hold_value()) {
-                this->hold_value = other.hold_value;
-            }
-        }
-        OptionCopyable<T>& operator=(const OptionCopyable<T>& other) {
-            this->value = other.value;
-            if constexpr (OptionCopyable<T>::has_hold_value()) {
-                this->hold_value = other.hold_value;
-            }
-            return *this;
-        }
-    };
-
-    template<typename T>
-    class OptionMovable: public OptionCopyable<T> {
-    public:
-        static OptionMovable<T> some(T t) { return { t }; }
-        static OptionMovable<T> none() { return { }; }
-    };
-
-    template<basic::Movable T>
-    class OptionMovable<T>: public OptionCopyable<T> {
-    public:
-        static OptionMovable<T> some(T t) { return { t }; }
-        static OptionMovable<T> none() { return { }; }
-
-        OptionMovable(T t): OptionCopyable<T>(t) {}
-        OptionMovable(): OptionCopyable<T>() {}
-
-        OptionMovable(const OptionMovable<T>&& other) noexcept {
-            this->value = std::move(other.value);
-            if constexpr (OptionCopyable<T>::has_hold_value()) {
-                this->hold_value = other.hold_value;
-            }
-        }
-        OptionMovable<T>& operator=(OptionMovable<T>&& other) noexcept {
-            this->value = std::move(other.value);
-            if constexpr (OptionCopyable<T>::has_hold_value()) {
-                this->hold_value = other.hold_value;
-            }
-            return *this;
-        }
-    };
-
-    template<typename T>
-    using Option = OptionMovable<T>;
+    using Option = _private::OptionCopyable<T>;
 
     static_assert(std::is_same_v<decltype(Option<int&>{}.unwrap()), int&>);
 }

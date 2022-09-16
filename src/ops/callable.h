@@ -15,7 +15,7 @@ namespace mstl::ops {
     };
 
     template<typename P, typename... Args>
-    concept Predicate = ops::Callable<P, bool, Args...>;
+    concept Predicate = std::predicate<P, Args...>;
 }
 
 #endif //__MODERN_STL_FUNCTION_H__

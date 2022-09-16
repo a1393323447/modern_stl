@@ -53,7 +53,7 @@ namespace mstl::iter {
     using MapFuncType = MapIter<Iter, F, typename Iter::Item>(*)(Iter, F);
     struct Map {
         template<Iterator Iter, typename F>
-        static constexpr MapFuncType<Iter, F>
+        static consteval MapFuncType<Iter, F>
         get_combine_func() noexcept {
             return map<Iter, F>;
         }

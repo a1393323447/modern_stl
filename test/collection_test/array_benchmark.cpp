@@ -124,7 +124,7 @@ void test_vectorize() {
 usize non_vec_1(Array<std::string, 1000> arr) {
     usize total_len = 0;
     combine(arr.iter(),
-        Filter{}, [](auto&& str) {
+        Filter<Likely>{}, [](auto&& str) {
             usize cnt = 0;
             for (auto c: str) {
                 if (c == 'K') {
@@ -211,7 +211,7 @@ void test_non_vectorize() {
     std::normal_distribution<> d{5,5 };
 
     std::vector<Array<std::string, 1000>> vec{};
-    for (usize i = 0; i < 1000; i++) {
+    for (usize i = 0; i < 10000; i++) {
         Array<std::string, 1000> arr{};
         for (usize j = 0; j < 1000; j++) {
             std::string str{};
