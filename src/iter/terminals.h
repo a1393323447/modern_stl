@@ -5,6 +5,7 @@
 #ifndef __MODERN_STL_TERMINAL_H__
 #define __MODERN_STL_TERMINAL_H__
 
+#include <ops/callable.h>
 #include <iter/terminal_concepts.h>
 
 namespace mstl::iter {

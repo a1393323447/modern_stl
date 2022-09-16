@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <memory>
+#include <compare>
 
 struct A{
     std::string x = "Hello";
@@ -41,16 +41,7 @@ struct A{
     }
 };
 int main() {
-    std::allocator<A> allocator;
 
-    auto arr = allocator.allocate(10);
-    std::construct_at(arr, "He");
-    std::cout << arr[0].x << std::endl;
-    std::destroy_at(arr);
-    allocator.deallocate(arr, 10);
-
-    int i = 10;
-    int& j = i;
 
 
     return 0;

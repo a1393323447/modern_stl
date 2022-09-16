@@ -6,6 +6,7 @@
 #define __MODERN_STL_BASIC_CONCEPTS_H__
 
 #include <concepts>
+#include <ostream>
 
 namespace mstl::basic {
     template<typename T>
