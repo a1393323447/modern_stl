@@ -82,7 +82,7 @@ namespace mstl::iter {
     template<>
     struct Filter<> {
         template<Iterator Iter, typename F>
-        static constexpr FilterFuncType<Iter, F>
+        static consteval FilterFuncType<Iter, F>
         get_combine_func() noexcept {
             return filter<Iter, F>;
         }
@@ -91,7 +91,7 @@ namespace mstl::iter {
     template<bool Likely>
     struct Filter<Likely> {
         template<Iterator Iter, typename F>
-        static constexpr FilterFuncWithGuessType<Iter, F, Likely>
+        static consteval FilterFuncWithGuessType<Iter, F, Likely>
         get_combine_func() noexcept {
             return filter<Iter, F, Likely>;
         }

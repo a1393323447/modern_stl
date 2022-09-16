@@ -23,7 +23,7 @@ namespace mstl::iter {
     template<typename Container>
     struct CollectAs {
         template<typename Iter>
-        static constexpr CollectFunc<Container, Iter>
+        static consteval CollectFunc<Container, Iter>
         get_terminal_func() noexcept {
             return collect<Container, Iter>;
         }
@@ -74,8 +74,8 @@ namespace mstl::iter {
     using FindFuncType = Option<typename Iter::Item>(*)(Iter&, P);
     struct FindFirst {
         template<Iterator Iter, typename P>
-        static constexpr FindFuncType<Iter, P>
-        get_terminal_func() {
+        static consteval FindFuncType<Iter, P>
+        get_terminal_func() noexcept {
             return find<Iter, P>;
         }
     };
@@ -95,8 +95,8 @@ namespace mstl::iter {
     using ForEachFuncType = void(*)(Iter, F);
     struct ForEach {
         template<Iterator Iter, typename F>
-        static constexpr ForEachFuncType<Iter, F>
-        get_terminal_func() {
+        static consteval ForEachFuncType<Iter, F>
+        get_terminal_func() noexcept {
             return for_each<Iter, F>;
         }
     };
