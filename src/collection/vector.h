@@ -312,7 +312,36 @@ namespace mstl::collection {
 
 //        todo template<typename ...Args> void emplace(const_iter, ...);
 
-//        todo erase(iter)
+        constexpr Iter erase(ConstIter pos) {
+            auto p = pos.pos();
+            if (p == len - 1) {
+                pop_back();
+                return end();
+            } else if (p >= 0 && p < len - 1) {
+                std::move(beginPtr + p + 1, beginPtr + len, beginPtr + p);
+                pop_back();
+                return {beginPtr, beginPtr + len, beginPtr + p};
+            } else {
+                return {nullptr, nullptr};
+            }
+        }
+
+        constexpr Iter erase(ConstIter first, ConstIter last) {
+            if (first < begin() || last > end()) {  // UB
+                return VectorIter<T>{nullptr, nullptr};
+            } else {
+                auto lo = first.pos(), hi = last.pos();
+                std::move(beginPtr + hi, beginPtr + len, beginPtr + lo);
+                auto d = hi - lo;
+
+                while (d > 0) {
+                    pop_back();
+                    d--;
+                }
+
+                return begin() + lo;
+            }
+        }
 
         constexpr void push_back(const T &v) {
             if (len >= cap) {
@@ -493,8 +522,10 @@ namespace mstl::collection {
 
         VectorIter(T *beg, T *end, T *cur) : beg(beg), cur(cur), end(end) {}
 
+        VectorIter(const VectorIter& r) : beg(r.beg), cur(r.cur), end(r.end) {}
+
         operator VectorIter<const T> () {
-            return {*this};
+            return {beg, end, cur};
         }
 
         Option<Item> next() {
@@ -535,6 +566,28 @@ namespace mstl::collection {
             return tmp;
         }
 
+        VectorIter operator+(usize i) {
+            auto tmp = *this;
+            tmp.cur += i;
+            return tmp;
+        }
+
+        VectorIter operator-(usize i) {
+            auto tmp = *this;
+            tmp.cur -= i;
+            return tmp;
+        }
+
+        VectorIter& operator+=(usize i) {
+            cur += i;
+            return *this;
+        }
+
+        VectorIter& operator-=(usize i) {
+            cur -= i;
+            return *this;
+        }
+
         bool operator==(const VectorIter &rhs) const {
             return beg == rhs.beg &&
                    cur == rhs.cur &&
@@ -545,9 +598,6 @@ namespace mstl::collection {
             return { cur <=> rhs.cur };
         }
 
-        std::weak_ordering operator<=>(const VectorIter<const T&> rhs) const {
-            return { cur <=> rhs.cur };
-        }
         usize pos() const {
             return cur - beg;
         }

@@ -14,6 +14,7 @@
 
 using namespace mstl;
 using namespace collection;
+using mstl::utility::to_string;
 
 static_assert(iter::Iterator<collection::VectorIter<int>>);
 static_assert(iter::IntoIterator<collection::Vector<int>>);
@@ -333,3 +334,17 @@ BOOST_AUTO_TEST_CASE(RESIZE_TEST) {
 
 }
 
+BOOST_AUTO_TEST_CASE(ERASE_TEST) {
+    auto a = INTVEC;
+    auto b = a;
+
+    auto loa = a.begin() + 1;
+    auto r1 = a.erase(loa);
+    BOOST_TEST_CHECK(to_string(a) == "Vec [0, 2, 3]");
+    BOOST_TEST_CHECK(*r1 == 2);
+
+    VectorIter<int> lob = b.begin() + 1, hib = b.begin() + 3;
+    auto r2 = b.erase(lob, hib);
+    BOOST_TEST_CHECK(to_string(b) == "Vec [0, 3]");
+    BOOST_TEST_CHECK(*r2 == 3);
+}

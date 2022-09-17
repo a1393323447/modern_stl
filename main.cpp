@@ -40,8 +40,8 @@ struct A{
         return *this;
     }
 };
-int main() {
 
+int main() {
 
 
     return 0;
