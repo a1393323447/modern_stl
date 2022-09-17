@@ -9,11 +9,13 @@
 #include <string>
 #include <sstream>
 
-template<mstl::basic::Printable P>
-std::string to_string(const P& printable) {
-    std::ostringstream tmp;
-    tmp << printable;
-    return tmp.str();
+namespace mstl::utility {
+    template<mstl::basic::Printable P>
+    std::string to_string(const P& printable) {
+        std::ostringstream tmp;
+        tmp << printable;
+        return tmp.str();
+    }
 }
 
 #endif //MODERN_STL_PRINT_H
