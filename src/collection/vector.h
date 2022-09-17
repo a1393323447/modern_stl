@@ -22,12 +22,33 @@ namespace mstl::collection {
     template<typename T>
     class VectorIter;
 
+    template<typename T, Allocator A, bool Reversed>
+    class VectorIntoIter;
+
+    template<typename T, Allocator A>
+    class Vector;
+
+    namespace _private {
+        template<typename T, Allocator A>
+        VectorIntoIter<T, A, false> vec_into_iter(Vector<T, A>&& v) {
+            return VectorIntoIter<T, A, false>{std::forward<Vector<T, A>&&>(v)};
+        }
+
+        template<typename T, Allocator A>
+        VectorIntoIter<T, A, true> vec_into_iter_reversed(Vector<T, A>&& v) {
+            return VectorIntoIter<T, A, true>{std::forward<Vector<T, A>&&>(v)};
+        }
+    }
+
     template<typename T, Allocator A = std::allocator<T>>
     class Vector {
     public:
         using Item = T;
-        using IntoIter = VectorIter<T>;
+        using IntoIter = VectorIntoIter<T, A, false>;
+        using IntoIterReversed = VectorIntoIter<T, A, true>;
         using AllocatorType = A;
+        using Iter = VectorIter<T>;
+        using ConstIter = VectorIter<const T>;
 
         constexpr Vector(std::initializer_list<T> list, const A &allocator = A{}) : len{0}, cap{0}, alloc(allocator) {
             copy_impl(list);
@@ -209,15 +230,35 @@ namespace mstl::collection {
 
     public:
         IntoIter into_iter() {
-            return IntoIter{beginPtr, endPtr};
+            return _private::vec_into_iter(std::move(*this));
         }
 
-        IntoIter begin() {
-            return IntoIter{beginPtr, endPtr, beginPtr};
+        IntoIterReversed into_iter_reversed() {
+            return _private::vec_into_iter_reversed(std::move(*this));
         }
 
-        IntoIter end() {
-            return IntoIter{beginPtr, endPtr, endPtr};
+        Iter iter() {
+            return Iter{beginPtr, beginPtr + len};
+        }
+
+        ConstIter citer() const {
+            return ConstIter{beginPtr, beginPtr + len};
+        }
+
+        Iter begin() {
+            return Iter{beginPtr, beginPtr + len, beginPtr};
+        }
+
+        Iter end() {
+            return Iter{beginPtr, beginPtr + len, beginPtr + len};
+        }
+
+        ConstIter begin() const {
+            return ConstIter{beginPtr, beginPtr + len, beginPtr};
+        }
+
+        ConstIter end() const {
+            return ConstIter{beginPtr, beginPtr + len, beginPtr + len};
         }
 
         template<iter::Iterator Iter>
@@ -271,7 +312,6 @@ namespace mstl::collection {
             }
 
             construct_at(len++, v);
-            endPtr++;
         }
 
         constexpr void push_back(T &&v) {
@@ -280,7 +320,6 @@ namespace mstl::collection {
             }
 
             construct_at(len++, std::forward<T &&>(v));
-            endPtr++;
         }
 
         template<typename ... Args>
@@ -290,7 +329,6 @@ namespace mstl::collection {
             }
 
             construct_at(len++, std::forward<Args>(args)...);
-            endPtr++;
         }
 
         // todo resize()
@@ -298,19 +336,16 @@ namespace mstl::collection {
         constexpr void pop_back() noexcept {
             destroy_at(len - 1);
             len--;
-            endPtr--;
         }
 
         constexpr void swap(Vector &o) noexcept {
             std::swap(len, o.len);
             std::swap(cap, o.cap);
-            std::swap(alloc, o.alloc);
 
             std::swap(beginPtr, o.beginPtr);
-            std::swap(endPtr, o.endPtr);
 
             if constexpr (std::allocator_traits<AllocatorType>::propagate_on_container_swap::value) {  // ?
-                std::swap(capEndPtr, o.capEndPtr);
+                std::swap(alloc, o.alloc);
             }
         }
 
@@ -319,8 +354,6 @@ namespace mstl::collection {
         usize cap{};
 
         T *beginPtr = nullptr;
-        T *endPtr = nullptr;
-        T *capEndPtr = nullptr;
 
         A alloc;
 
@@ -329,7 +362,7 @@ namespace mstl::collection {
         constexpr void deallocate() noexcept {
             alloc.deallocate(beginPtr, cap);
 
-            beginPtr = endPtr = capEndPtr = nullptr;
+            beginPtr = nullptr;
             len = cap = 0;
         }
 
@@ -339,8 +372,6 @@ namespace mstl::collection {
             cap = size;
 
             beginPtr = alloc.allocate(size);
-            endPtr = beginPtr;
-            capEndPtr = beginPtr + cap;
         }
 
         constexpr void allocate_reserve(usize size) noexcept {
@@ -354,8 +385,6 @@ namespace mstl::collection {
             len = oLen;
             cap = size;
             beginPtr = nArr;
-            endPtr = beginPtr + len;
-            capEndPtr = beginPtr + cap;
         }
 
         template<typename ...Args>
@@ -375,10 +404,6 @@ namespace mstl::collection {
 
             beginPtr = r.beginPtr;
             r.beginPtr = nullptr;
-            endPtr = r.endPtr;
-            r.endPtr = nullptr;
-            capEndPtr = r.capEndPtr;
-            r.capEndPtr = nullptr;
             alloc = std::move(r.alloc);
         }
 
@@ -416,19 +441,19 @@ namespace mstl::collection {
 
     template<typename T>
     class VectorIter {
-        // TODO 移动入迭代器
     public:
-        using Item = T;
+        using Item = T&;
+        using value_type = T;
 
-        VectorIter(Item *beg, Item *end) : beg(beg), cur(beg), end(end) {}
+        VectorIter(T *beg, T *end) : beg(beg), cur(beg), end(end) {}
 
-        VectorIter(Item *beg, Item *end, Item *cur) : beg(beg), cur(cur), end(end) {}
+        VectorIter(T *beg, T *end, T *cur) : beg(beg), cur(cur), end(end) {}
 
-        Option<T> next() {
+        Option<Item> next() {
             if (cur != end) {
-                return Option<T>::some(*cur++);
+                return Option<Item>::some(*cur++);
             } else {
-                return Option<T>::none();
+                return Option<Item>::none();
             }
         }
 
@@ -458,9 +483,73 @@ namespace mstl::collection {
         }
 
     private:
-        Item *const beg = nullptr;
-        Item *cur = nullptr;
-        Item *const end = nullptr;
+        T *const beg = nullptr;
+        T *cur = nullptr;
+        T *const end = nullptr;
+    };
+
+    template<typename T, Allocator A>
+    class VectorIntoIter<T, A, false> {
+    public:
+        using Item = T;
+        using VecType = Vector<Item, A>;
+        VectorIntoIter(VecType && v) : vec{std::forward<VecType&&>(v)}, len(vec.size()){}
+        VectorIntoIter(const VectorIntoIter& v) = delete;
+        VectorIntoIter(VectorIntoIter&& v)  noexcept {
+            vec = std::move(v.vec);
+            pos = v.pos;
+            v.pos = 0;
+            len = vec.size();
+        }
+
+    public:
+        Option<Item> next() {
+            if (pos < len) {
+                auto n = Option<Item>::some(Item{std::move(vec[pos])});
+                pos++;
+                if (pos == len) {
+                    vec.clear();
+                }
+                return n;
+            } else {
+                return Option<Item>::none();
+            }
+        }
+
+    private:
+        Vector<Item, A> vec;
+        usize pos = 0;
+        usize len;
+    };
+
+    template<typename T, Allocator A>
+    class VectorIntoIter<T, A, true> {
+    public:
+        using Item = T;
+        using VecType = Vector<Item, A>;
+
+        explicit VectorIntoIter(VecType && v) : vec{std::forward<VecType&&>(v)}{}
+        VectorIntoIter(const VectorIntoIter& v) = delete;
+        explicit VectorIntoIter(VectorIntoIter&& v)  noexcept {
+            vec = std::move(v.vec);
+            v.pos = 0;
+        }
+
+    public:
+        Option<Item> next() {
+            if (!vec.empty()) {
+                auto n = Option<Item>::some(Item{
+                    std::move(vec.back_unchecked())
+                });
+                vec.pop_back();
+                return n;
+            } else {
+                return Option<Item>::none();
+            }
+        }
+
+    private:
+        Vector<Item, A> vec;
     };
 
     template<typename T, typename U>

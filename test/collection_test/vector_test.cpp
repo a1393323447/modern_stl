@@ -6,6 +6,7 @@
 #include <collection/vector.h>
 #include <collection/arrary.h>
 #include <iter/iterator.h>
+#include <utility/utility.h>
 
 #define BOOST_TEST_MODULE Vector Test
 
@@ -248,3 +249,71 @@ BOOST_AUTO_TEST_CASE(COMPARE_TEST) {
     a[0] = 10;
     BOOST_CHECK(a > b);
 }
+
+BOOST_AUTO_TEST_CASE(INTO_ITER_TEST) {
+    auto a = INTVEC;
+    auto b = INTVEC;
+
+    auto c = a.into_iter();
+    auto d = b.into_iter_reversed();
+
+    BOOST_REQUIRE(a.empty());  // a and b have been moved
+    BOOST_REQUIRE(b.empty());  // so that they are empty as defined
+
+    auto e = iter::collect<Vector<int>>(std::move(c));
+    auto f = INTVEC;
+    BOOST_CHECK(e == f);
+
+    BOOST_REQUIRE(d.next().unwrap() == 3);
+    BOOST_REQUIRE(d.next().unwrap() == 2);
+    BOOST_REQUIRE(d.next().unwrap() == 1);
+    BOOST_REQUIRE(d.next().unwrap() == 0);
+    BOOST_REQUIRE(d.next().is_none());
+}
+
+BOOST_AUTO_TEST_CASE(INTO_ITER_TEST_STR) {
+    auto a = STRVEC;
+    auto b = STRVEC;
+
+    auto c = a.into_iter();
+    auto d = b.into_iter_reversed();
+
+    BOOST_REQUIRE(a.empty());  // a and b have been moved
+    BOOST_REQUIRE(b.empty());  // so that they are empty as defined
+
+    auto e = iter::collect<Vector<std::string>>(std::move(c));
+    auto f = STRVEC;
+    BOOST_CHECK(e == f);
+
+    BOOST_REQUIRE(d.next().unwrap() == "World");
+    BOOST_REQUIRE(d.next().unwrap() == "Hello");
+    BOOST_REQUIRE(d.next().unwrap() == "bar");
+    BOOST_REQUIRE(d.next().unwrap() == "foo");
+    BOOST_REQUIRE(d.next().is_none());
+}
+
+BOOST_AUTO_TEST_CASE(ITERATION_TEST) {
+    auto a = INTVEC;
+
+    auto x = iter::collect<Vector<int>>(a.iter());
+
+    BOOST_CHECK(a[2] == 2);
+    BOOST_CHECK(x[2] == 2);
+
+    std::cout << "ITERATION_TEST [";  // Test for range-based for statement
+    for (const auto &i: x) {
+        std::cout << i << ", ";
+    }
+    std::cout << "]" << std::endl;
+
+    auto b = iter::combine(
+            a.iter(),
+            iter::Map{}, [](int a) {
+                return a * 2;
+            },
+            iter::CollectAs<Vector<int>>{}
+    );
+
+    BOOST_TEST_CHECK(to_string(b) == "Vec [0, 2, 4, 6]");
+}
+
