@@ -7,6 +7,7 @@
 
 #include <type_traits>
 #include <concepts>
+#include <utility>
 #include "global.h"
 #include "type_traits.h"
 
@@ -109,7 +110,7 @@ namespace mstl::utility {
                 using pT = std::add_pointer_t<nT>;                  // pT = T*, Arg is considered as a pointer to T now.s
                 auto start = reinterpret_cast<pT *>(inner +
                                                     pos);           // start is T**, which means that a T* will be stored into 'inner'.
-                new(start) pT{&v};                                // construct &v at start(T**)
+                new(start) pT{std::addressof(v)};                                // construct &v at start(T**)
                 newPos += sizeof(usize);
             } else {  // non-reference
                 auto start = reinterpret_cast<Arg *>(inner + pos);
@@ -125,7 +126,7 @@ namespace mstl::utility {
                 using nT = std::remove_reference_t<Arg>;
                 using pT = std::add_pointer_t<nT>;
                 auto start = reinterpret_cast<pT *>(inner + pos);
-                new(start) pT{&v};
+                new(start) pT{std::addressof(v)};
             } else {  // non-reference
                 auto start = reinterpret_cast<Arg *>(inner + pos);
                 new(start) Arg{v};
