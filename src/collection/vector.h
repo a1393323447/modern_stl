@@ -493,6 +493,10 @@ namespace mstl::collection {
 
         VectorIter(T *beg, T *end, T *cur) : beg(beg), cur(cur), end(end) {}
 
+        operator VectorIter<const T> () {
+            return {*this};
+        }
+
         Option<Item> next() {
             if (cur != end) {
                 return Option<Item>::some(*cur++);
@@ -520,12 +524,30 @@ namespace mstl::collection {
             return tmp;
         }
 
+        VectorIter &operator--() {
+            cur--;
+            return *this;
+        }
+
+        VectorIter operator--(int) {
+            auto tmp = *this;
+            cur--;
+            return tmp;
+        }
+
         bool operator==(const VectorIter &rhs) const {
             return beg == rhs.beg &&
                    cur == rhs.cur &&
                    end == rhs.end;
         }
 
+        std::weak_ordering operator<=>(const VectorIter& rhs) const {
+            return { cur <=> rhs.cur };
+        }
+
+        std::weak_ordering operator<=>(const VectorIter<const T&> rhs) const {
+            return { cur <=> rhs.cur };
+        }
         usize pos() const {
             return cur - beg;
         }
