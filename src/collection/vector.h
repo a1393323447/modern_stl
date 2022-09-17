@@ -253,12 +253,20 @@ namespace mstl::collection {
             return Iter{beginPtr, beginPtr + len, beginPtr + len};
         }
 
-        ConstIter begin() const {
+        ConstIter cbegin() const {
             return ConstIter{beginPtr, beginPtr + len, beginPtr};
         }
 
-        ConstIter end() const {
+        ConstIter cend() const {
             return ConstIter{beginPtr, beginPtr + len, beginPtr + len};
+        }
+
+        ConstIter begin() const {
+            return cbegin();
+        }
+
+        ConstIter end() const {
+            return cend();
         }
 
         template<iter::Iterator Iter>
@@ -331,7 +339,43 @@ namespace mstl::collection {
             construct_at(len++, std::forward<Args>(args)...);
         }
 
-        // todo resize()
+         void resize(usize count) {
+            if (count < len) {
+                usize d = len - count;
+                while (d > 0) {
+                    pop_back();
+                    d--;
+                }
+            } else if (count > len) {
+                if (count > cap) {
+                    reserve(count);
+                }
+                usize d = count - len;
+                while (d > 0) {
+                    push_back(T{});
+                    d--;
+                }
+            }
+        }
+
+        constexpr void resize(usize count, const T& r) {
+            if (count < len) {
+                usize d = len - count;
+                while (d > 0) {
+                    pop_back();
+                    d--;
+                }
+            } else if (count > len) {
+                if (count > cap) {
+                    reserve(count);
+                }
+                usize d = count - len;
+                while (d > 0) {
+                    push_back(r);
+                    d--;
+                }
+            }
+        }
 
         constexpr void pop_back() noexcept {
             destroy_at(len - 1);
@@ -482,6 +526,9 @@ namespace mstl::collection {
                    end == rhs.end;
         }
 
+        usize pos() const {
+            return cur - beg;
+        }
     private:
         T *const beg = nullptr;
         T *cur = nullptr;

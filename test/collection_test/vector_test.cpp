@@ -317,3 +317,19 @@ BOOST_AUTO_TEST_CASE(ITERATION_TEST) {
     BOOST_TEST_CHECK(to_string(b) == "Vec [0, 2, 4, 6]");
 }
 
+BOOST_AUTO_TEST_CASE(RESIZE_TEST) {
+    auto a = INTVEC;
+    a.resize(6);
+    BOOST_TEST_REQUIRE(a.size() == 6);
+    BOOST_TEST_CHECK(to_string(a) == "Vec [0, 1, 2, 3, 0, 0]");
+
+    a.resize(3);
+    BOOST_TEST_REQUIRE(a.size() == 3);
+    BOOST_TEST_CHECK(to_string(a) == "Vec [0, 1, 2]");
+
+    a.resize(5, 10);
+    BOOST_TEST_REQUIRE(a.size() == 5);
+    BOOST_TEST_CHECK(to_string(a) == "Vec [0, 1, 2, 10, 10]");
+
+}
+
