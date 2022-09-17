@@ -90,7 +90,7 @@ namespace mstl::iter {
          * 接受一个迭代器 Iter iter 返回构建得到的 FromIter
          */
         requires requires(Iter iter) {
-            { FromIter::from_iter(iter) } -> std::same_as<FromIter>;
+            { FromIter::from_iter(std::forward<Iter>(iter)) } -> std::same_as<FromIter>;
         };
     };
 }

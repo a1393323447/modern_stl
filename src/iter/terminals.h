@@ -12,7 +12,7 @@ namespace mstl::iter {
     template<typename FromIter, typename Iter>
     requires FromIterator<FromIter, Iter>
     FromIter collect(Iter iter) noexcept {
-        return FromIter::from_iter(iter);
+        return FromIter::from_iter(std::forward<Iter>(iter));
     }
 
     /**
