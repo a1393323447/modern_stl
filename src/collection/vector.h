@@ -310,7 +310,24 @@ namespace mstl::collection {
 
 //        todo constexpr iter insert(iter pos, const T& value);
 
-//        todo template<typename ...Args> void emplace(const_iter, ...);
+        template<typename ...Args>
+        void emplace(ConstIter pos, Args...vs) {
+            if (len == cap) {
+                extend_space();
+            }
+
+            auto hi = len;
+            auto lo = pos.pos();
+
+            while (hi != lo) {  // Move every element to the next position
+                construct_at(hi, std::move(beginPtr[hi - 1]));
+                hi--;
+                destroy_at(hi);
+            }
+
+            construct_at(lo, std::forward<Args>(vs)...);
+            len++;
+        }
 
         constexpr Iter erase(ConstIter pos) {
             auto p = pos.pos();

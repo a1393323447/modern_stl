@@ -348,3 +348,19 @@ BOOST_AUTO_TEST_CASE(ERASE_TEST) {
     BOOST_TEST_CHECK(to_string(b) == "Vec [0, 3]");
     BOOST_TEST_CHECK(*r2 == 3);
 }
+
+BOOST_AUTO_TEST_CASE(EMPLACE_TEST) {
+    auto a = INTVEC;
+    auto lo = a.begin() + 1;
+
+    a.emplace(lo, 10);
+    BOOST_TEST_CHECK(to_string(a) == "Vec [0, 10, 1, 2, 3]");
+}
+
+BOOST_AUTO_TEST_CASE(EMPLACE_TEST_STR) {
+    auto a = STRVEC;
+    auto lo = a.begin() + 1;
+
+    a.emplace(lo, "H");
+    BOOST_TEST_CHECK(to_string(a) == "Vec [foo, H, bar, Hello, World]");
+}
