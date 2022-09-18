@@ -6,6 +6,7 @@
 - `iter`: 定义了迭代器相关的 `concept` 以及一些用于操作迭代器的函数
 - `collection`: `mstl` 的容器库, 现有:
     - `Array<T, N>`: 固定大小的数组
+    -  `Vector<T, A>`: 可变长的随机访问容器
 - `utility`: 通用库, 现有:
   - `Tuple`: 可包含任意数量异构类型的容器
 - `Option<T>`: 用于表示有或无的类型
