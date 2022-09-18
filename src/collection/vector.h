@@ -318,7 +318,6 @@ namespace mstl::collection {
             deallocate();
         }
 
-//        todo constexpr iter insert(iter pos, const T& value);
 
         template<typename ...Args>
         void emplace(ConstIter pos, Args...vs) {
@@ -780,7 +779,7 @@ namespace mstl::collection {
         if (lhs.size() != rhs.size()) {
             return false;
         } else {
-            for (int i = 0; i < lhs.size(); i++) {
+            for (usize i = 0; i < lhs.size(); i++) {
                 if (lhs[i] != rhs[i]) {
                     return false;
                 }
@@ -805,7 +804,7 @@ namespace mstl::collection {
     template<typename T, typename U>
     auto operator<=>(const Vector<T>& lhs, const Vector<U>& rhs)
     requires requires (T t, U u, usize len){
-        std::three_way_comparable_with<T, U, std::partial_ordering>;
+        requires std::three_way_comparable_with<T, U, std::partial_ordering>;
         { t <=> u } -> std::constructible_from<decltype(len <=> len)>;
     } {
         auto lenL = lhs.size();
