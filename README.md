@@ -107,9 +107,9 @@ usize BM_with_index(Array<std::string, 1000> arr) {
 ```text
 Start To Gen Test Data
 Gen All Test Data
-2022-09-16T14:31:45-00:00
+2022-09-18T08:26:47-00:00
 Running F:\C++\modern-stl\cmake-build-release\test\try_benchmark.exe
-Run on (12 X 2611.19 MHz CPU s)
+Run on (12 X 2600.14 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x6)
   L1 Instruction 32 KiB (x6)
@@ -118,6 +118,6 @@ CPU Caches:
 ------------------------------------------------------------------
 Benchmark                        Time             CPU   Iterations
 ------------------------------------------------------------------
-BM_with_iter/real_time      510421 ns       494026 ns         1360
-BM_with_index/real_time     506299 ns       515625 ns         1000
+BM_with_iter/real_time      116540 ns       115665 ns         6079
+BM_with_index/real_time     113037 ns       115203 ns         6239
 ```
