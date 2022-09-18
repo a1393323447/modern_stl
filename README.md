@@ -57,7 +57,7 @@ int main() {
 
 ### 使用迭代器
 ```c++
-usize BM_with_iter(Array<std::string, 1000> arr) {
+usize BM_with_iter(Array<std::string, 1000>& arr) {
     usize total_len = 0;
     combine(arr.iter(),
         Filter{}, [](const auto& str) {
@@ -83,7 +83,7 @@ usize BM_with_iter(Array<std::string, 1000> arr) {
 
 ### 使用下标
 ```c++
-usize BM_with_index(Array<std::string, 1000> arr) {
+usize BM_with_index(Array<std::string, 1000>& arr) {
     usize total_len = 0;
 
     for(usize i = 0; i < arr.size(); i++) {
