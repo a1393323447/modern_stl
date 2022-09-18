@@ -121,7 +121,7 @@ void test_vectorize() {
     std::cout << "Testing Vectorize Done ...\n\n";
 }
 
-usize non_vec_1(Array<std::string, 1000> arr) {
+usize non_vec_1(Array<std::string, 1000>& arr) {
     usize total_len = 0;
     combine(arr.iter(),
         Filter<Likely>{}, [](auto&& str) {
@@ -144,7 +144,7 @@ usize non_vec_1(Array<std::string, 1000> arr) {
     return total_len;
 }
 
-usize non_vec_2(Array<std::string, 1000> arr) {
+usize non_vec_2(Array<std::string, 1000>& arr) {
     usize total_len = 0;
 
     for(usize i = 0; i < arr.size(); i++) {
@@ -166,14 +166,14 @@ usize non_vec_2(Array<std::string, 1000> arr) {
 void test_non_vec_1(std::vector<Array<std::string, 1000>>& vec) {
     std::cout << "1. warming...\n";
     auto res = non_vec_1(vec[0]);
-    for (const auto& arr: vec) {
+    for (auto& arr: vec) {
         res = non_vec_1(arr);
     }
     std::cout << res << " Done\n";
 
 
     auto now = std::chrono::steady_clock::now();
-    for (const auto& arr: vec) {
+    for (auto& arr: vec) {
         res = non_vec_1(arr);
     }
     auto after = std::chrono::steady_clock::now();
@@ -185,14 +185,14 @@ void test_non_vec_1(std::vector<Array<std::string, 1000>>& vec) {
 void test_non_vec_2(std::vector<Array<std::string, 1000>>& vec) {
     std::cout << "2. warming...\n";
     auto res = non_vec_2(vec[0]);
-    for (const auto& arr: vec) {
+    for (auto& arr: vec) {
         res = non_vec_2(arr);
     }
     std::cout << res << " Done\n";
 
 
     auto now = std::chrono::steady_clock::now();
-    for (const auto& arr: vec) {
+    for (auto& arr: vec) {
         res = non_vec_2(arr);
     }
     auto after = std::chrono::steady_clock::now();

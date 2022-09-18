@@ -70,11 +70,11 @@ namespace mstl::collection {
         }
 
         IntoIter into_iter() {
-            return IntoIter { values };
+            return IntoIter { const_cast<T*>(values) };
         }
 
-        IterRef iter() {
-            return IterRef { values };
+        IterRef iter() const {
+            return IterRef { const_cast<T*>(values) };
         }
 
         template<iter::Iterator Iter>
@@ -95,7 +95,7 @@ namespace mstl::collection {
             // FIXME: panic if pos >= N
             return values[pos];
         }
-        constexpr usize size() { return N; }
+        constexpr usize size() const { return N; }
     private:
         Item values[N];
     };
