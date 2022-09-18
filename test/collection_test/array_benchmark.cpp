@@ -165,7 +165,7 @@ usize non_vec_2(Array<std::string, 1000>& arr) {
 
 void test_non_vec_1(std::vector<Array<std::string, 1000>>& vec) {
     std::cout << "1. warming...\n";
-    auto res = non_vec_1(vec[0]);
+    volatile usize res = non_vec_1(vec[0]);
     for (auto& arr: vec) {
         res = non_vec_1(arr);
     }
@@ -184,7 +184,7 @@ void test_non_vec_1(std::vector<Array<std::string, 1000>>& vec) {
 
 void test_non_vec_2(std::vector<Array<std::string, 1000>>& vec) {
     std::cout << "2. warming...\n";
-    auto res = non_vec_2(vec[0]);
+    volatile usize res = non_vec_2(vec[0]);
     for (auto& arr: vec) {
         res = non_vec_2(arr);
     }

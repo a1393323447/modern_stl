@@ -15,7 +15,7 @@ using namespace mstl::collection;
 
 std::vector<Array<std::string, 1000>> vec{};
 
-usize non_vec_1(Array<std::string, 1000> arr) {
+usize non_vec_1(Array<std::string, 1000>& arr) {
     usize total_len = 0;
     combine(arr.iter(),
         Filter{}, [](const auto& str) {
@@ -38,7 +38,7 @@ usize non_vec_1(Array<std::string, 1000> arr) {
     return total_len;
 }
 
-usize non_vec_2(Array<std::string, 1000> arr) {
+usize non_vec_2(Array<std::string, 1000>& arr) {
     usize total_len = 0;
 
     for(usize i = 0; i < arr.size(); i++) {
@@ -82,14 +82,14 @@ void generate_test_data() {
 }
 
 void BM_with_iter(benchmark::State& state) {
-    auto res = non_vec_1(vec[0]);
-    for (const auto& arr: vec) {
+    volatile usize res = non_vec_1(vec[0]);
+    for (auto& arr: vec) {
         res = non_vec_1(arr);
     }
 
     for (auto _: state) {
-        for (const auto& arr: vec) {
-            non_vec_1(arr);
+        for (auto& arr: vec) {
+            res = non_vec_1(arr);
         }
     }
 }
@@ -97,14 +97,14 @@ void BM_with_iter(benchmark::State& state) {
 BENCHMARK(BM_with_iter)->UseRealTime();
 
 void BM_with_index(benchmark::State& state) {
-    auto res = non_vec_2(vec[0]);
-    for (const auto& arr: vec) {
+    volatile usize res = non_vec_2(vec[0]);
+    for (auto& arr: vec) {
         res = non_vec_2(arr);
     }
 
     for (auto _: state) {
-        for (const auto& arr: vec) {
-            non_vec_2(arr);
+        for (auto& arr: vec) {
+            res = non_vec_2(arr);
         }
     }
 }
