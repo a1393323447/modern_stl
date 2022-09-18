@@ -5,7 +5,7 @@
 #ifndef __MODERN_STL_COMBINATOR_CONCEPTS_H__
 #define __MODERN_STL_COMBINATOR_CONCEPTS_H__
 
-#include <iter/iter_concepts.h>
+#include <iter/adapters/adapter_concepts.h>
 
 namespace mstl::iter::combinator {
     /**

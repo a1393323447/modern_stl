@@ -27,10 +27,25 @@ if (Boost_FOUND)
             NAME vector_test
             COMMAND vector_test
     )
+
+    add_executable(map_test iter_test/adapter_test/map_test.cpp)
+    target_link_libraries(map_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME map_test
+            COMMAND map_test
+    )
+
+    add_executable(pipe_test iter_test/adapter_test/pipe_test.cpp)
+    target_link_libraries(pipe_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME pipe_test
+            COMMAND pipe_test
+    )
 endif()
 
 find_package(benchmark)
 if (benchmark_FOUND)
+    set(CMAKE_CXX_FLAGS "-g")
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
     target_link_libraries(try_benchmark benchmark::benchmark)
 endif()

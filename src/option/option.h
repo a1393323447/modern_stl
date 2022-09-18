@@ -16,7 +16,7 @@ namespace mstl {
         template<typename T>
         class OptionBase {
         public:
-            OptionBase(T t): value(t), hold_value(true) {}
+            OptionBase(T t): hold_value(true), value(t) {}
             OptionBase(): hold_value(false) {}
 
             bool is_some() const { return hold_value; }
@@ -83,10 +83,13 @@ namespace mstl {
         public:
             using StoreT = std::remove_cvref_t<T>;
 
-            OptionBase(T ref_value): value(const_cast<StoreT*>(&ref_value)) {
+            OptionBase(T ref_value): value(const_cast<StoreT*>(std::addressof(ref_value))) {
                 static_assert(
-                        std::is_same_v<decltype(const_cast<StoreT*>(&ref_value)), StoreT*>,
-                        "Can not cast ref value to a pointer.\n"
+                    std::is_same_v<
+                        std::remove_const_t<std::remove_pointer_t<decltype(std::addressof(ref_value))>>,
+                        StoreT
+                    >,
+                    "Can not get a pointer to T&.\n"
                 );
             }
             OptionBase(): value(nullptr) {}
@@ -149,6 +152,7 @@ namespace mstl {
         template<typename T>
         class OptionCopyable: public OptionMovable<T> {
         public:
+            using  WrapType = T;
             static OptionCopyable<T> some(T t) { return { t }; }
             static OptionCopyable<T> none() { return { }; }
         };
@@ -156,13 +160,14 @@ namespace mstl {
         template<basic::CopyAble T>
         class OptionCopyable<T>: public OptionMovable<T> {
         public:
+            using  WrapType = T;
             static OptionCopyable<T> some(T t) { return { t }; }
             static OptionCopyable<T> none() { return { }; }
 
             OptionCopyable(T t): OptionMovable<T>(t) {}
             OptionCopyable(): OptionMovable<T>() {}
 
-            OptionCopyable(const OptionCopyable<T>& other) {
+            OptionCopyable(const OptionCopyable<T>& other): OptionMovable<T>() {
                 this->value = other.value;
                 if constexpr (OptionCopyable<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;

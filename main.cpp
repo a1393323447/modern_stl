@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <compare>
+#include <ops/range.h>
 
 struct A{
     std::string x = "Hello";

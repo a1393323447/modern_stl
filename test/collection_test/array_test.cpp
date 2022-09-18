@@ -18,7 +18,7 @@ struct Pow {
 
 void test_into_iter() {
     Array<i32, 10> array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    auto it = array.into_iter();
+    Iterator auto it = array.into_iter();
     auto next = it.next();
 
     while (next.is_some()) {
@@ -85,10 +85,10 @@ void test_combine() {
 
     i32 limit = 50;
     auto first = combine(arr.into_iter(),
-        Map{}, [](auto ele) {
+        Map{}, [](const auto& ele) {
             return ele * ele;
         },
-        FindFirst{}, [&](auto ele) {
+        FindFirst{}, [&](const auto& ele) {
             return ele > limit;
         }
     );
@@ -145,13 +145,36 @@ void test_array_ref() {
     );
 
     combine(usize_arr.iter(),
-        ForEach{}, [](auto&& size) {
+        ForEach{}, [](const auto& size) {
             std::cout << size << " ";
         }
     );
 
     std::cout << '\n';
 }
+
+struct M {
+    M() = default;
+    M(int a): m(a) {}
+
+    M(const M&) {
+        std::cout << "Copy constructed\n";
+    };
+    M& operator=(const M&) {
+        std::cout << "Copy assigned\n";
+        return *this;
+    };
+
+    M(M&&) {
+        std::cout << "Move constructed\n";
+    }
+    M& operator=(M&&) {
+        std::cout << "Move assigned\n";
+        return *this;
+    }
+    int m;
+};
+
 
 int main() {
     test_into_iter();

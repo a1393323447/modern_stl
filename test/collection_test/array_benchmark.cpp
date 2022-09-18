@@ -23,7 +23,7 @@ Array<Pow<usize>, 100> combine_for_ben_vec_1(Array<i32, 1000> arr) {
         Map{}, [](auto&& ele) {
             return ele * ele;
         },
-        Map{}, [](const auto&& ele) {
+        Map{}, [](const auto& ele) {
             return Pow<usize>{ static_cast<usize>(ele * ele) };
         },
         Filter{}, [](auto&& ele) {
@@ -36,21 +36,19 @@ Array<Pow<usize>, 100> combine_for_ben_vec_1(Array<i32, 1000> arr) {
 }
 
 Array<Pow<usize>, 100> combine_for_ben_vec_2(Array<i32, 1000> arr) {
+    Array<Pow<usize>, arr.size()> arr2{};
+    Array<Pow<usize>, 100> arr3{};
+
+    usize pos = 0;
     for (usize i = 0; i < arr.size(); i++) {
         arr[i] = arr[i] * arr[i];
-    }
-
-    Array<Pow<usize>, arr.size()> arr2{};
-    for (usize i = 0; i < arr2.size(); i++) {
         arr2[i] = Pow<usize>{ static_cast<usize>(arr[i] * arr[i]) };
-    }
-
-    Array<Pow<usize>, 100> arr3{};
-    usize pos = 0;
-    for (usize i = 0; i < arr3.size(); i++) {
         if (arr2[i].pow % 2 == 0) {
             arr3[pos] = arr2[i];
             pos++;
+            if (pos > arr3.size()) {
+                break;
+            }
         }
     }
 
@@ -211,7 +209,7 @@ void test_non_vectorize() {
     std::normal_distribution<> d{5,5 };
 
     std::vector<Array<std::string, 1000>> vec{};
-    for (usize i = 0; i < 10000; i++) {
+    for (usize i = 0; i < 1000; i++) {
         Array<std::string, 1000> arr{};
         for (usize j = 0; j < 1000; j++) {
             std::string str{};
@@ -230,6 +228,7 @@ void test_non_vectorize() {
 }
 
 int main() {
+    int a = 0;
     test_vectorize();
 
     test_non_vectorize();

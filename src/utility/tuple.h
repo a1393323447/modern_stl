@@ -241,7 +241,7 @@ namespace mstl::utility {
 
         constexpr Tuple &operator=(const Tuple &other) = default;
 
-        constexpr bool operator==(const Tuple &other) const {
+        constexpr bool operator==(const Tuple &) const {
             return true;
         }
     };

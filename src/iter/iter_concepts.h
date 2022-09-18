@@ -9,6 +9,13 @@
 #include <option/option.h>
 
 namespace mstl::iter {
+    namespace _private {
+        template<typename I>
+        struct TestIter {
+            using Item = I;
+            Option<I> next();
+        };
+    }
     /**
      * @tparam Iter 迭代器类型
      */

@@ -8,6 +8,7 @@
 #include <ops/callable.h>
 #include <iter/iter_concepts.h>
 #include <iter/terminal_concepts.h>
+#include <iter/adapters/flattened_adapter.h>
 #include <iter/adapters/combinator_concepts.h>
 
 namespace mstl::iter {
@@ -18,16 +19,29 @@ namespace mstl::iter {
     requires combinator::Combinator<Com, Iter, Lambda>
     decltype(auto) combine(Iter iter, Com, Lambda lambda) noexcept {
         constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
+        adapter::Adapter auto adapter = combinatorFunc(std::move(iter), lambda);
+        // 不再递归调用 combine
+        return adapter::flatten(adapter);
+    }
+
+    /**
+     * combine 递归的基线函数 2: 以 Terminal 结尾
+     */
+    template<adapter::Adapter Adapter, typename Ter, typename... Args>
+    requires terminal::Terminal<Ter, Adapter, Args...>
+    decltype(auto) combine(Adapter adapter, Ter, Args... args) noexcept {
+        auto flatten_iter = adapter::flatten(adapter);
+        constexpr auto terminalFunc = Ter::template get_terminal_func<decltype(flatten_iter), Args...>();
 
         // 不再递归调用 combine
-        return combinatorFunc(iter, lambda);
+        return terminalFunc(flatten_iter, args...);
     }
 
     /**
      * combine 递归的基线函数 2: 以 Terminal 结尾
      */
     template<Iterator Iter, typename Ter, typename... Args>
-    requires terminal::Terminal<Ter, Iter, Args...>
+    requires terminal::Terminal<Ter, Iter, Args...> && (!adapter::Adapter<Iter>)
     decltype(auto) combine(Iter iter, Ter, Args... args) noexcept {
         constexpr auto terminalFunc = Ter::template get_terminal_func<Iter, Args...>();
 
@@ -63,7 +77,7 @@ namespace mstl::iter {
         constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 
         // 递归调用 combine 模拟链式调用
-        return combine(combinatorFunc(iter, lambda), args...);
+        return combine(combinatorFunc(std::forward<Iter>(iter), lambda), args...);
     }
 }
 

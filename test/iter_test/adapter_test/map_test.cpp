@@ -1,8 +1,8 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/15.
 //
-#include <iter/iterator.h>
-#include <collection/arrary.h>
+#include "iter/iterator.h"
+#include "collection/arrary.h"
 
 #include <string>
 #include <iostream>
@@ -10,8 +10,9 @@
 using namespace mstl;
 using namespace mstl::iter;
 using namespace mstl::collection;
+using namespace mstl::collection::array::_iter;
 
-using OwnIter = ArrayIter<i32, 10>;
+using OwnIter = ::ArrayIter<i32, 10>;
 using MapWithOwnIter = MapIter<OwnIter, decltype([](i32) -> u32 { return 0; }), OwnIter::Item>;
 static_assert(std::is_same_v<MapWithOwnIter::Item, u32>);
 
@@ -50,10 +51,10 @@ int main() {
 
     std::cout << "iter ..\n";
     combine(arr.iter(),
-        Map{}, [](auto&& c) -> const Clone& {
+        Map{}, [](const auto& c) -> const Clone& {
             return c;
         },
-        ForEach{}, [](auto& c) {}
+        ForEach{}, [](const auto&) {}
     );
 
     return 0;

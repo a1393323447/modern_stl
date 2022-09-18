@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(ITERATION_TEST) {
     std::cout << "]" << std::endl;
 
     auto b = iter::combine(
-            a.iter(),
+            std::move(a.into_iter()),
             iter::Map{}, [](int a) {
                 return a * 2;
             },
