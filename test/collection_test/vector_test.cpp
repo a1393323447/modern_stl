@@ -78,6 +78,13 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST_STR) {
     BOOST_TEST_CHECK(a.empty());
 }
 
+BOOST_AUTO_TEST_CASE(ITER_BASED_CONSTRUCT_TEST) {
+    int x[] = {0, 1, 2, 3};
+    auto a = Vector<int>{x, x + 4};
+    auto b = INTVEC;
+    BOOST_CHECK(a == b);
+}
+
 BOOST_AUTO_TEST_CASE(DEFAULT_TEST) {
     auto a = Vector<int>(10);
     auto b = Vector<int>(10, 5);

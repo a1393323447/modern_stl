@@ -85,6 +85,16 @@ namespace mstl::collection {
             move_impl(std::forward<Vector&&>(r));
         }
 
+        template< iter::LegacyInputIterator InputIt >
+        constexpr Vector(InputIt first, InputIt last, const A& alloc = A{}): alloc(alloc) {
+            allocate(2);
+
+            while (first != last) {
+                push_back(*first);
+                first++;
+            }
+        }
+
         constexpr ~Vector() {
             clear();
         }

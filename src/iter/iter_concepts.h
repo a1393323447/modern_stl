@@ -93,6 +93,19 @@ namespace mstl::iter {
             { FromIter::from_iter(std::forward<Iter>(iter)) } -> std::same_as<FromIter>;
         };
     };
+
+    /**
+     * 同C++标准之具名要求"老式输入迭代器 (LegacyInputIterator)".
+     * <br>
+     * 要求类型可解引用、前缀自增、后缀自增，且可相等比较.
+     * */
+    template<typename It>
+    concept LegacyInputIterator = requires(It i, It j) {
+        {i == j} -> std::same_as<bool>;
+        *i;
+        ++i;
+        i++;
+    };
 }
 
 #endif //__MODERN_STL_ITER_CONCEPTS_H__
