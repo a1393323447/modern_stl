@@ -362,6 +362,75 @@ namespace mstl::collection {
             }
         }
 
+        constexpr Iter insert(ConstIter pos, const T& val) {
+            usize p = pos.pos();
+            emplace(pos, std::forward<const T&>(val));
+            return begin() + p;
+        }
+
+        constexpr Iter insert(ConstIter pos, T&& val) {
+            usize p = pos.pos();
+            emplace(pos, std::forward<T&&>(val));
+            return begin() + p;
+        }
+
+        constexpr Iter insert(ConstIter pos, usize count, const T& val) {
+            auto p = pos.pos();
+
+            move_elements_back(p, count);
+
+            for (usize i = 0; i < count; i++) {
+                construct_at(p + i, val);
+            }
+
+            return begin() + p;
+        }
+
+        template<iter::LegacyInputIterator InputIt>
+        constexpr Iter insert(ConstIter pos, InputIt first, InputIt last) {
+            auto p = pos.pos();
+            auto d = len - p;  // length of tail elements
+
+            auto tmp = alloc.allocate(d);
+            for (usize i = 0; i < d; i++) {
+                std::construct_at(tmp + i, std::move(beginPtr[p + i]));
+                destroy_at(p + i);
+            }
+
+            len = p;
+
+            while (first != last) {
+                push_back(*first);
+                first++;
+            }
+
+            if (len + d > cap) {
+                reserve(len + d);
+            }
+            for (usize i = 0; i < d; i++) {
+                construct_at(len++, std::move(tmp[i]));
+                std::destroy_at(tmp + i);
+            }
+
+            alloc.deallocate(tmp, d);
+            return begin() + p;
+        }
+
+        constexpr Iter insert(ConstIter pos, std::initializer_list<T> ilist) {
+            auto p = pos.pos(), count = ilist.size();
+
+            auto lo = ilist.begin(), hi = ilist.end();
+
+            move_elements_back(p, count);
+
+            auto i = p;
+            while (lo != hi) {
+                construct_at(i++, *lo);
+                lo++;
+            }
+            return begin() + p;
+        }
+
         constexpr void push_back(const T &v) {
             if (len >= cap) {
                 extend_space();

@@ -371,3 +371,31 @@ BOOST_AUTO_TEST_CASE(EMPLACE_TEST_STR) {
     a.emplace(lo, "H");
     BOOST_TEST_CHECK(to_string(a) == "Vec [foo, H, bar, Hello, World]");
 }
+
+BOOST_AUTO_TEST_CASE(INSERT_TEST) {
+    auto a = STRVEC;
+    auto b = a, c = a, d = a, e = a;
+
+    std::string ss[] = {"10", "10"};
+    std::string s = "10";
+
+    auto ra = a.insert(a.begin() + 1, s);  // ["foo", "10", "bar", "Hello", "World"]
+    BOOST_TEST_CHECK(to_string(a) == "Vec [foo, 10, bar, Hello, World]");
+    BOOST_TEST_CHECK(*ra == "10");
+
+    auto rb = b.insert(b.begin() + 1, std::move(s));  // ["foo", "10", "bar", "Hello", "World"]
+    BOOST_TEST_CHECK(to_string(b) == "Vec [foo, 10, bar, Hello, World]");
+    BOOST_TEST_CHECK(*rb == "10");
+
+    auto rc = c.insert(c.begin() + 1, 2, "10");  // ["foo", "10", "10", "bar", "Hello", "World"]
+    BOOST_TEST_CHECK(to_string(c) == "Vec [foo, 10, 10, bar, Hello, World]");
+    BOOST_TEST_CHECK(*rc == "10");
+
+    auto rd = d.insert(d.begin() + 1, ss, ss + 2);  // ["foo", "10", "10", "bar", "Hello", "World"]
+    BOOST_TEST_CHECK(to_string(d) == "Vec [foo, 10, 10, bar, Hello, World]");
+    BOOST_TEST_CHECK(*rd == "10");
+
+    auto re = e.insert(e.begin() + 1, {"10", "10"});  // ["foo", "10", "10", "bar", "Hello", "World"]
+    BOOST_TEST_CHECK(to_string(e) == "Vec [foo, 10, 10, bar, Hello, World]");
+    BOOST_TEST_CHECK(*re == "10");
+}
