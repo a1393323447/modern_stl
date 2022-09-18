@@ -326,17 +326,9 @@ namespace mstl::collection {
                 extend_space();
             }
 
-            auto hi = len;
-            auto lo = pos.pos();
-
-            while (hi != lo) {  // Move every element to the next position
-                construct_at(hi, std::move(beginPtr[hi - 1]));
-                hi--;
-                destroy_at(hi);
-            }
-
-            construct_at(lo, std::forward<Args>(vs)...);
-            len++;
+            auto p = pos.pos();
+            move_elements_back(p, 1);
+            construct_at(p, std::forward<Args>(vs)...);
         }
 
         constexpr Iter erase(ConstIter pos) {
@@ -517,15 +509,30 @@ namespace mstl::collection {
         }
 
         constexpr void copy_impl(const std::initializer_list<T> &list) {
-            usize _len = list.size();
+            usize l = list.size();
 
-            allocate(_len);
-            len = _len;
+            allocate(l);
+            len = l;
             usize i = 0;
             for (auto &ele: list) {
                 construct_at(i, ele);
                 i++;
             }
+        }
+
+        // 把元素向后移动n个位置, 改变len
+        // 这将导致[pos, pos + count)范围内的元素为无效元素(垂悬引用)
+        constexpr void move_elements_back(usize pos, usize count) {
+            if (len + count > cap) {
+                reserve(len + count);
+            }
+            auto hi = len - 1;
+            while (hi >= pos) {
+                construct_at(hi + count, std::move(beginPtr[hi]));
+                destroy_at(hi);
+                hi--;
+            }
+            len += count;
         }
 
         constexpr void extend_space() {
