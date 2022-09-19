@@ -7,6 +7,7 @@
 
 #include <global.h>
 #include <iter/iter_concepts.h>
+#include <intrinsics.h>
 
 #include <initializer_list>
 
@@ -17,7 +18,7 @@ namespace mstl::collection {
     public:
         using Item = T;
         explicit ArrayIter(Item* p): ptr(p) {};
-        Option<T> next() {
+        MSTL_INLINE Option<T> next() {
             if (pos < N) {
                 auto n = Option<T>::some(ptr[pos]);
                 pos++;
@@ -36,7 +37,7 @@ namespace mstl::collection {
     public:
         using Item = const T&;
         explicit ArrayIterRef(T* p): ptr(p) {};
-        Option<const T&> next() {
+        MSTL_INLINE Option<const T&> next() {
             if (pos < N) {
                 auto n = Option<const T&>::some(ptr[pos]);
                 pos++;
@@ -69,15 +70,18 @@ namespace mstl::collection {
             }
         }
 
+        MSTL_INLINE
         IntoIter into_iter() {
             return IntoIter { const_cast<T*>(values) };
         }
 
+        MSTL_INLINE
         IterRef iter() const {
             return IterRef { const_cast<T*>(values) };
         }
 
         template<iter::Iterator Iter>
+        MSTL_INLINE
         static decltype(auto) from_iter(Iter iter) {
             usize pos = 0;
             Array<typename Iter::Item, N> arr{};
@@ -91,10 +95,13 @@ namespace mstl::collection {
             return arr;
         }
 
+        MSTL_INLINE
         T& operator[](usize pos) {
             // FIXME: panic if pos >= N
             return values[pos];
         }
+
+        MSTL_INLINE
         constexpr usize size() const { return N; }
     private:
         Item values[N];

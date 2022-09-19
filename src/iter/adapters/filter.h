@@ -25,10 +25,12 @@ namespace mstl::iter {
 
         FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
 
+        MSTL_INLINE
         Option<Item> next() noexcept {
             return find(this->iter, predicate);
         }
 
+        MSTL_INLINE
         FilterIter<Iter, P>
         into_iter() noexcept { return *this; }
 
@@ -45,10 +47,12 @@ namespace mstl::iter {
 
         FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
 
+        MSTL_INLINE
         Option<Item> next() noexcept {
             return find<Iter, P, Likely>(this->iter, predicate);
         }
 
+        MSTL_INLINE
         FilterIter<Iter, P, Likely>
         into_iter() noexcept { return *this; }
 

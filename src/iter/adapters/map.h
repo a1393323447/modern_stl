@@ -7,6 +7,7 @@
 
 #include <iter/iter_concepts.h>
 #include <ops/callable.h>
+#include <intrinsics.h>
 
 namespace mstl::iter {
     /**
@@ -24,6 +25,7 @@ namespace mstl::iter {
 
         MapIter(Iter iter, Func func) : iter(iter), func(func) {}
 
+        MSTL_INLINE
         Option<Item> next() noexcept {
             auto next_item = iter.next();
             if (next_item.is_some()) {
@@ -35,6 +37,7 @@ namespace mstl::iter {
             }
         }
 
+        MSTL_INLINE
         MapIter<Iter, Func, Arg>
         into_iter() noexcept { return *this; }
 
