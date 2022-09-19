@@ -5,6 +5,7 @@
 #ifndef __MODERN_STL_UNTILITY_H__
 #define __MODERN_STL_UNTILITY_H__
 
+#include <intrinsics.h>
 #include <ops/callable.h>
 #include <iter/iter_concepts.h>
 #include <iter/terminal_concepts.h>
@@ -58,7 +59,7 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Com, typename Lambda, typename... Args>
     requires combinator::Combinator<Com, Iter, Lambda>
-    decltype(auto)  combine(Iter iter, Com, Lambda lambda, Args... args) noexcept {
+    MSTL_INLINE decltype(auto)  combine(Iter iter, Com, Lambda lambda, Args... args) noexcept {
         // 通过实现了 Combinator 包装类 Com 获取真正的 combinator 函数
         constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 

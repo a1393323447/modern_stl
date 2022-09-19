@@ -19,4 +19,8 @@
     #endif
 #endif
 
+#ifdef DEBUG
+#define MSTL_INLINE
+#endif
+
 #endif //__MODERN_STL_INTRINSICS_H__

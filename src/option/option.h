@@ -9,6 +9,7 @@
 #include <utility>
 #include <global.h>
 #include <concepts>
+#include <intrinsics.h>
 #include <basic_concepts.h>
 
 namespace mstl {
@@ -19,10 +20,10 @@ namespace mstl {
             OptionBase(T t): value(t), hold_value(true) {}
             OptionBase(): hold_value(false) {}
 
-            bool is_some() const { return hold_value; }
-            bool is_none() const { return !hold_value; }
+            MSTL_INLINE bool is_some() const { return hold_value; }
+            MSTL_INLINE bool is_none() const { return !hold_value; }
 
-            T unwrap() {
+            MSTL_INLINE T unwrap() {
                 if (hold_value) {
                     return std::move(value);
                 } else {
@@ -30,7 +31,7 @@ namespace mstl {
                 }
             }
 
-            T unwrap_uncheck() {
+            MSTL_INLINE T unwrap_uncheck() {
                 return std::move(value);
             }
 
@@ -49,10 +50,10 @@ namespace mstl {
             OptionBase(bool t): value(t | HOLD_MASK) {}
             OptionBase() {}
 
-            bool is_some() const { return value & HOLD_MASK; }
-            bool is_none() const { return !is_some(); }
+            MSTL_INLINE bool is_some() const { return value & HOLD_MASK; }
+            MSTL_INLINE bool is_none() const { return !is_some(); }
 
-            bool unwrap() {
+            MSTL_INLINE bool unwrap() {
                 if (is_some()) {
                     return value & VALUE_MASK;
                 } else {
@@ -60,7 +61,7 @@ namespace mstl {
                 }
             }
 
-            bool unwrap_uncheck() {
+            MSTL_INLINE bool unwrap_uncheck() {
                 return value & VALUE_MASK;
             }
 
@@ -91,10 +92,10 @@ namespace mstl {
             }
             OptionBase(): value(nullptr) {}
 
-            bool is_some() const { return value != nullptr; }
-            bool is_none() const { return !is_some(); }
+            MSTL_INLINE bool is_some() const { return value != nullptr; }
+            MSTL_INLINE bool is_none() const { return !is_some(); }
 
-            T unwrap() {
+            MSTL_INLINE T unwrap() {
                 if (value != nullptr) {
                     return *value;
                 } else {
@@ -102,7 +103,7 @@ namespace mstl {
                 }
             }
 
-            T unwrap_uncheck() {
+            MSTL_INLINE T unwrap_uncheck() {
                 return *value;
             }
 
@@ -152,15 +153,15 @@ namespace mstl {
         template<typename T>
         class OptionCopyable: public OptionMovable<T> {
         public:
-            static OptionCopyable<T> some(T t) { return { t }; }
-            static OptionCopyable<T> none() { return { }; }
+            MSTL_INLINE static OptionCopyable<T> some(T t) { return { t }; }
+            MSTL_INLINE static OptionCopyable<T> none() { return { }; }
         };
 
         template<basic::CopyAble T>
         class OptionCopyable<T>: public OptionMovable<T> {
         public:
-            static OptionCopyable<T> some(T t) { return { t }; }
-            static OptionCopyable<T> none() { return { }; }
+            MSTL_INLINE static OptionCopyable<T> some(T t) { return { t }; }
+            MSTL_INLINE static OptionCopyable<T> none() { return { }; }
 
             OptionCopyable(T t): OptionMovable<T>(t) {}
             OptionCopyable(): OptionMovable<T>() {}

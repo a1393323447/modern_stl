@@ -33,31 +33,10 @@ namespace mstl::collection {
     };
 
     template <typename T, usize N>
-    requires basic::LValRefType<T>
-    class ArrayIter<T, N> {
-    public:
-        using Item = T;
-        using StoreT   = std::remove_cvref_t<T>;
-        explicit ArrayIter(StoreT* *p): ptr(p) {};
-        MSTL_INLINE Option<T> next() {
-            if (pos < N) {
-                auto n = Option<T>::some(*ptr[pos]);
-                pos++;
-                return n;
-            } else {
-                return Option<T>::none();
-            }
-        }
-    private:
-        StoreT* *const ptr = nullptr;
-        usize          pos = 0;
-    };
-
-    template <typename T, usize N>
     class ArrayIterRef {
     public:
-        using Item   = const T&;
-        explicit ArrayIterRef(T *p): ptr(p) {};
+        using Item = const T&;
+        explicit ArrayIterRef(T* p): ptr(p) {};
         MSTL_INLINE Option<const T&> next() {
             if (pos < N) {
                 auto n = Option<const T&>::some(ptr[pos]);
@@ -68,117 +47,12 @@ namespace mstl::collection {
             }
         }
     private:
-        T *const ptr = nullptr;
+        const T* ptr = nullptr;
         usize    pos = 0;
     };
 
     template <typename T, usize N>
-    requires basic::LValRefType<T>
-    class ArrayIterRef<T, N> {
-    public:
-        using Item = const T&;
-        using StoreT = std::remove_cvref_t<T>;
-        explicit ArrayIterRef(StoreT* *p): ptr(p) {};
-        MSTL_INLINE Option<const T&> next() {
-            if (pos < N) {
-                auto n = Option<const T&>::some(*ptr[pos]);
-                pos++;
-                return n;
-            } else {
-                return Option<const T&>::none();
-            }
-        }
-    private:
-        const StoreT* *const ptr = nullptr;
-        usize                pos = 0;
-    };
-
-    //////////////////////////////// Array ////////////////////////////////////
-    template<typename T>
-    struct Protected {
-        static const bool value = false;
-    };
-    template <typename T, usize N>
     class Array {
-        static_assert(Protected<T>::value,
-            "unexpected type argument: This is a bug !\n"
-        );
-    };
-    template <typename T, usize N>
-    requires basic::RValRefType<T>
-    class Array<T, N> {
-        static_assert(Protected<T>::value,
-            "Should not store a rvalue reference in Array !\n"
-        );
-    };
-
-
-    template <typename T, usize N>
-    requires basic::LValRefType<T>
-    class Array<T, N> {
-    public:
-        using Item = T;
-        using StoreT   = std::remove_cvref_t<T>;
-        using IntoIter = ArrayIter<T, N>;
-        using IterRef  = ArrayIterRef<T, N>;
-
-        Array(std::initializer_list<T> list) {
-            // FIXME: panic if list.size() > N
-            usize pos = 0;
-            for (T ele: list) {
-                auto *ptr = const_cast<StoreT*>(std::addressof(ele));
-                this->values[pos] = ptr;
-                pos++;
-                if (pos >= N) {
-                    break;
-                }
-            }
-        }
-
-        MSTL_INLINE
-        IntoIter into_iter() {
-            return IntoIter { const_cast<StoreT*>(values) };
-        }
-
-        MSTL_INLINE
-        IterRef iter() const {
-            return IterRef { const_cast<StoreT*>(values) };
-        }
-
-        template<iter::Iterator Iter>
-        MSTL_INLINE
-        static decltype(auto) from_iter(Iter iter) {
-            usize pos = 0;
-            Array<typename Iter::Item, N> arr{};
-            Option<typename Iter::Item> next = iter.next();
-            while (next.is_some()) {
-                auto&& ele = next.unwrap_uncheck();
-                auto *ptr = const_cast<StoreT*>(std::addressof(ele));
-                arr[pos] = ptr;
-                next = iter.next();
-                pos++;
-            }
-
-            return arr;
-        }
-
-        MSTL_INLINE
-        T& operator[](usize pos) {
-            // FIXME: panic if pos >= N
-            return *values[pos];
-        }
-
-        MSTL_INLINE
-        constexpr usize size() const { return N; }
-    private:
-        StoreT* values[N];
-    };
-
-
-    template <typename T, usize N>
-    requires basic::CopyAble<T> &&
-           (!basic::RefType<T>)
-    class Array<T, N> {
     public:
         using Item = T;
         using IntoIter = ArrayIter<T, N>;
@@ -194,105 +68,6 @@ namespace mstl::collection {
                     break;
                 }
             }
-        }
-
-        Array(const Array<T, N>& other) {
-            for (usize pos = 0; pos < N; pos++) {
-                values[pos] = other.values[pos];
-            }
-        }
-
-        Array<T, N>& operator=(const Array<T, N>& other) {
-            if  (this == &other) {
-                return *this;
-            }
-
-            for (usize pos = 0; pos < N; pos++) {
-                values[pos] = other.values[pos];
-            }
-
-            return *this;
-        }
-
-        MSTL_INLINE
-        IntoIter into_iter() {
-            return IntoIter { const_cast<T*>(values) };
-        }
-
-        MSTL_INLINE
-        IterRef iter() const {
-            return IterRef { const_cast<T*>(values) };
-        }
-
-        template<iter::Iterator Iter>
-        MSTL_INLINE
-        static decltype(auto) from_iter(Iter iter) {
-            usize pos = 0;
-            Array<typename Iter::Item, N> arr{};
-            Option<typename Iter::Item> next = iter.next();
-            while (next.is_some()) {
-                arr[pos] = next.unwrap_uncheck();
-                next = iter.next();
-                pos++;
-            }
-
-            return arr;
-        }
-
-        MSTL_INLINE
-        T& operator[](usize pos) {
-            // FIXME: panic if pos >= N
-            return values[pos];
-        }
-
-        MSTL_INLINE
-        constexpr usize size() const { return N; }
-    private:
-        Item values[N];
-    };
-
-
-    template <typename T, usize N>
-    requires basic::Movable<T> &&
-           (!basic::CopyAble<T>) &&
-           (!basic::RefType<T>)
-    class Array<T, N> {
-    public:
-        using Item = T;
-        using IntoIter = ArrayIter<T, N>;
-        using IterRef  = ArrayIterRef<T, N>;
-
-        Array(std::initializer_list<T> list) {
-            // FIXME: panic if list.size() > N
-            usize pos = 0;
-            for (T ele: list) {
-                this->values[pos] = ele;
-                pos++;
-                if (pos >= N) {
-                    break;
-                }
-            }
-        }
-
-        Array(const Array<T, N>& other) = delete;
-        Array<T, N>& operator=(const Array<T, N>& other) = delete;
-
-        Array(const Array<T, N>&& other) noexcept {
-            for (usize pos = 0; pos < N; pos++) {
-                values[pos] = std::move(other.values[pos]);
-            }
-        }
-
-        Array<T, N>& operator=(Array<T, N>&& other) noexcept {
-            if  (this == &other) {
-                return *this;
-            }
-
-            for (usize pos = 0; pos < N; pos++) {
-                values[pos] = std::move(other.values[pos]);
-            }
-
-            return *this;
         }
 
         MSTL_INLINE
