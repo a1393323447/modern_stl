@@ -11,7 +11,6 @@
 namespace mstl::iter {
     template<typename FromIter, typename Iter>
     requires FromIterator<FromIter, Iter>
-    MSTL_INLINE
     FromIter collect(Iter iter) noexcept {
         return FromIter::from_iter(std::forward<Iter>(iter));
     }
@@ -33,7 +32,6 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename P>
     requires ops::Predicate<P, typename Iter::Item&>
-    MSTL_INLINE
     Option<typename Iter::Item>
     find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
@@ -51,7 +49,6 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename P, bool Likely>
     requires ops::Predicate<P, typename Iter::Item&>
-    MSTL_INLINE
     Option<typename Iter::Item>
     find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
@@ -86,7 +83,6 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename F>
     requires ops::Callable<F, void, typename Iter::Item>
-    MSTL_INLINE
     void for_each(Iter iter, F lambda) noexcept {
         Option<typename Iter::Item> next = iter.next();
         while (next.is_some()) {

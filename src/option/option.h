@@ -138,6 +138,9 @@ namespace mstl {
                 }
             }
             OptionMovable<T>& operator=(OptionMovable<T>&& other) noexcept {
+                if (this == &other) {
+                    return *this;
+                }
                 this->value = std::move(other.value);
                 if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
@@ -169,6 +172,9 @@ namespace mstl {
                 }
             }
             OptionCopyable<T>& operator=(const OptionCopyable<T>& other) {
+                if (this == &other) {
+                    return *this;
+                }
                 this->value = other.value;
                 if constexpr (OptionCopyable<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;

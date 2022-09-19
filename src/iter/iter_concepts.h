@@ -83,6 +83,7 @@ namespace mstl::iter {
     concept FromIterator = requires {
         requires IntoIterator<FromIter>;
         requires Iterator<Iter>;
+        requires std::same_as<typename FromIter::Item, typename Iter::Item>;
 
         /**
          * <h1>Require</h1>
