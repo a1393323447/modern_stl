@@ -55,8 +55,7 @@ namespace mstl::collection {
         }
 
         constexpr Vector() : alloc{} {
-            len = 0;
-            cap = 0;
+            allocate(2);
         }
 
         constexpr Vector(const A &allocator) : alloc(allocator), len(0), cap(0) {
@@ -421,6 +420,9 @@ namespace mstl::collection {
 
             auto lo = ilist.begin(), hi = ilist.end();
 
+            if (cap == 0) {
+                allocate(ilist.size());
+            }
             move_elements_back(p, count);
 
             auto i = p;
@@ -592,6 +594,9 @@ namespace mstl::collection {
         // 把元素向后移动n个位置, 改变len
         // 这将导致[pos, pos + count)范围内的元素为无效元素(垂悬引用)
         constexpr void move_elements_back(usize pos, usize count) {
+            if (len == 0) {
+                return;
+            }
             if (len + count > cap) {
                 reserve(len + count);
             }
@@ -805,7 +810,7 @@ namespace mstl::collection {
     template<typename T, typename U>
     auto operator<=>(const Vector<T>& lhs, const Vector<U>& rhs)
     requires requires (T t, U u, usize len){
-        std::three_way_comparable_with<T, U, std::partial_ordering>;
+        requires std::three_way_comparable_with<T, U, std::partial_ordering>;
         { t <=> u } -> std::constructible_from<decltype(len <=> len)>;
     } {
         auto lenL = lhs.size();
