@@ -54,9 +54,11 @@ int main() {
 ```
 
 ## Benchmark
+
+### 迭代器
 `mstl` 提供了基于迭代器的零成本抽象:
 
-### 使用迭代器
+#### 使用迭代器
 ```c++
 usize BM_with_iter(Array<std::string, 1000>& arr) {
     usize total_len = 0;
@@ -82,7 +84,7 @@ usize BM_with_iter(Array<std::string, 1000>& arr) {
 }
 ```
 
-### 使用下标
+#### 使用下标
 ```c++
 usize BM_with_index(Array<std::string, 1000>& arr) {
     usize total_len = 0;
@@ -104,7 +106,7 @@ usize BM_with_index(Array<std::string, 1000>& arr) {
 }
 ```
 
-### 测试结果
+#### 测试结果
 ```text
 Start To Gen Test Data
 Gen All Test Data
@@ -121,4 +123,47 @@ Benchmark                        Time             CPU   Iterations
 ------------------------------------------------------------------
 BM_with_iter/real_time      116540 ns       115665 ns         6079
 BM_with_index/real_time     113037 ns       115203 ns         6239
+```
+
+### Vector
+`mstl`实现了与C++标准库相类似的`std::vector`类, 位于`mstl::collections::Vector`(下称`Vector`).
+
+经测试, `Vector`的性能与标准库的`vector`较为接近, 甚至优于后者.
+
+`Vector`在各版本的构造函数测试中, 对同规模测试所消耗的时间与`std::vector`均相差不到1ms, 认为可忽略不计.
+`resize`操作相比`std::vector`平均慢约19毫秒.
+而常用的`push_back`, `erase`等操作则优于`std::vector`数毫秒, `insert`操作则比`std::vector`快约一倍, 详见测试结果.
+
+#### 测试方法
+参与测试的类分别为实验组`Vector<std::string>`和对照组`std::vector<std::string>`.
+基准程序代码见`test/collection_test/vector_benchmark.cpp`.
+对基准程序, 我们一共运行50次, 取每次运行的各测试用例的单次迭代的CPU时间的平均值作为最终各测试用例的消耗时间.
+
+#### 测试结果
+```
+Run on (16 X 2922.63 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x8)
+  L1 Instruction 32 KiB (x8)
+  L2 Unified 512 KiB (x8)
+  L3 Unified 4096 KiB (x2)
+-------------------------------------------------------  ---------
+name                                                     cpu_time(ns)
+BM_default_construct<std::vector<std::string>>           11960271
+BM_default_construct<Vector<std::string>>                12650287
+BM_range_based<std::vector<std::string>>                 72569486
+BM_range_based<Vector<std::string>>                      73993039
+BM_ilist<std::vector<std::string>>                       1246
+BM_ilist<Vector<std::string>>                            1211
+BM_push_back<std::vector<std::string>>                   151250100
+BM_push_back<Vector<std::string>>                        147968690
+BM_insert<std::vector<std::string>>                      70034700
+BM_insert<Vector<std::string>>                           38442950
+BM_resize<std::vector<std::string>>                      13405257
+BM_resize<Vector<std::string>>                           15344560
+BM_reserve<std::vector<std::string>>/iterations:1000000  0
+BM_reserve<Vector<std::string>>/iterations:1000000       0
+BM_erase<std::vector<std::string>>                       171250060
+BM_erase<Vector<std::string>>                            167421970
+-------------------------------------------------------  ---------
 ```
