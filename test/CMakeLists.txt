@@ -36,5 +36,4 @@ if (benchmark_FOUND)
 
     add_executable(vector_benchmark collection_test/vector_benchmark.cpp collection_test/init_list.cpp)
     target_link_libraries(vector_benchmark benchmark::benchmark)
-
 endif()
