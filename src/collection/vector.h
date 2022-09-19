@@ -317,8 +317,6 @@ namespace mstl::collection {
             deallocate();
         }
 
-//        todo constexpr iter insert(iter pos, const T& value);
-
         template<typename ...Args>
         void emplace(ConstIter pos, Args...vs) {
             if (len == cap) {
