@@ -33,4 +33,8 @@ find_package(benchmark)
 if (benchmark_FOUND)
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
     target_link_libraries(try_benchmark benchmark::benchmark)
+
+    add_executable(vector_benchmark collection_test/vector_benchmark.cpp collection_test/init_list.cpp)
+    target_link_libraries(vector_benchmark benchmark::benchmark)
+
 endif()
