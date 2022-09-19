@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <ostream>
 #include <compare>
+#include <iterator>
 
 #include <global.h>
 #include <iter/iter_concepts.h>
@@ -55,8 +56,7 @@ namespace mstl::collection {
         }
 
         constexpr Vector() : alloc{} {
-            len = 0;
-            cap = 0;
+            allocate(2);
         }
 
         constexpr Vector(const A &allocator) : alloc(allocator), len(0), cap(0) {
@@ -87,10 +87,10 @@ namespace mstl::collection {
 
         template< iter::LegacyInputIterator InputIt >
         constexpr Vector(InputIt first, InputIt last, const A& alloc = A{}): alloc(alloc) {
-            allocate(2);
-
+            usize distance = std::abs(std::distance(first, last));
+            allocate(distance);
             while (first != last) {
-                push_back(*first);
+                construct_at(len++, *first);
                 first++;
             }
         }
@@ -318,8 +318,6 @@ namespace mstl::collection {
             deallocate();
         }
 
-//        todo constexpr iter insert(iter pos, const T& value);
-
         template<typename ...Args>
         void emplace(ConstIter pos, Args...vs) {
             if (len == cap) {
@@ -389,46 +387,23 @@ namespace mstl::collection {
         template<iter::LegacyInputIterator InputIt>
         constexpr Iter insert(ConstIter pos, InputIt first, InputIt last) {
             auto p = pos.pos();
-            auto d = len - p;  // length of tail elements
+            usize distance = std::abs(std::distance(first, last));
 
-            auto tmp = alloc.allocate(d);
-            for (usize i = 0; i < d; i++) {
-                std::construct_at(tmp + i, std::move(beginPtr[p + i]));
-                destroy_at(p + i);
+            if (len + distance > cap) {             // if no enougn space
+                allocate_reserve(len + distance);   // then extend the vector
             }
 
-            len = p;
+            move_elements_back(p, distance);        // move elements back
 
-            while (first != last) {
-                push_back(*first);
-                first++;
+            for (auto i = p; first != last; ++i, ++first) {
+                construct_at(i, *first);
             }
 
-            if (len + d > cap) {
-                reserve(len + d);
-            }
-            for (usize i = 0; i < d; i++) {
-                construct_at(len++, std::move(tmp[i]));
-                std::destroy_at(tmp + i);
-            }
-
-            alloc.deallocate(tmp, d);
             return begin() + p;
         }
 
         constexpr Iter insert(ConstIter pos, std::initializer_list<T> ilist) {
-            auto p = pos.pos(), count = ilist.size();
-
-            auto lo = ilist.begin(), hi = ilist.end();
-
-            move_elements_back(p, count);
-
-            auto i = p;
-            while (lo != hi) {
-                construct_at(i++, *lo);
-                lo++;
-            }
-            return begin() + p;
+            return insert(pos, ilist.begin(), ilist.end());
         }
 
         constexpr void push_back(const T &v) {
@@ -538,7 +513,7 @@ namespace mstl::collection {
         constexpr void allocate_reserve(usize size) noexcept {
             auto nArr = alloc.allocate(size);  // Alloc
             for (usize i = 0; i < len; i++) {
-                std::construct_at(nArr + i, beginPtr[i]);
+                std::construct_at(nArr + i, std::move(beginPtr[i]));
             }
             usize oLen = len;
 
@@ -592,6 +567,9 @@ namespace mstl::collection {
         // 把元素向后移动n个位置, 改变len
         // 这将导致[pos, pos + count)范围内的元素为无效元素(垂悬引用)
         constexpr void move_elements_back(usize pos, usize count) {
+            if (len == 0) {
+                return;
+            }
             if (len + count > cap) {
                 reserve(len + count);
             }
@@ -679,6 +657,10 @@ namespace mstl::collection {
             auto tmp = *this;
             tmp.cur -= i;
             return tmp;
+        }
+
+        usize operator-(VectorIter i) {
+            return cur - i.cur;
         }
 
         VectorIter& operator+=(usize i) {
@@ -805,7 +787,7 @@ namespace mstl::collection {
     template<typename T, typename U>
     auto operator<=>(const Vector<T>& lhs, const Vector<U>& rhs)
     requires requires (T t, U u, usize len){
-        std::three_way_comparable_with<T, U, std::partial_ordering>;
+        requires std::three_way_comparable_with<T, U, std::partial_ordering>;
         { t <=> u } -> std::constructible_from<decltype(len <=> len)>;
     } {
         auto lenL = lhs.size();
@@ -824,7 +806,27 @@ namespace mstl::collection {
 
         return Order{lenL <=> lenR};
     }
-}
 
+}
+template<typename T>
+struct std::iterator_traits<mstl::collection::VectorIter<T>>
+{
+    typedef random_access_iterator_tag iterator_category;
+    typedef T                          value_type;
+    typedef ptrdiff_t                  difference_type;
+    typedef T*                         pointer;
+    typedef T&                         reference;
+};
+//由于无法使用iterator的信息，所以traits自己提供了。
+//局部特化，c++内置指针。
+template<typename T>
+struct std::iterator_traits<mstl::collection::VectorIter<const T>>
+{
+    typedef random_access_iterator_tag iterator_category;
+    typedef T                          value_type;//注意这里不是const T;如果是const T，算法拿到这个类型，用这个类型定义变量后，却无法改变其值，那就没有作用了，所以是T。
+    typedef ptrdiff_t                  difference_type;
+    typedef const T*                   pointer;
+    typedef const T&                   reference;
+};
 
 #endif //MODERN_STL_VECTOR_H

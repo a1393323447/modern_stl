@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <compare>
 
 struct A{
     std::string x = "Hello";

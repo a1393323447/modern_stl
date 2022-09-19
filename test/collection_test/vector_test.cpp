@@ -53,6 +53,8 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST) {
     BOOST_TEST_CHECK(a.size() == 0);
     BOOST_TEST_CHECK(a.capacity() == 0);
     BOOST_TEST_CHECK(a.empty());
+    auto b = INTVEC;
+    a.insert(a.begin(), b.begin(), b.end());
 }
 
 BOOST_AUTO_TEST_CASE(BASIC_TEST_STR) {
