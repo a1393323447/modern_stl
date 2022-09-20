@@ -124,21 +124,38 @@ namespace mstl {
         };
 
         template<typename T>
-        class OptionMovable: public OptionBase<T> {};
-
-        template<basic::Movable T>
-        class OptionMovable<T>: public OptionBase<T> {
+        class Option: public OptionBase<T> {
         public:
-            OptionMovable(T t): OptionBase<T>(t) {}
-            OptionMovable(): OptionBase<T>() {}
+            MSTL_INLINE static Option<T> some(T t) { return { t }; }
+            MSTL_INLINE static Option<T> none() { return { }; }
 
-            OptionMovable(const OptionMovable<T>&& other) noexcept {
+            Option(const Option<T>&) = delete;
+            Option<T>& operator=(const Option<T>&) = delete;
+            Option(const Option<T>&& other) = delete;
+            Option<T>& operator=(Option<T>&& other) = delete;
+        };
+
+        template<typename T>
+        requires (basic::Movable<std::remove_cvref_t<T>>) &&
+                (!basic::CopyAble<std::remove_cvref_t<T>>)
+        class Option<T>: public OptionBase<T> {
+        public:
+            MSTL_INLINE static Option<T> some(T t) { return { t }; }
+            MSTL_INLINE static Option<T> none() { return { }; }
+
+            Option(T t): OptionBase<T>(t) {}
+            Option(): OptionBase<T>() {}
+
+            Option(const Option<T>&) = delete;
+            Option<T>& operator=(const Option<T>&) = delete;
+
+            Option(const Option<T>&& other) noexcept {
                 this->value = std::move(other.value);
                 if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
                 }
             }
-            OptionMovable<T>& operator=(OptionMovable<T>&& other) noexcept {
+            Option<T>& operator=(Option<T>&& other) noexcept {
                 if (this == &other) {
                     return *this;
                 }
@@ -151,33 +168,46 @@ namespace mstl {
         };
 
         template<typename T>
-        class OptionCopyable: public OptionMovable<T> {
+        requires basic::CopyAble<std::remove_cvref_t<T>>
+        class Option<T>: public OptionBase<T> {
         public:
-            MSTL_INLINE static OptionCopyable<T> some(T t) { return { t }; }
-            MSTL_INLINE static OptionCopyable<T> none() { return { }; }
-        };
+            MSTL_INLINE static Option<T> some(T t) { return { t }; }
+            MSTL_INLINE static Option<T> none() { return { }; }
 
-        template<basic::CopyAble T>
-        class OptionCopyable<T>: public OptionMovable<T> {
-        public:
-            MSTL_INLINE static OptionCopyable<T> some(T t) { return { t }; }
-            MSTL_INLINE static OptionCopyable<T> none() { return { }; }
+            Option(T t): OptionBase<T>(t) {}
+            Option(): OptionBase<T>() {}
 
-            OptionCopyable(T t): OptionMovable<T>(t) {}
-            OptionCopyable(): OptionMovable<T>() {}
-
-            OptionCopyable(const OptionCopyable<T>& other) {
+            Option(const Option<T>& other) {
                 this->value = other.value;
-                if constexpr (OptionCopyable<T>::has_hold_value()) {
+                if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
                 }
             }
-            OptionCopyable<T>& operator=(const OptionCopyable<T>& other) {
+
+            Option<T>& operator=(const Option<T>& other) {
                 if (this == &other) {
                     return *this;
                 }
                 this->value = other.value;
-                if constexpr (OptionCopyable<T>::has_hold_value()) {
+                if constexpr (OptionBase<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+                return *this;
+            }
+
+            Option(const Option<T>&& other) noexcept {
+                this->value = std::move(other.value);
+                if constexpr (OptionBase<T>::has_hold_value()) {
+                    this->hold_value = other.hold_value;
+                }
+            }
+
+            Option<T>& operator=(Option<T>&& other) noexcept {
+                if (this == &other) {
+                    return *this;
+                }
+                this->value = std::move(other.value);
+                if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
                 }
                 return *this;
@@ -186,9 +216,8 @@ namespace mstl {
     }
 
     template<typename T>
-    using Option = _private::OptionCopyable<T>;
-
-    static_assert(std::is_same_v<decltype(Option<int&>{}.unwrap()), int&>);
+    using Option = _private::Option<T>;
+    static_assert(basic::CopyAble<std::string>);
 }
 
 #endif //__MODERN_STL_OPTION_H__

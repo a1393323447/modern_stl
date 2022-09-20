@@ -2,10 +2,9 @@
 // Created by 朕与将军解战袍 on 2022/9/14.
 //
 #include <option/option.h>
-#include <iostream>
 #include <string>
 
-#define BOOST_TEST_MODULE Tuple Test
+#define BOOST_TEST_MODULE Option Test
 #include <boost/test/unit_test.hpp>
 
 using namespace mstl;
