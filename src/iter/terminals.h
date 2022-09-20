@@ -49,7 +49,7 @@ namespace mstl::iter {
         return next_value;
     }
 
-    template<Iterator Iter, typename P, bool Likely>
+    template<Iterator Iter, typename P, bool Predict>
     requires ops::Predicate<P, typename Iter::Item&>
     MSTL_INLINE
     Option<typename Iter::Item>
@@ -59,7 +59,7 @@ namespace mstl::iter {
         while (next_value.is_some()) {
             // FIXME: 这里不应该使用 unwrap 语义 -> 现在的 unwrap 语义不清晰
             auto&& item = next_value.unwrap_uncheck();
-            if constexpr (Likely) {
+            if constexpr (Predict) {
                 if (predicate(item)) [[likely]] {
                     break;
                 }

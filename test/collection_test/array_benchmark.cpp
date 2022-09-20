@@ -18,15 +18,15 @@ struct Pow {
     T pow;
 };
 
-Array<Pow<usize>, 100> combine_for_ben_vec_1(Array<i32, 1000> arr) {
+Array<Pow<usize>, 100> combine_for_ben_vec_1(const Array<i32, 1000>& arr) {
     auto pow_arr = combine(arr.iter(),
-        Map{}, [](auto&& ele) {
+        Map{}, [](const auto& ele) {
             return ele * ele;
         },
-        Map{}, [](const auto&& ele) {
+        Map{}, [](const auto& ele) {
             return Pow<usize>{ static_cast<usize>(ele * ele) };
         },
-        Filter{}, [](auto&& ele) {
+        Filter{}, [](const auto& ele) {
             return ele.pow % 2 == 0;
         },
         CollectAs<Array<Pow<usize>, 100>>{}
@@ -35,14 +35,15 @@ Array<Pow<usize>, 100> combine_for_ben_vec_1(Array<i32, 1000> arr) {
     return pow_arr;
 }
 
-Array<Pow<usize>, 100> combine_for_ben_vec_2(Array<i32, 1000> arr) {
-    for (usize i = 0; i < arr.size(); i++) {
-        arr[i] = arr[i] * arr[i];
+Array<Pow<usize>, 100> combine_for_ben_vec_2(const Array<i32, 1000>& arr) {
+    Array<i32, 1000> arr1 {};
+    for (usize i = 0; i < arr1.size(); i++) {
+        arr1[i] = arr[i] * arr[i];
     }
 
-    Array<Pow<usize>, arr.size()> arr2{};
+    Array<Pow<usize>, 1000> arr2{};
     for (usize i = 0; i < arr2.size(); i++) {
-        arr2[i] = Pow<usize>{ static_cast<usize>(arr[i] * arr[i]) };
+        arr2[i] = Pow<usize>{ static_cast<usize>(arr1[i] * arr1[i]) };
     }
 
     Array<Pow<usize>, 100> arr3{};
@@ -57,17 +58,17 @@ Array<Pow<usize>, 100> combine_for_ben_vec_2(Array<i32, 1000> arr) {
     return arr3;
 }
 
-void test_vec_1(auto&& vec) {
+void test_vec_1(const auto& vec) {
     std::cout << "1. warming...\n";
     Array<Pow<usize>, 100> res{};
-    for (auto&& arr: vec) {
+    for (const auto& arr: vec) {
         res = combine_for_ben_vec_1(arr);
     }
     std::cout << res[0].pow << " Done\n";
 
 
     auto now = std::chrono::steady_clock::now();
-    for (auto arr: vec) {
+    for (const auto& arr: vec) {
         res = combine_for_ben_vec_1(arr);
     }
     auto after = std::chrono::steady_clock::now();
@@ -76,17 +77,17 @@ void test_vec_1(auto&& vec) {
     std::cout << "1. time: " << time << "\n";
 }
 
-void test_vec_2(auto&& vec) {
+void test_vec_2(const auto& vec) {
     std::cout << "2. warming...\n";
     auto res = combine_for_ben_vec_2(vec[0]);
-    for (auto arr: vec) {
+    for (const auto& arr: vec) {
         res = combine_for_ben_vec_2(arr);
     }
     std::cout << res[0].pow << " Done\n";
 
 
     auto now = std::chrono::steady_clock::now();
-    for (auto arr: vec) {
+    for (const auto& arr: vec) {
         res = combine_for_ben_vec_2(arr);
     }
     auto after = std::chrono::steady_clock::now();

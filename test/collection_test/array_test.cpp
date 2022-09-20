@@ -128,6 +128,27 @@ void test_combine_string() {
             std::cout << str << '\n';
         }
     );
+
+    using namespace std;
+    Array<string, 10> arr_own = {
+            "First", "Second", "Third", "Fourth", "Fifth",
+            "Sixth", "Seventh", "Eighth", "Ninth", "Tenth"
+    };
+
+    auto iter = arr_own.into_iter();
+    combine(iter,
+            Filter<Likely>{}, [](const auto& str) {
+                std::cout << "In Filter: " << str << '\n';
+                return str.size() >= 3;
+            },
+            Map{}, [](auto&& str) {
+                std::cout << "In Map: " << str << '\n';
+                return str + "?";
+            },
+            ForEach{}, [](auto&& str) {
+                std::cout << "In ForEach: " << str << '\n';
+            }
+    );
 }
 
 void test_array_ref() {
