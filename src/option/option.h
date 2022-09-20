@@ -17,7 +17,8 @@ namespace mstl {
         template<typename T>
         class OptionBase {
         public:
-            OptionBase(T t): value(t), hold_value(true) {}
+            template<typename U>
+            OptionBase(U&& t): value(std::forward<U&&>(t)), hold_value(true) {}
             OptionBase(): hold_value(false) {}
 
             MSTL_INLINE bool is_some() const { return hold_value; }
@@ -47,7 +48,8 @@ namespace mstl {
         template<>
         class OptionBase<bool> {
         public:
-            OptionBase(bool t): value(t | HOLD_MASK) {}
+            OptionBase(bool&& t): value(t | HOLD_MASK) {}
+            OptionBase(bool& t):  value(t | HOLD_MASK) {}
             OptionBase() {}
 
             MSTL_INLINE bool is_some() const { return value & HOLD_MASK; }
@@ -126,12 +128,17 @@ namespace mstl {
         template<typename T>
         class Option: public OptionBase<T> {
         public:
+            template<typename... Args>
+            MSTL_INLINE
+            static Option<T> some(Args... args) {
+                return { std::move(T{ std::forward<Args>(args)... }) };
+            }
             MSTL_INLINE static Option<T> some(T t) { return { t }; }
             MSTL_INLINE static Option<T> none() { return { }; }
 
             Option(const Option<T>&) = delete;
             Option<T>& operator=(const Option<T>&) = delete;
-            Option(const Option<T>&& other) = delete;
+            Option(Option<T>&& other) = delete;
             Option<T>& operator=(Option<T>&& other) = delete;
         };
 
@@ -140,16 +147,23 @@ namespace mstl {
                 (!basic::CopyAble<std::remove_cvref_t<T>>)
         class Option<T>: public OptionBase<T> {
         public:
+            template<typename... Args>
+            MSTL_INLINE
+            static Option<T> some(Args... args) {
+                return { std::move(T{ std::forward<Args>(args)... }) };
+            }
             MSTL_INLINE static Option<T> some(T t) { return { t }; }
             MSTL_INLINE static Option<T> none() { return { }; }
 
-            Option(T t): OptionBase<T>(t) {}
+            template<typename U>
+            requires std::same_as<std::remove_reference_t<T>, std::remove_reference_t<U>>
+            Option(U&& t): OptionBase<T>(std::forward<U&&>(t)) {}
             Option(): OptionBase<T>() {}
 
             Option(const Option<T>&) = delete;
             Option<T>& operator=(const Option<T>&) = delete;
 
-            Option(const Option<T>&& other) noexcept {
+            Option(Option<T>&& other) noexcept {
                 this->value = std::move(other.value);
                 if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
@@ -171,10 +185,17 @@ namespace mstl {
         requires basic::CopyAble<std::remove_cvref_t<T>>
         class Option<T>: public OptionBase<T> {
         public:
-            MSTL_INLINE static Option<T> some(T t) { return { t }; }
+            template<typename... Args>
+            MSTL_INLINE
+            static Option<T> some(Args... args) {
+                return { std::move(T{ std::forward<Args>(args)... }) };
+            }
+            MSTL_INLINE static Option<T> some(T t) { return Option<T>{ t }; }
             MSTL_INLINE static Option<T> none() { return { }; }
 
-            Option(T t): OptionBase<T>(t) {}
+            template<typename U>
+            requires std::same_as<std::remove_reference_t<T>, std::remove_reference_t<U>>
+            Option(U&& t): OptionBase<T>(std::forward<U&&>(t)) {}
             Option(): OptionBase<T>() {}
 
             Option(const Option<T>& other) {
@@ -195,7 +216,7 @@ namespace mstl {
                 return *this;
             }
 
-            Option(const Option<T>&& other) noexcept {
+            Option(Option<T>&& other) noexcept {
                 this->value = std::move(other.value);
                 if constexpr (OptionBase<T>::has_hold_value()) {
                     this->hold_value = other.hold_value;
