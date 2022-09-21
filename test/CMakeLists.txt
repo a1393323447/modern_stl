@@ -27,6 +27,13 @@ if (Boost_FOUND)
             NAME vector_test
             COMMAND vector_test
     )
+
+    add_executable(range_test range_test.cpp)
+    target_link_libraries(range_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME range_test
+            COMMAND range_test
+    )
 endif()
 
 find_package(benchmark)
