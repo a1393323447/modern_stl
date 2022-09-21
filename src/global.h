@@ -8,9 +8,11 @@
 #define MSTL_PANIC(...) mstl::panic(__FILE__, __LINE__, __VA_ARGS__)
 
 #include <cstdint>
-#include <intrinsics.h>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
+#include <utility/print.h>
+#include <intrinsics.h>
 
 namespace mstl {
     using u8    = std::uint8_t;
