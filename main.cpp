@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <utility/slice.h>
 
 struct A{
     std::string x = "Hello";
