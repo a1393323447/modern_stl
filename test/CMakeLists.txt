@@ -34,6 +34,13 @@ if (Boost_FOUND)
             NAME range_test
             COMMAND range_test
     )
+
+    add_executable(result_test collection_test/result_test.cpp)
+    target_link_libraries(result_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME result_test
+            COMMAND result_test
+    )
 endif()
 
 find_package(benchmark)

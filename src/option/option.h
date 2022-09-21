@@ -187,7 +187,7 @@ namespace mstl {
         public:
             template<typename... Args>
             MSTL_INLINE
-            static Option<T> some(Args... args) {
+            static Option<T> some(Args&&... args) {
                 return { std::move(T{ std::forward<Args>(args)... }) };
             }
             MSTL_INLINE static Option<T> some(T t) { return Option<T>{ t }; }

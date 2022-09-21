@@ -817,13 +817,12 @@ struct std::iterator_traits<mstl::collection::VectorIter<T>>
     typedef T*                         pointer;
     typedef T&                         reference;
 };
-//由于无法使用iterator的信息，所以traits自己提供了。
-//局部特化，c++内置指针。
+
 template<typename T>
 struct std::iterator_traits<mstl::collection::VectorIter<const T>>
 {
     typedef random_access_iterator_tag iterator_category;
-    typedef T                          value_type;//注意这里不是const T;如果是const T，算法拿到这个类型，用这个类型定义变量后，却无法改变其值，那就没有作用了，所以是T。
+    typedef T                          value_type;
     typedef ptrdiff_t                  difference_type;
     typedef const T*                   pointer;
     typedef const T&                   reference;

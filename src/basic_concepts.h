@@ -28,6 +28,13 @@ namespace mstl::basic {
     concept Printable = requires (std::ostream& out, const T& val){
         out << val;
     };
+
+    template<typename T>
+    concept Error = Movable<T> && CopyAble<T> && Printable<T> && !std::is_reference_v<T>;
+
+    // True, if and only if In is one of T and Ts...
+    template<typename In, typename T, typename ...Ts>
+    concept OneOf = std::same_as<In, T> || (std::same_as<In, Ts> || ...);
 }
 
 #endif //__MODERN_STL_BASIC_CONCEPTS_H__
