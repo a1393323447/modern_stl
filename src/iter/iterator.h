@@ -7,10 +7,7 @@
 
 #include <iter/utility.h>
 #include <iter/iter_concepts.h>
-#include <iter/adapters/map.h>
-#include <iter/adapters/filter.h>
-#include <iter/adapters/combinator_concepts.h>
-#include "iter/termnals/terminals.h"
-#include "iter/termnals/terminal_concepts.h"
+#include <iter/adapters/adapter.h>
+#include <iter/termnals/terminals.h>
 
 #endif //__MODERN_STL_ITERATOR_H__
