@@ -112,13 +112,21 @@ BOOST_AUTO_TEST_CASE(MOVEABLE_TEST) {
     b.ok_ref();
     static_assert(std::constructible_from<Result<MovableClass, int>, MovableClass&&>);
 
-    Result<TestClass, int> d(TestClass{});
+    Result<TestClass, int> d(TestClass{}), e(TestClass{});
     BOOST_TEST_CHECK(d.ok_ref_unchecked().mode == "Move");
-    Result<TestClass, int> e = std::move(d);
-    BOOST_TEST_CHECK(e.unwrap().mode == "Move");
+    e = std::move(d);
+    BOOST_TEST_CHECK(e.ok_ref_unchecked().mode == "Move =");
+    Result<TestClass, int> f = std::move(e);
+    BOOST_TEST_CHECK(f.unwrap().mode == "Move");
 }
 
 BOOST_AUTO_TEST_CASE(COPYABLE_TEST) {
+    Result<TestClass, int> res1(TestClass{}), res2(TestClass{});
+    res1 = res2;
+    BOOST_TEST_CHECK(res1.ok_ref_unchecked().mode == "Copy =");
+    Result<TestClass, int> res3 = res2;
+    BOOST_TEST_CHECK(res3.ok_ref_unchecked().mode == "Copy");
+
     std::string str1 = "foo";
     std::string str2 = "bar";
 

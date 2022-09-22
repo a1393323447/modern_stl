@@ -49,13 +49,21 @@ namespace mstl::result {
                 if (this == &rhs) {
                     return *this;
                 }
-                if (this->is_ok()) {
-                    this->template destroy<T>();
+                if (this->type != rhs.type) {
+                    if (this->is_ok()) {
+                        this->template destroy<T>();
+                    } else {
+                        this->template destroy<E>();
+                    }
+                    move_impl(std::forward<ResultBase<T, E>>(rhs));
                 } else {
-                    this->template destroy<E>();
+                    if (this->is_ok()) {
+                        this->ok_ref_unchecked() = rhs.unwrap();
+                    } else {
+                        this->err_ref_unchecked() = rhs.unwrap_err();
+                    }
                 }
 
-                move_impl(std::forward<ResultBase<T, E>>(rhs));
                 return *this;
             }
 
@@ -213,8 +221,16 @@ namespace mstl::result {
             using Base = ResultBase<T, E>;
         public:
             using Base::ResultBase;
+
             ResultRef(ResultRef&& r) noexcept : Base(std::forward<Base>(r)) {}
 
+            ResultRef& operator=(ResultRef&& rhs) noexcept {
+                if (this == &rhs)
+                    return *this;
+
+                Base::operator=(std::forward<ResultRef>(rhs));
+                return *this;
+            }
         protected:
             using UnderlyingType = T;
             using ConstUnderlyingType = const T;
@@ -241,6 +257,14 @@ namespace mstl::result {
             ResultRef(const ResultRef& r): Base(r) {}
 
             ResultRef(ResultRef&& r) noexcept : Base(std::forward<Base>(r)) {}
+
+            ResultRef& operator=(ResultRef&& rhs)  noexcept {
+                if (this == &rhs)
+                    return *this;
+
+                Base::operator=(std::forward<ResultRef>(rhs));
+                return *this;
+            }
 
             T unwrap() {
                 if (this->is_ok())
@@ -308,13 +332,20 @@ namespace mstl::result {
             if (this == &rhs) {
                 return *this;
             }
-            if (this->is_ok()) {
-                this->template destroy<typename Base::UnderlyingType>();
+            if (this->type != rhs.type) {
+                if (this->is_ok()) {
+                    this->template destroy<typename Base::UnderlyingType>();
+                } else {
+                    this->template destroy<E>();
+                }
+                copy_impl(rhs);
             } else {
-                this->template destroy<E>();
+                if (this->is_ok()) {
+                    this->ok_ref_unchecked() = rhs.ok_ref_unchecked();
+                } else {
+                    this->err_ref_unchecked() = rhs.err_ref_unchecked();
+                }
             }
-
-            copy_impl(rhs);
             return *this;
         }
 
