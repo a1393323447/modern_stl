@@ -28,37 +28,6 @@ void test_into_iter() {
     std::cout << std::endl;
 }
 
-void test_map() {
-    Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    auto arr_2 = collect<Array<Pow<i32>, 10>>(map(
-            arr.into_iter(), [](i32 ele) {
-                return Pow<i32>{ ele * ele };
-            }));
-
-    auto iter = arr_2.into_iter();
-    auto next = iter.next();
-
-    while (next.is_some()) {
-        std::cout << next.unwrap().pow << " ";
-        next = iter.next();
-    }
-    std::cout << std::endl;
-}
-
-void test_filter() {
-    Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-    auto iter = filter(arr.into_iter(), [](i32& ele) {
-        return ele % 2 == 0;
-    });
-
-    auto next = iter.next();
-    while (next.is_some()) {
-        std::cout << next.unwrap() << " ";
-        next = iter.next();
-    }
-    std::cout << std::endl;
-}
-
 void test_combine() {
     Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
@@ -137,17 +106,17 @@ void test_combine_string() {
 
     auto iter = arr_own.into_iter();
     combine(iter,
-            Filter<Likely>{}, [](const auto& str) {
-                std::cout << "In Filter: " << str << '\n';
-                return str.size() >= 3;
-            },
-            Map{}, [](auto&& str) {
-                std::cout << "In Map: " << str << '\n';
-                return str + "?";
-            },
-            ForEach{}, [](auto&& str) {
-                std::cout << "In ForEach: " << str << '\n';
-            }
+        Filter<Likely>{}, [](const auto& str) {
+            std::cout << "In Filter: " << str << '\n';
+            return str.size() >= 3;
+        },
+        Map{}, [](auto&& str) {
+            std::cout << "In Map: " << str << '\n';
+            return str + "?";
+        },
+        ForEach{}, [](auto&& str) {
+            std::cout << "In ForEach: " << str << '\n';
+        }
     );
 }
 
@@ -174,13 +143,116 @@ void test_array_ref() {
     std::cout << '\n';
 }
 
+template<typename T>
+struct Test {
+    template<typename U>
+    requires basic::Movable<U> &&
+             std::same_as<T, U>
+    Test(U&& value): value(std::forward<U>(value)) {}
+
+    template<typename U>
+    requires basic::Movable<U> &&
+             std::same_as<T, U>
+    Test(Test<U>&& other) {
+        value = std::move(other.value);
+    }
+
+    template<typename U>
+    requires basic::Movable<U> &&
+             std::same_as<T, U>
+    Test<T>& operator=(Test<U>&& other) noexcept {
+        if (this == &other) {
+            return *this;
+        }
+
+        value = std::move(other.value);
+    }
+
+    template<typename U>
+    requires basic::CopyAble<U> &&
+             std::same_as<T, U>
+    Test(const Test<U>& other) {
+        value = other.value;
+    }
+
+    template<typename U>
+    requires basic::CopyAble<U> &&
+             std::same_as<T, U>
+    Test<T>& operator=(const Test<U>& other) noexcept {
+        if (this == &other) {
+            return *this;
+        }
+
+        value = other.value;
+    }
+
+    T value;
+};
+
+class Movable {
+public:
+    Movable() = default;
+    Movable(int n): num(n) { }
+    Movable(const Movable&) = delete;
+    Movable& operator=(const Movable&) = delete;
+
+    Movable(Movable&& m) noexcept {
+        if (this == &m) return;
+        num = m.num;
+    }
+
+    Movable& operator=(Movable&& m) noexcept {
+        if (this == &m) return *this;
+        num = m.num;
+
+        return *this;
+    }
+
+
+private:
+    int num;
+};
+
+class Copyable {
+public:
+    Copyable() = default;
+    Copyable(int n): num(n) { }
+    Copyable(const Copyable&) = default;
+    Copyable& operator=(const Copyable&) = default;
+
+    Copyable(Copyable&& m) noexcept {
+        if (this == &m) return;
+        num = m.num;
+    }
+
+    Copyable& operator=(Copyable&& m) noexcept {
+        if (this == &m) return *this;
+        num = m.num;
+
+        return *this;
+    }
+
+
+private:
+    int num;
+};
+
 int main() {
     test_into_iter();
-    test_map();
-    test_filter();
     test_combine();
     test_combine_string();
     test_array_ref();
+
+    Test<Movable> t = { Movable{1} };
+    Test<Movable> d = { Movable{2} };
+//    t = d;
+    t = std::move(d);
+
+    Test<Copyable> c = { Copyable{1} };
+    Test<Copyable> b = { Copyable{2} };
+
+    c = b;
+    c = std::move(b);
 
     return 0;
 }

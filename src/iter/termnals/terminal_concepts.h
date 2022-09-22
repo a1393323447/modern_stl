@@ -5,9 +5,20 @@
 #ifndef __MODERN_STL_TERMINAL_CONCEPTS_H__
 #define __MODERN_STL_TERMINAL_CONCEPTS_H__
 
-#include <iter/iter_concepts.h>
+#include "iter/iter_concepts.h"
 
 namespace mstl::iter::terminal {
+
+    namespace _private {
+        template<typename TerHolder, typename Iter>
+        concept TerminalHolder = requires {
+            requires Iterator<Iter>;
+            requires requires (TerHolder holder, Iter iter) {
+                { holder.call(iter) };
+            };
+        };
+    }
+
     template<typename Ter, typename Iter, typename... Args>
     concept Terminal = requires {
         requires Iterator<Iter>;

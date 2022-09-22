@@ -74,7 +74,7 @@ namespace mstl {
             has_hold_value() {
                 return false;
             }
-            // 0       4      7
+                          // 0       4      7
             u8 value = 0; // [ value | hold ]
         };
 
@@ -129,6 +129,7 @@ namespace mstl {
         class Option: public OptionBase<T> {
         public:
             template<typename... Args>
+            requires (!std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<Args>> && ...)
             MSTL_INLINE
             static Option<T> some(Args... args) {
                 return { std::move(T{ std::forward<Args>(args)... }) };
@@ -148,6 +149,7 @@ namespace mstl {
         class Option<T>: public OptionBase<T> {
         public:
             template<typename... Args>
+            requires (!std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<Args>> && ...)
             MSTL_INLINE
             static Option<T> some(Args... args) {
                 return { std::move(T{ std::forward<Args>(args)... }) };
@@ -186,11 +188,14 @@ namespace mstl {
         class Option<T>: public OptionBase<T> {
         public:
             template<typename... Args>
+            requires (!std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<Args>> && ...)
             MSTL_INLINE
             static Option<T> some(Args&&... args) {
-                return { std::move(T{ std::forward<Args>(args)... }) };
+                return Option<T>{ T{ std::forward<Args>(args)... } };
             }
-            MSTL_INLINE static Option<T> some(T t) { return Option<T>{ t }; }
+            MSTL_INLINE static Option<T> some(T t) {
+                return Option<T>{ t };
+            }
             MSTL_INLINE static Option<T> none() { return { }; }
 
             template<typename U>

@@ -8,7 +8,8 @@
 #include <intrinsics.h>
 #include <ops/callable.h>
 #include <iter/iter_concepts.h>
-#include <iter/terminal_concepts.h>
+#include "iter/termnals/terminal_concepts.h"
+#include <iter/adapters/adapter_concepts.h>
 #include <iter/adapters/combinator_concepts.h>
 
 namespace mstl::iter {
@@ -65,6 +66,18 @@ namespace mstl::iter {
 
         // 递归调用 combine 模拟链式调用
         return combine(combinatorFunc(iter, lambda), args...);
+    }
+
+    template<Iterator Iter, typename AdapterHolder>
+    requires _private::AdapterHolder<AdapterHolder, Iter>
+    MSTL_INLINE decltype(auto) operator|(Iter iter, AdapterHolder holder) {
+        return holder.to_adapter(std::move(iter));
+    }
+
+    template<Iterator Iter, typename TerminalHolder>
+    requires terminal::_private::TerminalHolder<TerminalHolder, Iter>
+    MSTL_INLINE decltype(auto) operator|(Iter iter, TerminalHolder holder) {
+        return holder.call(std::move(iter));
     }
 }
 

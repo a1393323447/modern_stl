@@ -128,9 +128,9 @@ namespace mstl::ops {
                  std::same_as<I, Idx>
         Option<I> next() {
             if (low == high) {
-                return Option<I>::none();
+                return Option<Item>::none();
             } else {
-                auto value = Option<I>::some(low);
+                auto value = Option<Item>::some(low);
                 low++;
                 return value;
             }

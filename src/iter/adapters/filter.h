@@ -6,98 +6,159 @@
 #define __MODERN_STL_FILTER_H__
 
 #include <iter/iter_concepts.h>
-#include <iter/terminals.h>
+#include "iter/termnals/terminals.h"
 
 namespace mstl::iter {
+    namespace _private {
+        template<Iterator Iter, typename P, bool ...Predict>
+        requires ops::Predicate<P, typename Iter::Item&>
+        class FilterIter {
+            static_assert(
+                (Predict && ... && false),
+                "Too many prediction for Filter\n"
+            );
+        };
+
+        template<Iterator Iter, typename P>
+        requires ops::Predicate<P, typename Iter::Item&>
+        class FilterIter<Iter, P> {
+        public:
+            using Item = typename Iter::Item;
+
+            FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
+
+            MSTL_INLINE
+            Option<Item> next() noexcept {
+                return find(this->iter, predicate);
+            }
+
+            MSTL_INLINE
+            FilterIter<Iter, P>
+            into_iter() noexcept { return *this; }
+
+        private:
+            Iter iter;
+            P predicate;
+        };
+
+        template<Iterator Iter, typename P, bool Predict>
+        requires ops::Predicate<P, typename Iter::Item&>
+        class FilterIter<Iter, P, Predict> {
+        public:
+            using Item = typename Iter::Item;
+
+            FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
+
+            MSTL_INLINE
+            Option<Item> next() noexcept {
+                return find<Iter, P, Predict>(this->iter, predicate);
+            }
+
+            MSTL_INLINE
+            FilterIter<Iter, P, Predict>
+            into_iter() noexcept { return *this; }
+
+        private:
+            Iter iter;
+            P predicate;
+        };
+
+        template<typename Lambda, bool... Predict>
+        class FilterHolder {
+            static_assert(
+                (Predict && ... && false),
+                "Too many prediction for Filter\n"
+            );
+        };
+
+        template<typename Lambda, bool Predict>
+        class FilterHolder<Lambda, Predict> {
+        public:
+            FilterHolder(Lambda lambda): lambda(lambda) {}
+            template<typename Iter>
+            MSTL_INLINE
+            FilterIter<Iter, Lambda, Predict>
+            to_adapter(Iter iter) {
+                return FilterIter<Iter, Lambda, Predict>{ std::move(iter), std::move(lambda) };
+            }
+        private:
+            Lambda lambda;
+        };
+
+        template<typename Lambda>
+        class FilterHolder<Lambda> {
+        public:
+            FilterHolder(Lambda lambda): lambda(lambda) {}
+            template<typename Iter>
+            MSTL_INLINE
+            FilterIter<Iter, Lambda>
+            to_adapter(Iter iter) {
+                return FilterIter<Iter, Lambda>{ std::move(iter), std::move(lambda) };
+            }
+        private:
+            Lambda lambda;
+        };
+
+        template<Iterator Iter, typename P>
+        FilterIter<Iter, P>
+        filter(Iter iter, P predicate) noexcept {
+            return FilterIter<Iter, P>{ iter, predicate };
+        }
+
+        template<Iterator Iter, typename P, bool Predict>
+        FilterIter<Iter, P, Predict>
+        filter(Iter iter, P predicate) noexcept {
+            return FilterIter<Iter, P, Predict>{ iter, predicate };
+        }
+    }
 
     constexpr bool Likely = true;
     constexpr bool Unlikely = false;
 
-    template<Iterator Iter, typename P, bool ...args>
-    requires ops::Predicate<P, typename Iter::Item&>
-    class FilterIter {};
 
-    template<Iterator Iter, typename P>
-    requires ops::Predicate<P, typename Iter::Item&>
-    class FilterIter<Iter, P> {
-    public:
-        using Item = typename Iter::Item;
-
-        FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
-
-        MSTL_INLINE
-        Option<Item> next() noexcept {
-            return find(this->iter, predicate);
-        }
-
-        MSTL_INLINE
-        FilterIter<Iter, P>
-        into_iter() noexcept { return *this; }
-
-    private:
-        Iter iter;
-        P predicate;
-    };
-
-    template<Iterator Iter, typename P, bool Likely>
-    requires ops::Predicate<P, typename Iter::Item&>
-    class FilterIter<Iter, P, Likely> {
-    public:
-        using Item = typename Iter::Item;
-
-        FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
-
-        MSTL_INLINE
-        Option<Item> next() noexcept {
-            return find<Iter, P, Likely>(this->iter, predicate);
-        }
-
-        MSTL_INLINE
-        FilterIter<Iter, P, Likely>
-        into_iter() noexcept { return *this; }
-
-    private:
-        Iter iter;
-        P predicate;
-    };
-
-    template<Iterator Iter, typename P>
-    FilterIter<Iter, P>
-    filter(Iter iter, P predicate) noexcept {
-        return FilterIter<Iter, P>{ iter, predicate };
+    template<typename Lambda>
+    MSTL_INLINE
+    _private::FilterHolder<Lambda>
+    filter(Lambda&& lambda) {
+        return _private::FilterHolder<Lambda>{ std::forward<Lambda>(lambda) };
     }
 
-    template<Iterator Iter, typename P, bool Likely>
-    FilterIter<Iter, P, Likely>
-    filter(Iter iter, P predicate) noexcept {
-        return FilterIter<Iter, P, Likely>{ iter, predicate };
+    template<bool Predict, typename Lambda>
+    MSTL_INLINE
+    _private::FilterHolder<Lambda, Predict>
+    filter(Lambda&& lambda) {
+        return _private::FilterHolder<Lambda, Predict>{ std::forward<Lambda>(lambda) };
     }
 
     template<Iterator Iter, typename P>
-    using FilterFuncType = FilterIter<Iter, P>(*)(Iter, P);
+    using FilterFuncType = _private::FilterIter<Iter, P>(*)(Iter, P);
 
-    template<Iterator Iter, typename P, bool Likely>
-    using FilterFuncWithGuessType = FilterIter<Iter, P, Likely>(*)(Iter, P);
+    template<Iterator Iter, typename P, bool Predict>
+    using FilterFuncWithGuessType = _private::FilterIter<Iter, P, Predict>(*)(Iter, P);
 
-
-    template<bool ...Likely>
-    struct Filter;
+    template<bool ...Predict>
+    struct Filter {
+        static_assert(
+            (Predict && ... && false),
+            "Too many prediction for Filter\n"
+        );
+    };
 
     template<>
     struct Filter<> {
         template<Iterator Iter, typename F>
         static consteval FilterFuncType<Iter, F>
         get_combine_func() noexcept {
-            return filter<Iter, F>;
+            return _private::filter<Iter, F>;
         }
     };
 
-    template<bool Likely>
-    struct Filter<Likely> {
+    template<bool Predict>
+    struct Filter<Predict> {
         template<Iterator Iter, typename F>
-        static consteval FilterFuncWithGuessType<Iter, F, Likely>
+        static consteval FilterFuncWithGuessType<Iter, F, Predict>
         get_combine_func() noexcept {
-            return filter<Iter, F, Likely>;
+            return _private::filter<Iter, F, Predict>;
         }
     };
 }
