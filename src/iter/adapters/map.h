@@ -30,7 +30,6 @@ namespace mstl::iter {
             Option<Item> next() noexcept {
                 auto next_item = iter.next();
                 if (next_item.is_some()) {
-                    // FIXME: 现在的 unwrap 语义不明确
                     Item item = func(next_item.unwrap_uncheck());
                     return Option<Item>::some(item);
                 } else {

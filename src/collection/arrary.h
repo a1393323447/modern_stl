@@ -45,7 +45,7 @@ namespace mstl::collection {
         }
         MSTL_INLINE Option<T> next() {
             if (pos < N) {
-                auto n = Option<T>::some(ptr[pos]);
+                auto n = Option<T>::some(std::move(ptr[pos]));
                 pos++;
                 return n;
             } else {
@@ -147,19 +147,6 @@ namespace mstl::collection {
         using IntoIter = ArrayIter<T, N>;
         using IterRef  = ArrayIterRef<T, N>;
 
-        Array(std::initializer_list<T> list) {
-            // FIXME: panic if list.size() > N
-            usize pos = 0;
-            for (T ele: list) {
-                auto *ptr = const_cast<StoreT*>(std::addressof(ele));
-                this->values[pos] = ptr;
-                pos++;
-                if (pos >= N) {
-                    break;
-                }
-            }
-        }
-
         Array(const Array<T, N>& other) = default;
         Array<T, N>& operator=(const Array<T, N>& other) = default;
 
@@ -216,13 +203,17 @@ namespace mstl::collection {
 
         MSTL_INLINE
         T& operator[](usize pos) {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return *values[pos];
         }
 
         MSTL_INLINE
         const T& operator[](usize pos) const {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return values[pos];
         }
 
@@ -243,7 +234,9 @@ namespace mstl::collection {
         using IterRef  = ArrayIterRef<T, N>;
 
         Array(std::initializer_list<T> list) {
-            // FIXME: panic if list.size() > N
+            if (list.size() > N) {
+                MSTL_PANIC("Excess elements in array initializer");
+            }
             usize pos = 0;
             for (T ele: list) {
                 this->values[pos] = ele;
@@ -317,13 +310,17 @@ namespace mstl::collection {
 
         MSTL_INLINE
         T& operator[](usize pos) {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return values[pos];
         }
 
         MSTL_INLINE
         const T& operator[](usize pos) const {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return values[pos];
         }
 
@@ -345,7 +342,9 @@ namespace mstl::collection {
         using IterRef  = ArrayIterRef<T, N>;
 
         Array(std::initializer_list<T> list) {
-            // FIXME: panic if list.size() > N
+            if (list.size() >= N) {
+                MSTL_PANIC("Excess elements in array initializer");
+            }
             usize pos = 0;
             for (T ele: list) {
                 this->values[pos] = ele;
@@ -404,13 +403,17 @@ namespace mstl::collection {
 
         MSTL_INLINE
         T& operator[](usize pos) {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return values[pos];
         }
 
         MSTL_INLINE
         const T& operator[](usize pos) const {
-            // FIXME: panic if pos >= N
+            if (pos >= N) {
+                MSTL_PANIC("Array: index out of boundary.");
+            }
             return values[pos];
         }
 
