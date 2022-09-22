@@ -27,6 +27,7 @@ namespace mstl::collection {
     class VectorIntoIter;
 
     template<typename T, Allocator A>
+    requires (!basic::RefType<T>)
     class Vector;
 
     namespace _private {
@@ -42,6 +43,7 @@ namespace mstl::collection {
     }
 
     template<typename T, Allocator A = std::allocator<T>>
+    requires (!basic::RefType<T>)
     class Vector {
     public:
         using Item = T;
