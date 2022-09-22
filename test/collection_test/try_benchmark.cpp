@@ -17,24 +17,22 @@ std::vector<Array<std::string, 1000>> vec{};
 
 usize non_vec_1(Array<std::string, 1000>& arr) {
     usize total_len = 0;
-    combine(arr.iter(),
-        Filter{}, [](const auto& str) {
-            usize cnt = 0;
-            for (auto c: str) {
-                if (c >= 'A' + 13) {
-                    cnt++;
-                }
+    arr.iter() |
+    filter([](const auto& str) {
+        usize cnt = 0;
+        for (auto c: str) {
+            if (c >= 'A' + 13) {
+                cnt++;
             }
-            return cnt >= 10;
-        },
-        Map{}, [](const auto& str) {
-            return str.size();
-        },
-        ForEach{}, [&](usize size) {
-            total_len += size;
         }
-    );
-
+        return cnt >= 10;
+    }) |
+    map([](const auto& str) {
+        return str.size();
+    }) |
+    for_each([&](usize size) {
+        total_len += size;
+    });
     return total_len;
 }
 

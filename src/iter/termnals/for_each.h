@@ -37,7 +37,7 @@ namespace mstl::iter {
     template<typename Lambda>
     MSTL_INLINE
     ForEachHolder<Lambda> for_each(Lambda lambda) noexcept {
-        return CollectHolder<Lambda>{ lambda };
+        return ForEachHolder<Lambda>{ lambda };
     }
 
     template<Iterator Iter, typename F>
