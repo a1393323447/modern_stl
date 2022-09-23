@@ -5,24 +5,14 @@
 #ifndef __MODERN_STL_OPTION_H__
 #define __MODERN_STL_OPTION_H__
 
-#include <forward_list>
-#include <utility>
 #include <global.h>
 #include <concepts>
 #include <intrinsics.h>
 #include <basic_concepts.h>
 
 namespace mstl {
-    // 现在的 Option 中的 T 是延迟析构的 !
     template<typename T>
     class Option {
-
-    };
-
-
-    template<typename T>
-    requires (!basic::RefType<T>)
-    class Option<T> {
     public:
         template<typename... Args>
         MSTL_INLINE static Option<T> emplace(Args&&... args) {
