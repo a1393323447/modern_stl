@@ -1,6 +1,7 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/14.
 //
+#define DEBUG
 #include <option/option.h>
 #include <string>
 
@@ -9,8 +10,7 @@
 
 using namespace mstl;
 
-class Movable {
-public:
+struct Movable {
     Movable() = default;
     Movable(int n): num(n) { }
     Movable(const Movable&) = delete;
@@ -27,30 +27,21 @@ public:
 
         return *this;
     }
-
-
-private:
     int num;
 };
 
-template<typename U>
-void test(U&& u) {
-    static_assert(std::is_reference_v<U>, "This is not a reference");
-}
+BOOST_AUTO_TEST_CASE(TEST_REF){
+    static_assert(mstl::basic::Movable<Option<std::string&>>);
+    static_assert(mstl::basic::CopyAble<Option<std::string&>>);
 
-BOOST_AUTO_TEST_CASE(test_ref){
     std::string str = "123";
     Option<std::string&> op = Option<std::string&>::some(str);
     std::string& ref = op.unwrap_uncheck();
-
-    test(ref);
-
-    auto o = Option<Movable>::some(1);
-
     BOOST_CHECK_EQUAL(ref, str);
+    BOOST_CHECK(op.is_none());
 }
 
-BOOST_AUTO_TEST_CASE(test_bool) {
+BOOST_AUTO_TEST_CASE(TEST_BOOL) {
     bool f = false;
     bool t = true;
 
@@ -60,11 +51,11 @@ BOOST_AUTO_TEST_CASE(test_bool) {
 
     BOOST_CHECK(some_false.is_some());
     BOOST_CHECK(!some_false.is_none());
-    BOOST_CHECK_EQUAL(some_false.unwrap(), false);
+    BOOST_CHECK_EQUAL(some_false.as_ref(), false);
 
     BOOST_CHECK(some_true.is_some());
     BOOST_CHECK(!some_true.is_none());
-    BOOST_CHECK_EQUAL(some_true.unwrap(), true);
+    BOOST_CHECK_EQUAL(some_true.as_ref(), true);
 
     BOOST_CHECK(none.is_none());
     BOOST_CHECK(!none.is_some());
@@ -72,14 +63,33 @@ BOOST_AUTO_TEST_CASE(test_bool) {
     Option<bool> copy = some_false;
     BOOST_CHECK(copy.is_some());
     BOOST_CHECK(!copy.is_none());
-    BOOST_CHECK_EQUAL(copy.unwrap(), false);
+    BOOST_CHECK_EQUAL(copy.as_ref(), false);
 
     copy = some_true;
     BOOST_CHECK(some_true.is_some());
     BOOST_CHECK(!some_true.is_none());
-    BOOST_CHECK_EQUAL(some_true.unwrap(), true);
+    BOOST_CHECK_EQUAL(some_true.as_ref(), true);
 
     copy = none;
     BOOST_CHECK(!copy.is_some());
     BOOST_CHECK(copy.is_none());
+}
+
+BOOST_AUTO_TEST_CASE(TEST_MOVABLE) {
+    static_assert(mstl::basic::Movable<Option<Movable>>);
+    static_assert(!mstl::basic::CopyAble<Option<Movable>>);
+
+    Movable movable{ 10 };
+    auto op_1 = Option<Movable>::some(std::move(movable));
+
+    auto op_2 = Option<Movable>::emplace(10);
+
+    BOOST_CHECK(op_1.as_ref().num == op_2.as_ref().num);
+
+    Option<Movable> op_1_move = std::move(op_1);
+    BOOST_CHECK(op_1.is_none());
+    BOOST_CHECK(op_1_move.as_ref().num == op_2.as_ref().num);
+
+    movable = op_1_move.unwrap();
+    BOOST_CHECK(movable.num == op_2.as_ref().num);
 }

@@ -30,6 +30,7 @@
 #endif
 
 #ifdef DEBUG
+#undef MSTL_INLINE
 #define MSTL_INLINE
 #endif
 
