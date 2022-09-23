@@ -12,36 +12,37 @@
 #include <iterator>
 
 #include <global.h>
-#include <iter/iter_concepts.h>
+#include <iter/iterator.h>
 #include <option/option.h>
-#include <memory/allocators/allocator_concept.h>
+#include <memory/memory.h>
 
-using mstl::memory::allocators::Allocator;
 
 namespace mstl::collection {
 
     template<typename T>
     class VectorIter;
 
-    template<typename T, Allocator A, bool Reversed>
+    template<typename T, mstl::memory::concepts::Allocator A, bool Reversed>
     class VectorIntoIter;
 
-    template<typename T, Allocator A>
+    template<typename T, mstl::memory::concepts::Allocator A>
+    requires (!basic::RefType<T>)
     class Vector;
 
     namespace _private {
-        template<typename T, Allocator A>
+        template<typename T, mstl::memory::concepts::Allocator A>
         VectorIntoIter<T, A, false> vec_into_iter(Vector<T, A>&& v) {
             return VectorIntoIter<T, A, false>{std::forward<Vector<T, A>&&>(v)};
         }
 
-        template<typename T, Allocator A>
+        template<typename T, mstl::memory::concepts::Allocator A>
         VectorIntoIter<T, A, true> vec_into_iter_reversed(Vector<T, A>&& v) {
             return VectorIntoIter<T, A, true>{std::forward<Vector<T, A>&&>(v)};
         }
     }
 
-    template<typename T, Allocator A = std::allocator<T>>
+    template<typename T, mstl::memory::concepts::Allocator A = mstl::memory::allocator::Allocator>
+    requires (!basic::RefType<T>)
     class Vector {
     public:
         using Item = T;
@@ -480,9 +481,7 @@ namespace mstl::collection {
 
             std::swap(beginPtr, o.beginPtr);
 
-            if constexpr (std::allocator_traits<AllocatorType>::propagate_on_container_swap::value) {  // ?
-                std::swap(alloc, o.alloc);
-            }
+            std::swap(alloc, o.alloc);
         }
 
     private:
@@ -494,10 +493,13 @@ namespace mstl::collection {
         A alloc;
 
     private:
+        constexpr memory::Layout get_layout() {
+            return memory::Layout::from_type<T>();
+        }
+
         // Deallocate memory without destroy any element.
         constexpr void deallocate() noexcept {
-            alloc.deallocate(beginPtr, cap);
-
+            alloc.deallocate(beginPtr, get_layout(), cap);
             beginPtr = nullptr;
             len = cap = 0;
         }
@@ -507,11 +509,11 @@ namespace mstl::collection {
             len = 0;
             cap = size;
 
-            beginPtr = alloc.allocate(size);
+            beginPtr = (T*)alloc.allocate(get_layout(), size);
         }
 
         constexpr void allocate_reserve(usize size) noexcept {
-            auto nArr = alloc.allocate(size);  // Alloc
+            auto nArr = (T*)alloc.allocate(get_layout(), size);  // Alloc
             for (usize i = 0; i < len; i++) {
                 std::construct_at(nArr + i, std::move(beginPtr[i]));
             }
@@ -692,7 +694,7 @@ namespace mstl::collection {
         T *const end = nullptr;
     };
 
-    template<typename T, Allocator A>
+    template<typename T, mstl::memory::concepts::Allocator A>
     class VectorIntoIter<T, A, false> {
     public:
         using Item = T;
@@ -726,7 +728,7 @@ namespace mstl::collection {
         usize len;
     };
 
-    template<typename T, Allocator A>
+    template<typename T, mstl::memory::concepts::Allocator A>
     class VectorIntoIter<T, A, true> {
     public:
         using Item = T;
@@ -762,7 +764,7 @@ namespace mstl::collection {
         if (lhs.size() != rhs.size()) {
             return false;
         } else {
-            for (int i = 0; i < lhs.size(); i++) {
+            for (usize i = 0; i < lhs.size(); i++) {
                 if (lhs[i] != rhs[i]) {
                     return false;
                 }

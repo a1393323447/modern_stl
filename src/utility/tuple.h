@@ -234,14 +234,15 @@ namespace mstl::utility {
     class Tuple<> {  // Unit type
     public:
         Tuple() = default;
+        Tuple(const Tuple&) = default;
 
         static constexpr usize size() {
             return 0;
         }
 
-        constexpr Tuple &operator=(const Tuple &other) = default;
+        constexpr Tuple &operator=(const Tuple &) = default;
 
-        constexpr bool operator==(const Tuple &other) const {
+        constexpr bool operator==(const Tuple &) const {
             return true;
         }
     };

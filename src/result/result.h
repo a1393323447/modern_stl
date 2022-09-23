@@ -10,13 +10,10 @@
 #include "option/option.h"
 
 namespace mstl::result {
-    using mstl::basic::Error;
-    using mstl::basic::LValRefType;
-    using mstl::basic::RValRefType;
 
     namespace _private {
         // Substitute E as reference types is forbiden.
-        template<typename T, Error E> requires (!std::same_as<T, E> && !RValRefType<T>)
+        template<typename T, mstl::basic::Error E> requires (!std::same_as<T, E> && !mstl::basic::RValRefType<T>)
         class ResultBase {
         public:
             ResultBase(const T& t): type(Ok) {
@@ -216,7 +213,7 @@ namespace mstl::result {
             }
         };
 
-        template<typename T, Error E>
+        template<typename T, mstl::basic::Error E>
         class ResultRef: public ResultBase<T, E>{
             using Base = ResultBase<T, E>;
         public:
@@ -246,7 +243,7 @@ namespace mstl::result {
             ResultRef(): Base() {}
         };
 
-        template<LValRefType T, Error E>
+        template<mstl::basic::LValRefType T, mstl::basic::Error E>
         class ResultRef<T, E>: public ResultBase<std::remove_reference_t<T>*, E>{
             using TPointer = std::remove_reference_t<T>*;
             using Base = ResultBase<TPointer , E>;
@@ -305,7 +302,7 @@ namespace mstl::result {
         };
     }
 
-    template<typename T, Error E>
+    template<typename T, mstl::basic::Error E>
     class Result: public _private::ResultRef<T, E> {
         using Base = _private::ResultRef<T, E>;
     public:
@@ -320,8 +317,8 @@ namespace mstl::result {
     private:
     };
 
-    template<typename T, Error E>
-    requires basic::CopyAble<T> || LValRefType<T>
+    template<typename T, mstl::basic::Error E>
+    requires basic::CopyAble<T> || mstl::basic::LValRefType<T>
     class Result<T, E> final: public _private::ResultRef<T, E> {
         using Base = _private::ResultRef<T, E>;
     public:
