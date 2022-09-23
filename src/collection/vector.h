@@ -12,11 +12,11 @@
 #include <iterator>
 
 #include <global.h>
-#include <iter/iter_concepts.h>
+#include <iter/iterator.h>
 #include <option/option.h>
-#include <memory/allocators/allocator_concept.h>
+#include <memory/memory.h>
 
-using mstl::memory::allocators::Allocator;
+using mstl::memory::concepts::Allocator;
 
 namespace mstl::collection {
 

@@ -6,37 +6,17 @@
 #define MODERN_STL_ALLOCATOR_CONCEPT_H
 
 #include <concepts>
-#include <memory>
+#include "allocator.h"
 
-namespace mstl::memory::allocators {
-
-    namespace _private {
-        template<typename T>
-        concept allocator_stl = requires(T a, usize size) {
-            typename T::value_type;
-
-            { a.allocate(size) } -> std::same_as<typename T::value_type *>;
-            requires requires(typename T::value_type *p) {
-                { a.deallocate(p, size) };
-            };
-        };
-
-        template<typename T>
-        concept allocator_mstl = requires(T a, usize size) {
-            typename T::ValueType;
-
-            { a.allocate(size) } -> std::same_as<typename T::ValueType *>;
-            requires requires(typename T::ValueType *p) {
-                { a.deallocate(p, size) };
-            };
-        };
-    }
+namespace mstl::memory::concepts {
 
     template<typename T>
-    concept Allocator = _private::allocator_mstl<T> || _private::allocator_stl<T>;
+    concept Allocator = basic::Movable<T> && requires(T a, Layout layout, usize length, void *ptr){
+        { a.allocate(layout, length) } -> std::same_as<void *>;
+        { a.deallocate(ptr, layout, length) } -> std::same_as<void>;
+    };
 
-
-    static_assert(Allocator<std::allocator<int>>);
+    static_assert(Allocator<mstl::memory::allocator::Allocator>);
 }
 
 

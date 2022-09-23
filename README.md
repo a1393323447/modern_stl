@@ -13,8 +13,7 @@
 - `ops`: 用于定义一些列操作的 `concept`
 
 ## 目标🎯
-- [ ] 实现自己的*Allocator*.
-  - [ ] 包装std::allocator.
+- [x] 实现自己的*Allocator*.
 
 ## 示例
 `mstl::collection::Array<T>` 及迭代器的使用:

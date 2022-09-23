@@ -8,6 +8,6 @@ add_executable(modern_stl_test main.cpp)
 
 enable_testing(true)
 
-set(CMAKE_CXX_FLAGS -fconcepts-diagnostics-depth=10)
+set(CMAKE_CXX_FLAGS "-fconcepts-diagnostics-depth=10 -Wall -Wextra -Wno-attributes")
 
 add_subdirectory(test)
