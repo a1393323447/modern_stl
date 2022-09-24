@@ -17,7 +17,7 @@ namespace mstl::iter {
         using Item = typename Iter::Item;
         Option<Item> next_value = iter.next();
         while (next_value.is_some()) {
-            auto&& item = next_value.unwrap_uncheck();
+            auto&& item = next_value.as_ref_uncheck();
             if (predicate(item)) {
                 break;
             }
@@ -34,7 +34,7 @@ namespace mstl::iter {
         using Item = typename Iter::Item;
         Option<Item> next_value = iter.next();
         while (next_value.is_some()) {
-            auto&& item = next_value.unwrap_uncheck();
+            auto&& item = next_value.as_ref_uncheck();
             if constexpr (Predict) {
                 if (predicate(item)) [[likely]] {
                     break;

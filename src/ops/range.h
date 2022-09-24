@@ -16,65 +16,43 @@ namespace mstl::ops {
     public:
         RangeCursor(Idx p): pos(p) {}
 
-        template<typename I = Idx>
-        requires basic::CopyAble<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor(const RangeCursor<int>& other) {
+        RangeCursor(const RangeCursor& other)
+        requires basic::CopyAble<Idx> {
             pos = other.pos;
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I>& operator++() {
+        RangeCursor& operator++() requires Inc<Idx> {
             ++pos;
             return *this;
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> operator++(int) {
-            RangeCursor<I> old = *this;
+        RangeCursor operator++(int) requires Inc<Idx> {
+            RangeCursor old = *this;
             ++pos;
             return old;
         }
 
-        template<typename I = Idx>
-        requires Add<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> operator+(RangeCursor<I> rhs) {
+        RangeCursor operator+(RangeCursor rhs) requires Add<Idx> {
             return { pos + rhs.pos };
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I>& operator--() {
+        RangeCursor& operator--() requires Dec<Idx> {
             --pos;
             return *this;
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> operator--(int) {
-            RangeCursor<I> old = *this;
+        RangeCursor operator--(int) requires Dec<Idx> {
+            RangeCursor old = *this;
             --pos;
             return old;
         }
 
-        template<typename I = Idx>
-        requires Sub<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> operator-(RangeCursor<I> rhs) {
+        RangeCursor operator-(RangeCursor rhs) requires Sub<Idx> {
             return { pos - rhs.pos };
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        I operator*() const {
+        Idx operator*() const
+        requires Inc<Idx> {
             return pos;
         }
 
@@ -114,8 +92,8 @@ namespace mstl::ops {
 
         Range(Idx low, Idx high): low(low), high(high) {}
 
-        Range(Range<Idx>&) = default;
-        Range& operator=(const Range<Idx>&) = default;
+        Range(Range&) = default;
+        Range& operator=(const Range&) = default;
 
         template<typename U>
         requires WeakOrd<Idx, U> && WeakOrd<U, Idx>
@@ -123,10 +101,7 @@ namespace mstl::ops {
             return low <= item && item < high;
         }
 
-        template<typename I = Idx>
-        requires Inc<I> &&
-                 std::same_as<I, Idx>
-        Option<I> next() {
+        Option<Idx> next() requires Inc<Idx> {
             if (low == high) {
                 return Option<Item>::none();
             } else {
@@ -136,17 +111,13 @@ namespace mstl::ops {
             }
         }
 
-        template<typename I = Idx>
-        requires Inc<I> && Dec<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> begin() {
+        RangeCursor<Idx> begin()
+        requires Inc<Idx> && Dec<Idx> {
             return { low };
         }
 
-        template<typename I = Idx>
-        requires Inc<I> && Dec<I> &&
-                 std::same_as<I, Idx>
-        RangeCursor<I> end() {
+        RangeCursor<Idx> end()
+        requires Inc<Idx> && Dec<Idx> {
             return { high };
         }
 

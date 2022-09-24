@@ -37,7 +37,7 @@ namespace mstl {
     }
 
     template <basic::Printable ...Args>
-    [[noreturn]] MSTL_INLINE inline void panic(const char* filename, int line, Args&& ...args) noexcept {
+    MSTL_NORETURN MSTL_INLINE inline void panic(const char* filename, int line, Args&& ...args) noexcept {
         std::cerr << "Panicked at " << filename << ":" << line << std::endl;
         if constexpr (sizeof...(args)) {
             std::cerr << "Messages:\n";

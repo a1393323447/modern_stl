@@ -19,7 +19,18 @@
     #endif
 #endif
 
+#ifdef __has_cpp_attribute
+    #if __has_cpp_attribute(noreturn)
+    #define MSTL_NORETURN [[noreturn]]
+    #elif __has_cpp_attribute(gnu::noreturn)
+    #define MSTL_NORETURN [[gnu::noreturn]]
+    #else
+    #define MSTL_NORETURN
+    #endif
+#endif
+
 #ifdef DEBUG
+#undef MSTL_INLINE
 #define MSTL_INLINE
 #endif
 
