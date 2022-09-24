@@ -35,6 +35,9 @@ namespace mstl::basic {
     // True, if and only if In is one of T and Ts...
     template<typename In, typename T, typename ...Ts>
     concept OneOf = std::same_as<In, T> || (std::same_as<In, Ts> || ...);
+
+    template<typename P>
+    concept PtrType = std::is_pointer_v<P>;
 }
 
 #endif //__MODERN_STL_BASIC_CONCEPTS_H__
