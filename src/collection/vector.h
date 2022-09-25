@@ -493,7 +493,7 @@ namespace mstl::collection {
         A alloc;
 
     private:
-        constexpr memory::Layout get_layout() {
+        constexpr static memory::Layout get_layout() {
             return memory::Layout::from_type<T>();
         }
 
