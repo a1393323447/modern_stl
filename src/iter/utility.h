@@ -18,6 +18,7 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Com, typename Lambda>
     requires combinator::Combinator<Com, Iter, Lambda>
+    MSTL_INLINE constexpr
     decltype(auto) combine(Iter iter, Com, Lambda lambda) noexcept {
         constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 
@@ -30,6 +31,7 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Ter, typename... Args>
     requires terminal::Terminal<Ter, Iter, Args...>
+    MSTL_INLINE constexpr
     decltype(auto) combine(Iter iter, Ter, Args... args) noexcept {
         constexpr auto terminalFunc = Ter::template get_terminal_func<Iter, Args...>();
 
@@ -60,7 +62,8 @@ namespace mstl::iter {
      */
     template<Iterator Iter, typename Com, typename Lambda, typename... Args>
     requires combinator::Combinator<Com, Iter, Lambda>
-    MSTL_INLINE decltype(auto)  combine(Iter iter, Com, Lambda lambda, Args... args) noexcept {
+    MSTL_INLINE constexpr
+    decltype(auto)  combine(Iter iter, Com, Lambda lambda, Args... args) noexcept {
         // 通过实现了 Combinator 包装类 Com 获取真正的 combinator 函数
         constexpr auto combinatorFunc = Com::template get_combine_func<Iter, Lambda>();
 
@@ -70,13 +73,15 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename AdapterHolder>
     requires _private::AdapterHolder<AdapterHolder, Iter>
-    MSTL_INLINE decltype(auto) operator|(Iter iter, AdapterHolder holder) {
+    MSTL_INLINE constexpr
+    decltype(auto) operator|(Iter iter, AdapterHolder holder) {
         return holder.to_adapter(std::move(iter));
     }
 
     template<Iterator Iter, typename TerminalHolder>
     requires terminal::_private::TerminalHolder<TerminalHolder, Iter>
-    MSTL_INLINE decltype(auto) operator|(Iter iter, TerminalHolder holder) {
+    MSTL_INLINE constexpr
+    decltype(auto) operator|(Iter iter, TerminalHolder holder) {
         return holder.call(std::move(iter));
     }
 }

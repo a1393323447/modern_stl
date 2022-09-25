@@ -11,7 +11,7 @@
 namespace mstl::iter {
     template<Iterator Iter, typename F>
     requires ops::Callable<F, void, typename Iter::Item>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     void for_each(Iter iter, F lambda) noexcept {
         Option<typename Iter::Item> next = iter.next();
         while (next.is_some()) {
@@ -27,15 +27,16 @@ namespace mstl::iter {
 
         template<typename Iter>
         requires Iterator<std::remove_cvref_t<Iter>>
+        MSTL_INLINE constexpr
         void call(Iter&& iter) {
-            for_each(iter, lambda);
+            for_each(std::forward<Iter>(iter), lambda);
         }
     private:
         Lambda lambda;
     };
 
     template<typename Lambda>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     ForEachHolder<Lambda> for_each(Lambda lambda) noexcept {
         return ForEachHolder<Lambda>{ lambda };
     }

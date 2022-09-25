@@ -1,5 +1,6 @@
 add_executable(array_test collection_test/array_test.cpp)
 add_executable(array_benchmark collection_test/array_benchmark.cpp)
+add_executable(fold_test iter_test/fold_test.cpp)
 
 
 find_package(Boost COMPONENTS unit_test_framework)
@@ -47,6 +48,9 @@ find_package(benchmark)
 if (benchmark_FOUND)
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
     target_link_libraries(try_benchmark benchmark::benchmark)
+
+    add_executable(array_benchmark_2 collection_test/array_benchmark_2.cpp)
+    target_link_libraries(array_benchmark_2 benchmark::benchmark)
 
     add_executable(vector_benchmark collection_test/vector_benchmark.cpp collection_test/init_list.cpp)
     target_link_libraries(vector_benchmark benchmark::benchmark)

@@ -11,7 +11,7 @@
 namespace mstl::iter {
     template<Iterator Iter, typename P>
     requires ops::Predicate<P, typename Iter::Item&>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     Option<typename Iter::Item>
     find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
@@ -28,7 +28,7 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename P, bool Predict>
     requires ops::Predicate<P, typename Iter::Item&>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     Option<typename Iter::Item>
     find(Iter& iter, P predicate) noexcept {
         using Item = typename Iter::Item;
@@ -53,10 +53,12 @@ namespace mstl::iter {
     class FindHolder {
     public:
         FindHolder(Lambda lambda): lambda(lambda) {}
+
         template<typename Iter>
         requires Iterator<std::remove_cvref_t<Iter>>
+        MSTL_INLINE constexpr
         Option<typename std::remove_cvref_t<Iter>::Item>
-        run(Iter&& iter) {
+        call(Iter&& iter) {
             return find(iter, lambda);
         }
 
@@ -65,7 +67,7 @@ namespace mstl::iter {
     };
 
     template<typename Lambda>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     FindHolder<Lambda> find(Lambda lambda) {
         return FindHolder<Lambda>{ lambda };
     }

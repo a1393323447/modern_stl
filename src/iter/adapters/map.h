@@ -26,7 +26,7 @@ namespace mstl::iter {
 
             MapIter(Iter iter, Func func): iter(iter), func(func) {}
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             Option<Item> next() noexcept {
                 auto next_item = iter.next();
                 if (next_item.is_some()) {
@@ -37,7 +37,7 @@ namespace mstl::iter {
                 }
             }
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             MapIter<Iter, Func>
             into_iter() noexcept { return *this; }
 
@@ -47,7 +47,7 @@ namespace mstl::iter {
         };
 
         template<Iterator Iter, typename F>
-        MapIter<Iter, F>
+        MSTL_INLINE constexpr MapIter<Iter, F>
         map(Iter iter, F f) noexcept {
             return { iter, f };
         }
@@ -58,7 +58,7 @@ namespace mstl::iter {
             MapHolder(Lambda lambda): lambda(lambda) {}
 
             template<typename Iter>
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             MapIter<Iter, Lambda>
             to_adapter(Iter iter) {
                 return MapIter<Iter, Lambda>{ std::move(iter), lambda };
@@ -69,7 +69,7 @@ namespace mstl::iter {
     }
 
     template<typename Lambda>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     _private::MapHolder<Lambda>
     map(Lambda&& lambda) {
         return _private::MapHolder<Lambda>{ std::forward<Lambda>(lambda) };

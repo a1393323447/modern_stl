@@ -27,12 +27,12 @@ namespace mstl::iter {
 
             FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             Option<Item> next() noexcept {
                 return find(this->iter, predicate);
             }
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             FilterIter<Iter, P>
             into_iter() noexcept { return *this; }
 
@@ -49,12 +49,12 @@ namespace mstl::iter {
 
             FilterIter(Iter it, P p) noexcept : iter(it), predicate(p) { }
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             Option<Item> next() noexcept {
                 return find<Iter, P, Predict>(this->iter, predicate);
             }
 
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             FilterIter<Iter, P, Predict>
             into_iter() noexcept { return *this; }
 
@@ -75,8 +75,9 @@ namespace mstl::iter {
         class FilterHolder<Lambda, Predict> {
         public:
             FilterHolder(Lambda lambda): lambda(lambda) {}
+
             template<typename Iter>
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             FilterIter<Iter, Lambda, Predict>
             to_adapter(Iter iter) {
                 return FilterIter<Iter, Lambda, Predict>{ std::move(iter), std::move(lambda) };
@@ -89,8 +90,9 @@ namespace mstl::iter {
         class FilterHolder<Lambda> {
         public:
             FilterHolder(Lambda lambda): lambda(lambda) {}
+
             template<typename Iter>
-            MSTL_INLINE
+            MSTL_INLINE constexpr
             FilterIter<Iter, Lambda>
             to_adapter(Iter iter) {
                 return FilterIter<Iter, Lambda>{ std::move(iter), std::move(lambda) };
@@ -100,12 +102,14 @@ namespace mstl::iter {
         };
 
         template<Iterator Iter, typename P>
+        MSTL_INLINE constexpr
         FilterIter<Iter, P>
         filter(Iter iter, P predicate) noexcept {
             return FilterIter<Iter, P>{ iter, predicate };
         }
 
         template<Iterator Iter, typename P, bool Predict>
+        MSTL_INLINE constexpr
         FilterIter<Iter, P, Predict>
         filter(Iter iter, P predicate) noexcept {
             return FilterIter<Iter, P, Predict>{ iter, predicate };
@@ -117,14 +121,14 @@ namespace mstl::iter {
 
 
     template<typename Lambda>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     _private::FilterHolder<Lambda>
     filter(Lambda&& lambda) {
         return _private::FilterHolder<Lambda>{ std::forward<Lambda>(lambda) };
     }
 
     template<bool Predict, typename Lambda>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     _private::FilterHolder<Lambda, Predict>
     filter(Lambda&& lambda) {
         return _private::FilterHolder<Lambda, Predict>{ std::forward<Lambda>(lambda) };

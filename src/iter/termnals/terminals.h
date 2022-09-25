@@ -7,6 +7,7 @@
 
 #include "ops/callable.h"
 #include "iter/termnals/find.h"
+#include <iter/termnals/fold.h>
 #include "iter/termnals/collect.h"
 #include "iter/termnals/for_each.h"
 #include "iter/termnals/terminal_concepts.h"

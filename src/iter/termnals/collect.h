@@ -11,7 +11,7 @@
 namespace mstl::iter {
     template<typename FromIter, typename Iter>
     requires FromIterator<FromIter, Iter>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     FromIter collect(Iter iter) noexcept {
         return FromIter::from_iter(std::forward<Iter>(iter));
     }
@@ -23,14 +23,14 @@ namespace mstl::iter {
 
         template<typename Iter>
         requires Iterator<std::remove_cvref_t<Iter>>
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         FromIter call(Iter&& iter) {
             return collect<FromIter, std::remove_cvref_t<Iter>>(iter);
         }
     };
 
     template<typename FromIter>
-    MSTL_INLINE
+    MSTL_INLINE constexpr
     CollectHolder<FromIter> collect() noexcept {
         return CollectHolder<FromIter>{};
     }

@@ -43,7 +43,9 @@ namespace mstl::collection {
             }
             pos = other.pos;
         }
-        MSTL_INLINE Option<T> next() {
+
+        MSTL_INLINE constexpr
+        Option<T> next() {
             if (pos < N) {
                 auto n = Option<T>::some(std::move(ptr[pos]));
                 pos++;
@@ -64,7 +66,9 @@ namespace mstl::collection {
         using Item = T;
         using StoreT   = std::remove_cvref_t<T>;
         explicit ArrayIter(StoreT* *p): ptr(p) {};
-        MSTL_INLINE Option<T> next() {
+
+        MSTL_INLINE constexpr
+        Option<T> next() {
             if (pos < N) {
                 auto n = Option<T>::some(*ptr[pos]);
                 pos++;
@@ -83,7 +87,9 @@ namespace mstl::collection {
     public:
         using Item   = const T&;
         explicit ArrayIterRef(T *p): ptr(p) {};
-        MSTL_INLINE Option<const T&> next() {
+
+        MSTL_INLINE constexpr
+        Option<const T&> next() {
             if (pos < N) {
                 auto n = Option<const T&>::some(ptr[pos]);
                 pos++;
@@ -104,7 +110,9 @@ namespace mstl::collection {
         using Item = const T&;
         using StoreT = std::remove_cvref_t<T>;
         explicit ArrayIterRef(StoreT* *p): ptr(p) {};
-        MSTL_INLINE Option<const T&> next() {
+
+        MSTL_INLINE constexpr
+        Option<const T&> next() {
             if (pos < N) {
                 auto n = Option<const T&>::some(*ptr[pos]);
                 pos++;
@@ -201,7 +209,7 @@ namespace mstl::collection {
             return arr;
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         T& operator[](usize pos) {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
@@ -209,12 +217,12 @@ namespace mstl::collection {
             return *values[pos];
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         const T& operator[](usize pos) const {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
             }
-            return values[pos];
+            return *values[pos];
         }
 
         MSTL_INLINE
@@ -308,7 +316,7 @@ namespace mstl::collection {
             return arr;
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         T& operator[](usize pos) {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
@@ -316,7 +324,7 @@ namespace mstl::collection {
             return values[pos];
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         const T& operator[](usize pos) const {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
@@ -324,8 +332,8 @@ namespace mstl::collection {
             return values[pos];
         }
 
-        MSTL_INLINE
-        constexpr static usize size() { return N; }
+        MSTL_INLINE constexpr
+        static usize size() { return N; }
     private:
         Item values[N];
     };
@@ -401,7 +409,7 @@ namespace mstl::collection {
             return arr;
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         T& operator[](usize pos) {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
@@ -409,7 +417,7 @@ namespace mstl::collection {
             return values[pos];
         }
 
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         const T& operator[](usize pos) const {
             if (pos >= N) {
                 MSTL_PANIC("Array: index out of boundary.");
@@ -417,8 +425,8 @@ namespace mstl::collection {
             return values[pos];
         }
 
-        MSTL_INLINE
-        constexpr usize size() const { return N; }
+        MSTL_INLINE constexpr
+        static usize size() { return N; }
     private:
         Item values[N];
     };
