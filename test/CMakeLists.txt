@@ -42,6 +42,13 @@ if (Boost_FOUND)
             NAME result_test
             COMMAND result_test
     )
+
+    add_executable(list_test collection_test/list_test.cpp)
+    target_link_libraries(list_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME list_test
+            COMMAND list_test
+    )
 endif()
 
 find_package(benchmark)
