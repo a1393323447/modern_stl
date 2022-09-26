@@ -6,7 +6,7 @@
 #include <collection/vector.h>
 #include <collection/arrary.h>
 #include <iter/iterator.h>
-#include <utility/utility.h>
+#include "../TrackingAllocator.h"
 
 #define BOOST_TEST_MODULE Vector Test
 
@@ -17,9 +17,9 @@ using namespace collection;
 using mstl::utility::to_string;
 
 static_assert(iter::Iterator<collection::VectorIter<int>>);
-static_assert(iter::IntoIterator<collection::Vector<int>>);
+static_assert(iter::IntoIterator<collection::Vector<int, TrackingAllocator<>>>);
 
-#define INTVEC Vector<int>{0, 1, 2, 3}
+#define INTVEC Vector<int, TrackingAllocator<>>{0, 1, 2, 3}
 
 #define STRVEC Vector<std::string>{ \
     "foo",        \
@@ -82,15 +82,15 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST_STR) {
 
 BOOST_AUTO_TEST_CASE(ITER_BASED_CONSTRUCT_TEST) {
     int x[] = {0, 1, 2, 3};
-    auto a = Vector<int>{x, x + 4};
+    auto a = Vector<int, TrackingAllocator<>>{x, x + 4};
     auto b = INTVEC;
     BOOST_CHECK(a == b);
 }
 
 BOOST_AUTO_TEST_CASE(DEFAULT_TEST) {
-    auto a = Vector<int>(10);
-    auto b = Vector<int>(10, 5);
-    auto c = Vector<int>();
+    auto a = Vector<int, TrackingAllocator<>>(10);
+    auto b = Vector<int, TrackingAllocator<>>(10, 5);
+    auto c = Vector<int, TrackingAllocator<>>();
 
     BOOST_TEST_REQUIRE(a.size() == 10);
     BOOST_TEST_REQUIRE(b.size() == 10);
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(DEFAULT_TEST_STR) {
 BOOST_AUTO_TEST_CASE (COPY_TEST) {
     auto a = INTVEC;
     auto b = a;
-    auto c = Vector<int>{};
+    auto c = Vector<int, TrackingAllocator<>>{};
     c = b;
 
     BOOST_REQUIRE(a.size() == b.size());
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(MOVE_TEST) {
     BOOST_CHECK(b.size() == 4);
     BOOST_CHECK(b[0] == 0);
 
-    auto c = Vector<int>{};
+    auto c = Vector<int, TrackingAllocator<>>{};
     c = std::move(b);
 
     BOOST_CHECK(c.size() == 4);
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(ASSIGN_TEST) {
 BOOST_AUTO_TEST_CASE(FROM_ITER_TEST) {
     auto a = Array<int, 4>{0, 1, 2, 3};
     auto iter = a.into_iter();
-    auto b = iter::collect<Vector<int>>(iter);
+    auto b = iter::collect<Vector<int, TrackingAllocator<>>>(iter);
 
     auto c = INTVEC;
     BOOST_CHECK(b == c);
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(RESERVE_TEST) {
 }
 
 BOOST_AUTO_TEST_CASE(SWAP_TEST) {
-    auto a = Vector<int>(10, 0);
+    auto a = Vector<int, TrackingAllocator<>>(10, 0);
     auto b = INTVEC;
 
     a.swap(b);
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(INTO_ITER_TEST) {
     BOOST_REQUIRE(a.empty());  // a and b have been moved
     BOOST_REQUIRE(b.empty());  // so that they are empty as defined
 
-    auto e = iter::collect<Vector<int>>(std::move(c));
+    auto e = iter::collect<Vector<int, TrackingAllocator<>>>(std::move(c));
     auto f = INTVEC;
     BOOST_CHECK(e == f);
 
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(INTO_ITER_TEST_STR) {
 BOOST_AUTO_TEST_CASE(ITERATION_TEST) {
     auto a = INTVEC;
 
-    auto x = iter::collect<Vector<int>>(a.iter());
+    auto x = iter::collect<Vector<int, TrackingAllocator<>>>(a.iter());
 
     BOOST_CHECK(a[2] == 2);
     BOOST_CHECK(x[2] == 2);
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(ITERATION_TEST) {
             iter::Map{}, [](int a) {
                 return a * 2;
             },
-            iter::CollectAs<Vector<int>>{}
+            iter::CollectAs<Vector<int, TrackingAllocator<>>>{}
     );
 
     BOOST_TEST_CHECK(to_string(b) == "Vec [0, 2, 4, 6]");
@@ -400,4 +400,13 @@ BOOST_AUTO_TEST_CASE(INSERT_TEST) {
     auto re = e.insert(e.begin() + 1, {"10", "10"});  // ["foo", "10", "10", "bar", "Hello", "World"]
     BOOST_TEST_CHECK(to_string(e) == "Vec [foo, 10, 10, bar, Hello, World]");
     BOOST_TEST_CHECK(*re == "10");
+}
+
+BOOST_AUTO_TEST_CASE(MEMORY_TRACK) {
+    std::cout << std::endl;
+    std::cout << "================= MEMORY TRACK =================" << std::endl;
+    TrackingAllocator<>::dump();
+    std::cout << "================= MEMORY TRACK =================" << std::endl;
+
+    BOOST_REQUIRE(TrackingAllocator<>::get_beholding_memory() == 0);
 }
