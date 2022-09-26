@@ -7,6 +7,18 @@
 
 #define MSTL_PANIC(...) mstl::panic(__FILE__, __LINE__, __VA_ARGS__)
 
+#ifdef DEBUG
+// 如果断言失败, 则panic. 仅在Debug模式下有效.
+    #define MSTL_DEBUG_ASSERT(expression, message)  \
+    do{                                             \
+        if (!(expression)) {                         \
+            MSTL_PANIC(message);                    \
+        }                                           \
+    }while(false)
+#else
+    #define MSTL_DEBUG_ASSERT(expression, message) do{}while(false)
+#endif // DEBUG
+
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
