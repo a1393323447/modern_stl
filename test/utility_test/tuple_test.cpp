@@ -66,3 +66,9 @@ BOOST_AUTO_TEST_CASE(DEFAULT_CONSTRUCT_TEST) {
     auto a = make_tuple<std::string>();
     BOOST_CHECK(get<0>(a).empty());
 }
+
+BOOST_AUTO_TEST_CASE(PAIR_TEST) {
+    auto a = mstl::utility::make_pair(0, std::string("HH"));
+    BOOST_CHECK(a.first() == 0);
+    BOOST_CHECK(a.second() == "HH");
+}
