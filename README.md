@@ -129,11 +129,11 @@ BM_with_index/real_time     113602 ns       114469 ns         6006
 ### Vector
 `mstl`实现了与C++标准库相类似的`std::vector`类, 位于`mstl::collections::Vector`(下称`Vector`).
 
-经测试, `Vector`的性能与标准库的`vector`较为接近, 甚至优于后者.
+经测试, `Vector`的性能与标准库的`vector`较为接近, 部分操作甚至优于后者.
 
-`Vector`在各版本的构造函数测试中, 对同规模测试所消耗的时间与`std::vector`均相差不到1ms, 认为可忽略不计.
-`resize`操作相比`std::vector`平均慢约19毫秒.
-而常用的`push_back`, `erase`等操作则优于`std::vector`数毫秒, `insert`操作则比`std::vector`快约一倍, 详见测试结果.
+`Vector`在各版本的构造函数测试中, 对同规模测试所消耗的时间与`std::vector`均相差不到7%, 认为可忽略不计.
+`resize`, `push_back`, `erase`等操作所消耗的时间与`std::vector`相差不到2%.
+`insert`操作则比`std::vector`快约32%, 详见测试结果.
 
 #### 测试方法
 参与测试的类分别为实验组`Vector<std::string>`和对照组`std::vector<std::string>`.
@@ -148,23 +148,23 @@ CPU Caches:
   L1 Instruction 32 KiB (x8)
   L2 Unified 512 KiB (x8)
   L3 Unified 4096 KiB (x2)
--------------------------------------------------------  ---------
-name                                                     cpu_time(ns)
-BM_default_construct<std::vector<std::string>>           11960271
-BM_default_construct<Vector<std::string>>                12650287
-BM_range_based<std::vector<std::string>>                 72569486
-BM_range_based<Vector<std::string>>                      73993039
-BM_ilist<std::vector<std::string>>                       1246
-BM_ilist<Vector<std::string>>                            1211
-BM_push_back<std::vector<std::string>>                   151250100
-BM_push_back<Vector<std::string>>                        147968690
-BM_insert<std::vector<std::string>>                      70034700
-BM_insert<Vector<std::string>>                           38442950
-BM_resize<std::vector<std::string>>                      13405257
-BM_resize<Vector<std::string>>                           15344560
-BM_reserve<std::vector<std::string>>/iterations:1000000  0
-BM_reserve<Vector<std::string>>/iterations:1000000       0
-BM_erase<std::vector<std::string>>                       171250060
-BM_erase<Vector<std::string>>                            167421970
--------------------------------------------------------  ---------
+----------------------------------------------  ---------
+name                                            cpu_time (ns)
+BM_default_construct<std::vector<std::string>>  11859722
+BM_default_construct<Vector<std::string>>       11980360
+BM_range_based<std::vector<std::string>>        90535732
+BM_range_based<Vector<std::string>>             87606666
+BM_ilist<std::vector<std::string>>              45165
+BM_ilist<Vector<std::string>>                   42234
+BM_push_back<std::vector<std::string>>          98303518
+BM_push_back<Vector<std::string>>               100647102
+BM_insert<std::vector<std::string>>             87467778
+BM_insert<Vector<std::string>>                  59784404
+BM_resize<std::vector<std::string>>             11846370
+BM_resize<Vector<std::string>>                  11703414
+BM_reserve<std::vector<std::string>>            7228
+BM_reserve<Vector<std::string>>                 7359
+BM_erase<std::vector<std::string>>              103869080
+BM_erase<Vector<std::string>>                   105997260
+----------------------------------------------  ---------
 ```
