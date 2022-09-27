@@ -57,6 +57,12 @@ namespace mstl::ops {
         }
 
         template<typename I>
+        requires PartialOrd<I, Idx> && (!StrongOrd<I, Idx>) && (!WeakOrd<I, Idx>)
+        std::partial_ordering operator<=>(const RangeCursor<I>& rhs) const {
+            return pos <=> rhs.pos;
+        }
+
+        template<typename I>
         requires WeakOrd<I, Idx> && (!StrongOrd<I, Idx>)
         std::weak_ordering operator<=>(const RangeCursor<I>& rhs) const {
             return pos <=> rhs.pos;
@@ -85,18 +91,18 @@ namespace mstl::ops {
     };
 
     template<typename Idx>
-    requires WeakOrd<Idx, Idx> &&
+    requires PartialOrd<Idx, Idx> &&
              basic::CopyAble<Idx>
     struct Range {
         using Item = Idx;
 
         Range(Idx low, Idx high): low(low), high(high) {}
 
-        Range(Range&) = default;
+        Range(const Range&) = default;
         Range& operator=(const Range&) = default;
 
         template<typename U>
-        requires WeakOrd<Idx, U> && WeakOrd<U, Idx>
+        requires PartialOrd<Idx, U> && PartialOrd<U, Idx>
         bool contains(U&& item) {
             return low <= item && item < high;
         }
@@ -109,6 +115,21 @@ namespace mstl::ops {
                 low++;
                 return value;
             }
+        }
+
+        Option<Idx> prev() requires Dec<Idx> {
+            if (low == high) {
+                return Option<Item>::none();
+            } else {
+                auto value = Option<Item>::some(high);
+                high--;
+                return value;
+            }
+        }
+
+        bool empty() {
+            // partial order
+            return !(low < high);
         }
 
         RangeCursor<Idx> begin()

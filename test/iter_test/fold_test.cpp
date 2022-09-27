@@ -1,6 +1,7 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/24.
 //
+#include <ops/range.h>
 #include <collection/arrary.h>
 #include <iter/iterator.h>
 
@@ -16,5 +17,10 @@ int main() {
         return acc + num;
     });
 
-    return sum;
+    i32 total = ops::Range<i32>(0, 10) |
+    fold(0, [&](i32 acc, i32 num) {
+        return acc + num;
+    });
+
+    return sum + total;
 }

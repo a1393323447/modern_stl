@@ -2,7 +2,7 @@
 // Created by 朕与将军解战袍 on 2022/9/13.
 //
 
-#include <collection/arrary.h>
+#include <collection/array.h>
 #include <iter/iterator.h>
 #include <iostream>
 #include <string>
@@ -17,7 +17,7 @@ struct Pow {
 };
 
 void test_into_iter() {
-    Array<i32, 10> array { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    Array<i32, 10> array = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
     auto it = array.into_iter();
     auto next = it.next();
 
