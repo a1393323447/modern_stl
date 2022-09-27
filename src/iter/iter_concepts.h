@@ -55,7 +55,7 @@ namespace mstl::iter {
     concept DoubleEndedIterator = requires {
         requires Iterator<Iter>;
         requires requires(Iter iter) {
-            { iter.prev() } -> std::same_as<typename Iter::Item>;
+            { iter.prev() } -> std::same_as<Option<typename Iter::Item>>;
         };
     };
 

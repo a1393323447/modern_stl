@@ -43,6 +43,7 @@ def process_output(benchmark_output: str) -> [BenchmarkResult]:
             cpu_time = benchmark_data[3]
             iteration = benchmark_data[5]
             res = BenchmarkResult(case, float(time), float(cpu_time), float(iteration))
+            res.iteration = 1
             print("current res = " + str(res))
             benchmark_results.append(res)
     print()

@@ -111,9 +111,8 @@ usize BM_with_index(Array<std::string, 1000>& arr) {
 
 #### 测试结果
 ```text
-2022-09-19T15:39:40-00:00
 Running F:\C++\modern-stl\cmake-build-release\test\try_benchmark.exe
-Run on (12 X 2596.94 MHz CPU s)
+Run on (12 X 2603.18 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x6)
   L1 Instruction 32 KiB (x6)
@@ -122,8 +121,8 @@ CPU Caches:
 ------------------------------------------------------------------
 Benchmark                        Time             CPU   Iterations
 ------------------------------------------------------------------
-BM_with_iter/real_time      117424 ns       117109 ns         6004
-BM_with_index/real_time     113602 ns       114469 ns         6006
+BM_with_iter/real_time      108622 ns       106854 ns         6434
+BM_with_index/real_time     107107 ns       106453 ns         6605
 ```
 
 ### Vector

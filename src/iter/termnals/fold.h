@@ -12,6 +12,7 @@ namespace mstl::iter {
 
     template<Iterator Iter, typename T, typename Lambda>
     requires ops::Callable<Lambda, T, T, typename Iter::Item>
+    constexpr
     T fold(Iter iter, T init, Lambda lambda) {
         auto next = iter.next();
         while (next.is_some()) {
