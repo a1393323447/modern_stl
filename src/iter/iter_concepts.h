@@ -51,6 +51,14 @@ namespace mstl::iter {
         { iter.next() } -> std::same_as<Option<typename Iter::Item>>;
     };
 
+    template<typename Iter>
+    concept DoubleEndedIterator = requires {
+        requires Iterator<Iter>;
+        requires requires(Iter iter) {
+            { iter.prev() } -> std::same_as<typename Iter::Item>;
+        };
+    };
+
     /**
      * @tparam Into 可以转化为 Iterator 的类型
      */
