@@ -2,8 +2,6 @@
 // Created by Shiroan on 2022/9/22.
 //
 
-// fixme 目前, 当尾节点变更时, 迭代器将会失效 考虑使用虚尾节点
-
 #ifndef MODERN_STL_LINKED_LIST_H
 #define MODERN_STL_LINKED_LIST_H
 
@@ -87,21 +85,13 @@ namespace mstl::collection {
     static_assert(concepts::ForwardNode<ForwardListNode<int>>);
     static_assert(!concepts::Node<ForwardListNode<int>>);
     static_assert(concepts::Node<ListNode<int>>);
-//
-//    template<typename T,
-//            concepts::ForwardNode Node,
-//            mstl::memory::concepts::Allocator A>
-//    requires (!basic::RefType<T>)
-//    class BaseList;
 
     template<typename T,
             concepts::ForwardNode Node,
             bool Reversed=false>
     requires (!basic::RefType<T>) && (!Reversed || (Reversed && concepts::Node<Node>))
     class ListIter {
-        Node* head;
         Node* cur;
-        Node* tail;
 
         template<typename T_,
                 concepts::ForwardNode Node_,
@@ -113,23 +103,22 @@ namespace mstl::collection {
         using Item = T&;
         using value_type = T;
 
-        ListIter(Node *head, Node *cur, Node* tail) : head(head), cur(cur), tail(tail) {}
-        ListIter(const ListIter& r): head(r.head), cur(r.cur), tail(r.tail) {}
+        ListIter(Node *cur) : cur(cur) {}
+        ListIter(const ListIter& r): cur(r.cur) {}
 
         ListIter& operator=(const ListIter& r) {
             if (&r == this) {
                 return *this;
             }
-            head = r.head;
             cur = r.cur;
             return *this;
         }
         operator ListIter<const T, Node> () {
-            return ListIter<const T, Node>{head, cur, tail};
+            return ListIter<const T, Node>{cur};
         }
 
         Option<Item> next() {
-            if (cur != nullptr && cur != head) {
+            if (cur != nullptr && cur->data != nullptr) {
                 auto res = Option<Item>::some(*cur->data);
                 cur = cur->next;
                 return res;
@@ -177,28 +166,19 @@ namespace mstl::collection {
 
         ListIter& operator--()
         requires concepts::Node<Node> {
-            if (cur == nullptr) {
-                cur = tail;
-            } else {
-                cur = cur->prev;
-            }
+            cur = cur->prev;
             return *this;
         }
 
         ListIter operator--(int)
         requires concepts::Node<Node> {
             auto tmp = *this;
-            if (cur == nullptr) {
-                cur = tail;
-            } else {
-                cur = cur->prev;
-            }
+            cur = cur->prev;
             return tmp;
         }
 
         bool operator==(const ListIter &rhs) const {
-            return head == rhs.head &&
-                   cur == rhs.cur;
+            return cur == rhs.cur;
         }
     };
 
@@ -304,7 +284,8 @@ namespace mstl::collection {
                 init_empty_list();
                 return;
             }
-            Node* h = build_virtual_head_node();
+            Node* h = build_virtual_node();
+            Node* t = build_virtual_node();
             Node* p = h;
             for (usize i = 0; i < count; i++) {
                 Node* tmp = construct_node(value);
@@ -312,9 +293,9 @@ namespace mstl::collection {
                 p = tmp;
                 len++;
             }
-
+            p->set_next(t);
             head = h;
-            tail = p;
+            tail = t;
             tail->set_next(nullptr);
         }
 
@@ -324,7 +305,8 @@ namespace mstl::collection {
                 init_empty_list();
                 return;
             }
-            Node* h = build_virtual_head_node();
+            Node* h = build_virtual_node();
+            Node* t = build_virtual_node();
             Node* p = h;
             for (usize i = 0; i < count; i++) {
                 Node* tmp = construct_node();
@@ -332,9 +314,9 @@ namespace mstl::collection {
                 p = tmp;
                 len++;
             }
-
+            p->set_next(t);
             head = h;
-            tail = p;
+            tail = t;
             tail->set_next(nullptr);
         }
 
@@ -346,7 +328,8 @@ namespace mstl::collection {
                 return;
             }
 
-            Node* h = build_virtual_head_node();
+            Node* h = build_virtual_node();
+            Node* t = build_virtual_node();
             Node* p = h;
             while (first != last) {
                 Node* tmp = construct_node(*first++);
@@ -354,9 +337,9 @@ namespace mstl::collection {
                 p = tmp;
                 len++;
             }
-
+            p->set_next(t);
             head = h;
-            tail = p;
+            tail = t;
             tail->set_next(nullptr);
         }
 
@@ -370,6 +353,7 @@ namespace mstl::collection {
         BaseList(BaseList&& list, const A& allocator) noexcept {
             MSTL_DEBUG_ASSERT(list.head != nullptr, "The list has been moved.");
             alloc = allocator;
+
             if (allocator == list.alloc) {
                 head = list.head;
                 tail = list.tail;
@@ -386,7 +370,8 @@ namespace mstl::collection {
                 }
 
                 Node* rp = list.head->next;
-                Node* h = build_virtual_head_node();
+                Node* h = build_virtual_node();
+                Node* t = build_virtual_node();
                 Node* p = h;
 
                 while (rp != nullptr) {
@@ -398,11 +383,12 @@ namespace mstl::collection {
                     len++;
                     list.destroy_node(tmp);
                 }
-
+                p->set_next(t);
                 head = h;
-                tail = p;
-                p->set_next(nullptr);
+                tail = t;
+                tail->set_next(nullptr);
                 list.destroy_node(list.head);
+                list.destroy_node(list.tail);
             }
 
             list.head = nullptr;
@@ -427,7 +413,8 @@ namespace mstl::collection {
                 return;             // unless the list has been moved
             } else {
                 clear();              // clear all elements int the list
-                destroy_node(head);  // and finally release the virtual head node.
+                destroy_node(head);  // and finally release the virtual head node
+                destroy_node(tail);  // and the virtual tail node.
             }
         }
 
@@ -436,8 +423,7 @@ namespace mstl::collection {
             if (&rhs == this) {
                 return *this;
             }
-            clear();
-            destroy_node(head);
+            this->~BaseList();
             alloc = rhs.alloc;
             copy_impl(rhs);
             return *this;
@@ -447,8 +433,7 @@ namespace mstl::collection {
             if (&rhs == this) {
                 return *this;
             }
-            clear();
-            destroy_node(head);
+            this->~BaseList();
             alloc = std::move(rhs.alloc);
             head = rhs.head;
             rhs.head = nullptr;
@@ -471,9 +456,7 @@ namespace mstl::collection {
                 p = tmp;
                 len++;
             }
-
-            tail = p;
-            tail->set_next(nullptr);
+            p->set_next(tail);
             return *this;
         }
 
@@ -486,6 +469,7 @@ namespace mstl::collection {
         }
 
     public:  // visitor
+        // todo from_iter and into_iter
         Option<T&> front() noexcept {
             if (empty()) {
                 return Option<T&>::none();
@@ -504,20 +488,20 @@ namespace mstl::collection {
             }
         }
 
-        Option<T&> back() noexcept {
+        Option<T&> back() noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<T&>::none();
             } else {
-                T* data = tail->data;
+                T* data = tail->prev->data;
                 return Option<T&>::some(*data);
             }
         }
 
-        Option<const T&> back() const noexcept {
+        Option<const T&> back() const noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<const T&>::none();
             } else {
-                const T* data = tail->data;
+                const T* data = tail->prev->data;
                 return Option<const T&>::some(*data);
             }
         }
@@ -531,7 +515,7 @@ namespace mstl::collection {
         }
 
         Iter before_begin() noexcept {
-            return ListIter<T, Node>(head, head, tail);
+            return ListIter<T, Node>(head);
         }
 
         ConstIter before_begin() const noexcept {
@@ -539,11 +523,11 @@ namespace mstl::collection {
         }
 
         ConstIter cbefore_begin() const noexcept {
-            return ListIter<const T, Node>(head, head, tail);
+            return ListIter<const T, Node>(head);
         }
 
         Iter begin() noexcept{
-            return ListIter<T, Node>(head, head->next, tail);
+            return ListIter<T, Node>(head->next);
         }
 
         ConstIter begin() const noexcept {
@@ -551,11 +535,11 @@ namespace mstl::collection {
         }
 
         ConstIter cbegin() const noexcept{
-            return ListIter<const T, Node>(head, head->next, tail);
+            return ListIter<const T, Node>(head->next);
         }
 
         Iter end() noexcept{
-            return ListIter<T, Node>(head, nullptr, tail);
+            return ListIter<T, Node>(tail);
         }
 
         ConstIter end() const noexcept{
@@ -563,12 +547,12 @@ namespace mstl::collection {
         }
 
         ConstIter cend() const noexcept{
-            return ListIter<const T, Node>(head, nullptr, tail);
+            return ListIter<const T, Node>(tail);
         }
 
         decltype(auto) rbegin() noexcept
         requires is_double_linked_list {
-            return ListIter<T, Node, true>(head, tail, tail);
+            return ListIter<T, Node, true>(tail->prev);
         }
 
         decltype(auto) rbegin() const noexcept
@@ -578,12 +562,12 @@ namespace mstl::collection {
 
         decltype(auto) crbegin() const noexcept
         requires is_double_linked_list {
-            return ListIter<const T, Node, true>(head, tail, tail);
+            return ListIter<const T, Node, true>(tail->prev);
         }
 
         decltype(auto) rend() noexcept
         requires is_double_linked_list {
-            return ListIter<T, Node, true>(head, head, tail);
+            return ListIter<T, Node, true>(head);
         }
 
         decltype(auto) rend() const noexcept
@@ -593,7 +577,7 @@ namespace mstl::collection {
 
         decltype(auto) crend() const noexcept
         requires is_double_linked_list {
-            return ListIter<const T, Node, true>(head, head, tail);
+            return ListIter<const T, Node, true>(head);
         }
 
     public:  // capacity
@@ -608,15 +592,14 @@ namespace mstl::collection {
     public:  // editors
         void clear() noexcept {
             Node* cur = head->next;
-            while (cur != nullptr) {
+            while (cur != tail) {
                 Node* tmp = cur;
                 cur = cur->next;
 
                 destroy_node(tmp);
             }
             len = 0;
-            head->set_next(nullptr);
-            tail = head;
+            head->set_next(tail);
         }
 
         Iter insert_after(ConstIter pos, const T& val)
@@ -631,8 +614,9 @@ namespace mstl::collection {
 
         Iter insert_after(ConstIter pos, usize count, const T& val)
         requires basic::CopyAble<T> {
+            MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (count == 0) {
-                return Iter(pos.head, pos.cur, pos.tail);
+                return Iter(pos.cur);
             }
             Node* p = pos.cur;
             Node* r = p;
@@ -644,16 +628,14 @@ namespace mstl::collection {
             }
             len += count;
             p->set_next(t);
-            if (t == nullptr) {
-                tail = p;
-            }
-            return {head, r->next, tail};
+            return {r->next};
         }
 
         template<iter::LegacyInputIterator InputIt>
         Iter insert_after(ConstIter pos, InputIt first, InputIt last) {
+            MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (first == last) {
-                return {pos.head, pos.cur, pos.tail};
+                return {pos.cur};
             }
             Node* p = pos.cur;
             Node* r = p;
@@ -666,10 +648,7 @@ namespace mstl::collection {
                 p = tmp;
             }
             p->set_next(t);
-            if (t == nullptr) {
-                tail = p;
-            }
-            return {head, r->next, tail};
+            return {r->next};
         }
 
         Iter insert_after(ConstIter pos, std::initializer_list<T> ilist) {
@@ -678,28 +657,25 @@ namespace mstl::collection {
 
         template<typename ...Args>
         Iter emplace_after(ConstIter pos, Args&& ...args) {
+            MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
             tmp->set_next(pos.cur->next);
             pos.cur->set_next(tmp);
             len++;
-            if (tmp->next == nullptr) {
-                tail = tmp;
-            }
-            return ListIter<T, Node>(head, tmp, tail);
+            return ListIter<T, Node>(tmp);
         }
 
         Iter erase_after(ConstIter pos) {
-            if (pos.cur->next == nullptr) {
-                return {pos.head, pos.cur, pos.tail};
+            MSTL_DEBUG_ASSERT(pos != end(), "Trying to erase element after the tail.");
+            if (pos.cur->next == tail) {
+                return end();
             } else {
                 Node* tmp = pos.cur->next;
-                pos.cur->set_next(tmp->next);
-                if (tail == tmp) {
-                    tail = (pos.cur != nullptr) ? pos.cur : head;
-                }
+                Node* r = tmp->next;
+                pos.cur->set_next(r);
                 destroy_node(tmp);
                 len--;
-                return {pos.head, pos.cur->next, pos.tail};
+                return {r};
             }
         }
 
@@ -709,19 +685,20 @@ namespace mstl::collection {
                     break;
                 erase_after(first);
             }
-            return {last.head, last.cur, last.tail};
+            return {last.cur};
         }
 
         template<class ...Args>
         Iter emplace(ConstIter pos, Args&& ...args)
         requires is_double_linked_list {
+            MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
             Node* prev = pos.cur->prev;
 
             prev->set_next(tmp);
             tmp->set_next(pos.cur);
             len++;
-            return ListIter<T, Node>(head, tmp, tail);
+            return ListIter<T, Node>(tmp);
         }
 
         Iter insert(ConstIter pos, const T& val)
@@ -736,10 +713,12 @@ namespace mstl::collection {
 
         Iter insert(ConstIter pos, usize count, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
+            MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             if (count == 0) {
-                return Iter(pos.head, pos.cur, pos.tail);
+                return Iter(pos.cur);
             }
             Node* p = pos.cur->prev;
+            Node* r = p;
             Node* t = pos.cur;
             for (usize i = 0; i < count; i++) {
                 Node* tmp = construct_node(val);
@@ -748,14 +727,14 @@ namespace mstl::collection {
             }
             len += count;
             p->set_next(t);
-            return {head, p, tail};
+            return {r->next};
         }
 
         template<iter::LegacyInputIterator InputIt>
         Iter insert(ConstIter pos, InputIt first, InputIt last)
         requires is_double_linked_list {
             if (first == last) {
-                return {pos.head, pos.cur, pos.tail};
+                return {pos.cur};
             }
             Node* p = pos.cur->prev;
             Node* r = p;
@@ -768,7 +747,7 @@ namespace mstl::collection {
                 p = tmp;
             }
             p->set_next(t);
-            return {head, r->next, tail};
+            return {r->next};
         }
 
         Iter insert(ConstIter pos, std::initializer_list<T> ilist) {
@@ -777,22 +756,25 @@ namespace mstl::collection {
 
         Iter erase(ConstIter pos)
         requires is_double_linked_list {
-            if (pos.cur == nullptr || pos.cur == head) {
-                return {pos.head, pos.cur, pos.tail};
+            if (pos.cur == tail || pos.cur == head) {
+                return {pos.cur};
             } else {
                 Node* tmp = pos.cur;
                 pos.cur->prev->set_next(tmp->next);
                 Node* r = tmp->next;
                 destroy_node(tmp);
                 len--;
-                return {pos.head, r, pos.tail};
+                return {r};
             }
         }
 
         Iter erase(ConstIter first, ConstIter last)
         requires is_double_linked_list {
             if (first == last) {
-                return {last.head, last.cur, last.tail};
+                return {last.cur};
+            }
+            if (first == before_begin()) {
+                ++first;                // skip the head
             }
             Node* h = first.cur->prev;
             h->set_next(last.cur);
@@ -802,7 +784,7 @@ namespace mstl::collection {
                 destroy_node(tmp);
                 len--;
             }
-            return {last.head, last.cur, last.tail};
+            return {last.cur};
         }
 
 
@@ -822,10 +804,6 @@ namespace mstl::collection {
 
             node->set_next(head->next);
             head->set_next(node);
-            if (tail == head) {
-                tail = node;
-            }
-
             len++;
             return *node->data;
         }
@@ -834,9 +812,6 @@ namespace mstl::collection {
             Node* tmp = head->next;
             MSTL_DEBUG_ASSERT(tmp != nullptr, "Trying to pop front at an empty list.");
             head->set_next(tmp->next);
-            if (tail == tmp) {
-                tail = head;
-            }
             destroy_node(tmp);
             len--;
         }
@@ -856,9 +831,8 @@ namespace mstl::collection {
         requires is_double_linked_list {
             Node* node = construct_node(std::forward<Args>(args)...);
 
-            node->set_next(nullptr);
-            tail->set_next(node);
-            tail = node;
+            tail->prev->set_next(node);
+            node->set_next(tail);
 
             len++;
             return *node->data;
@@ -868,9 +842,8 @@ namespace mstl::collection {
         requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             MSTL_DEBUG_ASSERT(!empty(), "Trying to pop back at an empty list.");
-            Node* tmp = tail;
-            tmp->prev->set_next(nullptr);
-            tail = tmp->prev;
+            Node* tmp = tail->prev;
+            tmp->prev->set_next(tail);
             len--;
             destroy_node(tmp);
         }
@@ -881,7 +854,7 @@ namespace mstl::collection {
             } else if (count == len) {
                 return;
             } else if (count > len) {
-                lengthen(count);
+                extend(count);
             } else {
                 shorten(count);
             }
@@ -893,7 +866,7 @@ namespace mstl::collection {
             } else if (count == len) {
                 return;
             } else if (count > len) {
-                lengthen(count, val);
+                extend(count, val);
             } else {
                 shorten(count);
             }
@@ -907,6 +880,8 @@ namespace mstl::collection {
         }
 
     public:  // Operations
+        /*
+         * todo handle the tail node
         void merge(BaseList& other) {
             merge(other, std::less<T>{});
         }
@@ -981,6 +956,7 @@ namespace mstl::collection {
         }
 
         // todo splice_after
+
         void splice_after(ConstIter pos, BaseList& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = pos.cur->next;
@@ -1042,7 +1018,7 @@ namespace mstl::collection {
             other.head = other.tail = nullptr;
             other.len = 0;
         }
-
+    */
         usize remove(const T& val) noexcept requires ops::Eq<T, T> {
             return remove_if([&](const T& val1) {
                 return val == val1;
@@ -1061,17 +1037,13 @@ namespace mstl::collection {
             Node* cur = head->next;
             Node* last = head;
 
-            while (cur != nullptr) {
+            while (cur != tail) {
                 if (predicate(*cur->data)) {
                     last->set_next(cur->next);
-                    if (cur == tail) {  // dropping the tail node
-                        tail = last;
-                    }
                     destroy_node(cur);  // drop the node
                     len--;
                     cnt++;
                     cur = last->next;
-
                 } else {
                     cur = cur->next;
                     last = last->next;
@@ -1086,11 +1058,11 @@ namespace mstl::collection {
                 return;
             }
 
-            Node* p1 = head->next;
+            Node* p1 = head;
             Node* p2 = p1->next;
             Node* p3 = p2->next;
-            Node* h = head->next;
-            Node* t = tail;
+            Node* h = head;  // the former header
+//            Node* t = tail;
             while (p2 != nullptr) {
                 p2->set_next(p1);
                 p1 = p2;
@@ -1098,25 +1070,21 @@ namespace mstl::collection {
                 if (p3 != nullptr)
                     p3 = p3->next;
             }
-
-            head->set_next(t);
-            tail = h;
             h->set_next(nullptr);
+            std::swap(head, tail);
         }
 
         void reverse() requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
-            Node* h = head->next;
-            Node* bp = head;
-            Node* p = h;
+            Node* p = head;
+            Node* ap = head->next;
             while (p != nullptr) {
-                bp = p;
-                p = p->next;
-                std::swap(bp->next, bp->prev);
+                std::swap(p->next, p->prev);
+                p = ap;
+                if (ap != nullptr)
+                    ap = ap->next;
             }
-            head->set_next(bp);
-            tail = h;
-            h->set_next(nullptr);
+            std::swap(head, tail);
         }
 
         usize unique() requires ops::Eq<T, T> {
@@ -1133,7 +1101,7 @@ namespace mstl::collection {
             Node* cur = head->next->next;
             Node* before_cur = head->next;
             Node* last = head->next;
-            while (cur != nullptr) {
+            while (cur != tail) {
                 if (p(*cur->data, *last->data)) {
                     before_cur->set_next(cur->next);
                     destroy_node(cur);  // drop the node
@@ -1149,6 +1117,8 @@ namespace mstl::collection {
             return cnt;
         }
 
+        /*
+         * todo handle tail
         void sort() {
             sort(std::less<T>());
         }
@@ -1162,6 +1132,7 @@ namespace mstl::collection {
             head->set_next(h);
             reset_tail();
         }
+     */
 
     private:
         constexpr static memory::Layout get_node_layout() {
@@ -1178,7 +1149,7 @@ namespace mstl::collection {
             return node;
         }
 
-        Node* build_virtual_head_node() {
+        Node* build_virtual_node() {
             Node* r = alloc_node();
             r->next = nullptr;
             r->data = nullptr;
@@ -1219,9 +1190,11 @@ namespace mstl::collection {
 
         // DO NOT INVOKE when the list is not empty
         void init_empty_list() {
-            Node* node = build_virtual_head_node();
-            head = node;
-            tail = node;
+            Node* h = build_virtual_node();
+            head = h;
+            Node* t = build_virtual_node();
+            tail = t;
+            head->set_next(tail);
         }
 
         void copy_impl(const BaseList& other)
@@ -1235,20 +1208,21 @@ namespace mstl::collection {
             }
 
             Node* rp = other.head->next;
-            Node* h = build_virtual_head_node();
+            Node* h = build_virtual_node();
+            Node* t = build_virtual_node();
             Node* p = h;
 
-            while (rp != nullptr) {
+            while (rp != other.tail) {
                 Node* tmp = construct_node(*static_cast<const T*>(rp->data));
                 rp = rp->next;
                 p->set_next(tmp);
                 p = tmp;
                 len++;
             }
-
+            p->set_next(t);
             head = h;
-            tail = p;
-            p->set_next(nullptr);
+            tail = t;
+            tail->set_next(nullptr);
         }
 
         void reset_tail() {
@@ -1265,9 +1239,16 @@ namespace mstl::collection {
             Node* t;
             usize d = len - count;
             if constexpr (is_double_linked_list) {
-                t = tail;
-                for (usize i = 0; i < d; i++) {
-                    t = t->prev;
+                if (d < len / 2) {  // 如果 d 小于长度的一半, 那么从尾部开始遍历会更快
+                    t = tail->prev;
+                    for (usize i = 0; i < d; i++) {
+                        t = t->prev;
+                    }
+                } else {
+                    t = head;
+                    for (usize i = 0; i < count; i++) {
+                        t = t->next;
+                    }
                 }
             } else {
                 t = head;
@@ -1275,42 +1256,55 @@ namespace mstl::collection {
                     t = t->next;
                 }
             }
-            tail = t;
-            t = t->next;
-            tail->set_next(nullptr);
+            Node* p = t->next;
+            t->set_next(tail);
 
-            while (t != nullptr) {
-                Node* tmp = t;
-                t = t->next;
+            while (p != tail) {
+                Node* tmp = p;
+                p = p->next;
                 destroy_node(tmp);
             }
             len = count;
         }
 
-        void lengthen(usize count) {
+        void extend(usize count) {
             usize d = count - len;
-            Node* p = tail;
+            Node* p;
+            if constexpr (is_double_linked_list) {
+                p = tail->prev;
+            } else {
+                p = head;
+                for (usize i = 0; i < len; i++) {
+                    p = p->next;
+                }
+            }
             for (usize i = 0; i < d; i++) {
                 Node* tmp = construct_node();
                 p->set_next(tmp);
+                tmp->set_next(tail);
                 p = tmp;
             }
-            tail = p;
-            p->set_next(nullptr);
-            len =  count;
+            len = count;
         }
 
-        void lengthen(usize count, const T& val) {
+        void extend(usize count, const T& val) {
             usize d = count - len;
-            Node* p = tail;
+            Node* p;
+            if constexpr (is_double_linked_list) {
+                p = tail->prev;
+            } else {
+                p = head;
+                for (usize i = 0; i < len; i++) {
+                    p = p->next;
+                }
+            }
             for (usize i = 0; i < d; i++) {
                 Node* tmp = construct_node(val);
                 p->set_next(tmp);
+                tmp->set_next(tail);
                 p = tmp;
             }
-            tail = p;
-            p->set_next(nullptr);
-            len =  count;
+            len = count;
         }
     };
 
