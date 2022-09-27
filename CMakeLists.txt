@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(modern_stl)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")  # Debug Mode
 
 include_directories(src)
 add_executable(modern_stl_test main.cpp)

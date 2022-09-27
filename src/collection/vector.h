@@ -15,7 +15,7 @@
 #include <iter/iterator.h>
 #include <option/option.h>
 #include <memory/memory.h>
-
+#include <ops/cmp.h>
 
 namespace mstl::collection {
 
@@ -758,9 +758,9 @@ namespace mstl::collection {
         Vector<Item, A> vec;
     };
 
-    template<typename T, typename U>
-    requires std::equality_comparable_with<T, U>
-    bool operator==(const Vector<T> &lhs, const Vector<U> &rhs) {
+    template<typename T, typename U, memory::concepts::Allocator A, memory::concepts::Allocator B>
+    requires ops::Eq<T, U>
+    bool operator==(const Vector<T, A> &lhs, const Vector<U, B> &rhs) {
         if (lhs.size() != rhs.size()) {
             return false;
         } else {
@@ -773,8 +773,8 @@ namespace mstl::collection {
         return true;
     }
 
-    template<mstl::basic::Printable T>
-    std::ostream &operator<<(std::ostream &os, const Vector<T> &vector) {
+    template<mstl::basic::Printable T, memory::concepts::Allocator A>
+    std::ostream &operator<<(std::ostream &os, const Vector<T, A> &vector) {
         os << "Vec [";
         for (usize i = 0; i < vector.size(); i++) {
             os << vector[i];
@@ -786,8 +786,8 @@ namespace mstl::collection {
         return os;
     }
 
-    template<typename T, typename U>
-    auto operator<=>(const Vector<T>& lhs, const Vector<U>& rhs)
+    template<typename T, typename U, memory::concepts::Allocator A, memory::concepts::Allocator B>
+    auto operator<=>(const Vector<T, A>& lhs, const Vector<U, B>& rhs)
     requires requires (T t, U u, usize len){
         requires std::three_way_comparable_with<T, U, std::partial_ordering>;
         { t <=> u } -> std::constructible_from<decltype(len <=> len)>;

@@ -73,6 +73,9 @@ namespace mstl::utility {
         friend const ArgAtT<pos, Arg, Args...> &
         get(const Tuple<Arg, Args...> &tuple);
 
+        template<usize pos>
+        using Type = ArgAtT<pos, Ts...>;
+
     private:
         char inner[_private::sum_of_size_of_types<Ts...>()];
 
@@ -225,6 +228,22 @@ namespace mstl::utility {
         bool operator==(const Tuple &other) const {
             return equal_impl<size() - 1>(other);
         }
+
+        auto& first() requires (sizeof...(Ts) == 2) {
+            return get<0>(*this);
+        }
+
+        const auto& first() const requires (sizeof...(Ts) == 2) {
+            return get<0>(*this);
+        }
+
+        auto& second() requires (sizeof...(Ts) == 2) {
+            return get<1>(*this);
+        }
+
+        const auto& second() const requires (sizeof...(Ts) == 2) {
+            return get<1>(*this);
+        }
     };
 
     /**
@@ -366,6 +385,15 @@ namespace mstl::utility {
     Tuple<T &, Ts &...>
     tie(T &v, Ts &...vs) {
         return Tuple<T &, Ts &...>{v, vs...};
+    }
+
+    // Pair<T, U>
+    template<typename T, typename U>
+    using Pair = Tuple<T, U>;
+
+    template<typename T, typename U>
+    Pair<T, U> make_pair(T&& t, U&& u) {
+        return make_tuple(std::forward<T>(t), std::forward<U>(u));
     }
 } // utility
 
