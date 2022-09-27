@@ -30,8 +30,8 @@ namespace mstl::memory {
             }
         }
 
-        static Layout from_size_align_unchecked(usize size, usize align) {
-            return {Layout{size, align}};
+        constexpr static Layout from_size_align_unchecked(usize size, usize align) {
+            return {size, align};
         }
 
     private:

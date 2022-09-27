@@ -43,11 +43,7 @@ Strings generate_test_data() {
 
 template<typename Vec>
 void default_construct() {
-    volatile usize res;
     Vec strs(1000000, "foo");
-    for (usize i = 0; i < 1000000; i++) {
-        res = strs[i].size();
-    }
 }
 
 template<typename Vec>
@@ -63,11 +59,6 @@ BENCHMARK_TEMPLATE(BM_default_construct, Vector<std::string>);
 template<typename Vec>
 void range_based(const Strings& vec) {
     Vec strs(vec.begin(), vec.end());
-    volatile usize res;
-
-    for (usize i = 0; i < 1000000; i++) {
-        res = strs[i].size();
-    }
 }
 
 template<typename Vec>
@@ -84,10 +75,6 @@ BENCHMARK_TEMPLATE(BM_range_based, Vector<std::string>);
 template <typename Vec>
 void ilist() {
     Vec strs(list);
-    volatile usize res;
-    for (const auto& i: strs) {
-        res = i.size();
-    }
 }
 
 template<typename Vec>
@@ -103,15 +90,11 @@ BENCHMARK_TEMPLATE(BM_ilist, Vector<std::string>);
 template <typename Vec>
 void push_back(const Strings& vec) {
     Vec strs;
-    volatile usize res;
 
     for (const auto& i : vec) {
         strs.push_back(i);
     }
 
-    for (const auto& i: strs) {
-        res = i.size();
-    }
 }
 
 template<typename Vec>
@@ -153,16 +136,8 @@ template<typename Vec>
 void resize() {
     Vec strs;
     strs.resize(1000000, "foo");
-    volatile usize res;
-
-    for (const auto& i: strs) {
-        res = i.size();
-    }
 
     strs.resize(10);
-    for (const auto& i: strs) {
-        res = i.size();
-    }
 }
 
 template<typename Vec>
@@ -186,23 +161,18 @@ void BM_reserve(benchmark::State& state) {
         reserve<Vec>();
     }
 }
-BENCHMARK_TEMPLATE(BM_reserve, std::vector<std::string>)->Iterations(1000000);
-BENCHMARK_TEMPLATE(BM_reserve, Vector<std::string>)->Iterations(1000000);
+BENCHMARK_TEMPLATE(BM_reserve, std::vector<std::string>);
+BENCHMARK_TEMPLATE(BM_reserve, Vector<std::string>);
 
 template<typename Vec>
 void erase(const Strings& vec) {
     Vec strs;
-    volatile usize res;
 
     for (const auto& i : vec) {
         strs.push_back(i);
     }
 
     strs.erase(strs.begin(), strs.begin() + 100000);
-
-    for (const auto& i: strs) {
-        res = i.size();
-    }
 }
 
 template<typename Vec>

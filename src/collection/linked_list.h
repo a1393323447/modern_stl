@@ -7,6 +7,7 @@
 
 #include <concepts>
 #include <global.h>
+#include <utility/tuple.h>
 #include <option/option.h>
 #include <basic_concepts.h>
 #include <iter/iterator.h>
@@ -185,37 +186,46 @@ namespace mstl::collection {
     namespace _private {
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        Node* merge(Node* a, Node* b, P predicate);
+        utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate);
 
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        Node* mergeSort(Node* head, P predicate) {
+        utility::Pair<Node*, Node*> mergeSort(Node* head, P predicate) {
             if (head == nullptr || head->next == nullptr) {
-                return head;
+                return utility::make_pair(head, (Node*)nullptr);
             }
+
+            static auto is_end = [](Node* n) -> bool {                      // 检测n是否为实尾节点
+                return (n->next == nullptr || n->next->data == nullptr);
+            };
 
             Node* fast = head;
             Node* slow = head;
 
-            while (fast->next != nullptr && fast->next->next != nullptr) {
+            while (!is_end(fast) &&
+                   !is_end(fast->next)) {  // after the loop, "slow" will be the mid-node.
                 fast = fast->next->next;
                 slow = slow->next;
             }
             fast = slow;
             slow = slow->next;
             fast->next = nullptr;
-            fast = mergeSort(head, predicate);
-            slow = mergeSort(slow, predicate);
-            return merge(fast, slow, predicate);
+            auto group1 = mergeSort(head, predicate);
+            auto group2 = mergeSort(slow, predicate);
+            return merge(group1.first(), group2.first(), predicate);
         }
 
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        Node* merge(Node* a, Node* b, P predicate) {
-            if (a == nullptr)
-                return b;
-            if (b == nullptr)
-                return a;
+        utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate) {
+            if (a == nullptr || a->data == nullptr)
+                return utility::make_pair(b, (Node*)nullptr);
+            if (b == nullptr || b->data == nullptr)
+                return utility::make_pair(a, (Node*)nullptr);
+
+            static auto is_end = [](Node* n) -> bool {          // 检测n是否为虚尾节点(含空节点)
+                return (n == nullptr || n->data == nullptr);
+            };
 
             Node* res;
             Node* p;
@@ -229,7 +239,7 @@ namespace mstl::collection {
             }
             p = res;
 
-            while (a != nullptr && b != nullptr) {
+            while (!is_end(a) && !is_end(b)) {
                 if (predicate(*a->data, *b->data)) {
                     p->set_next(a);
                     a = a->next;
@@ -239,13 +249,16 @@ namespace mstl::collection {
                 }
                 p = p->next;
             }
-            if (a != nullptr) {
+
+            if (!is_end(a)) {
                 p->set_next(a);
-            } else if (b != nullptr){
+            } else if (!is_end(b)){
                 p->set_next(b);
             }
-
-            return res;
+            while (!is_end(p->next)) {
+                p = p->next;
+            }
+            return utility::make_pair(res, p);
         }
     }
 
@@ -880,8 +893,6 @@ namespace mstl::collection {
         }
 
     public:  // Operations
-        /*
-         * todo handle the tail node
         void merge(BaseList& other) {
             merge(other, std::less<T>{});
         }
@@ -899,23 +910,15 @@ namespace mstl::collection {
             Node* a = head->next;
             Node* b = other.head->next;
 
-            Node* tailA = tail;
-            Node* tailB = other.tail;
-            Node* tail_;
-            if (tailA == head || p(*tailA->data, *tailB->data)) {
-                tail_ = tailB;
-            } else {
-                tail_ = tailA;
-            }
-
-            other.head->set_next(nullptr);
+            other.head->set_next(other.tail);
             len += other.len;
             other.len = 0;
-            other.tail = other.head;
 
-            Node* r = _private::merge(a, b, p);
-            head->set_next(r);
-            tail = tail_;
+            auto r = _private::merge(a, b, p);
+            head->set_next(r.first());
+            if (Node* t = r.second(); t != nullptr) {
+                t->set_next(tail);
+            }
         }
 
         void merge(BaseList&& other) {
@@ -935,24 +938,18 @@ namespace mstl::collection {
             Node* a = head->next;
             Node* b = other.head->next;
 
-            Node* tailA = tail;
-            Node* tailB = other.tail;
-            Node* tail_;
-            if (tailA == head || p(tailA, tailB)) {
-                tail_ = tailB;
-            } else {
-                tail_ = tailA;
-            }
-
             len += other.len;
             other.len = 0;
             other.destroy_node(other.head);
+            other.destroy_node(other.tail);
             other.head = nullptr;
             other.tail = nullptr;
 
-            Node* r = _private::merge(a, b, p);
-            head->set_next(r);
-            tail = tail_;
+            auto r = _private::merge(a, b, p);
+            head->set_next(r.first());
+            if (Node* t = r.second(); t != nullptr) {
+                t->set_next(tail);
+            }
         }
 
         // todo splice_after
@@ -1018,7 +1015,7 @@ namespace mstl::collection {
             other.head = other.tail = nullptr;
             other.len = 0;
         }
-    */
+
         usize remove(const T& val) noexcept requires ops::Eq<T, T> {
             return remove_if([&](const T& val1) {
                 return val == val1;
@@ -1062,7 +1059,6 @@ namespace mstl::collection {
             Node* p2 = p1->next;
             Node* p3 = p2->next;
             Node* h = head;  // the former header
-//            Node* t = tail;
             while (p2 != nullptr) {
                 p2->set_next(p1);
                 p1 = p2;
@@ -1117,8 +1113,6 @@ namespace mstl::collection {
             return cnt;
         }
 
-        /*
-         * todo handle tail
         void sort() {
             sort(std::less<T>());
         }
@@ -1126,13 +1120,13 @@ namespace mstl::collection {
         template<typename P>
         void sort(P predicate)
         requires ops::Predicate<P, T, T> {
-            // Must I use this shit?
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
-            Node* h = _private::mergeSort(head->next, predicate);
-            head->set_next(h);
-            reset_tail();
+            auto r = _private::mergeSort(head->next, predicate);
+            head->set_next(r.first());
+            if (Node* t = r.second(); t != nullptr) {
+                t->set_next(tail);
+            }
         }
-     */
 
     private:
         constexpr static memory::Layout get_node_layout() {
@@ -1223,16 +1217,6 @@ namespace mstl::collection {
             head = h;
             tail = t;
             tail->set_next(nullptr);
-        }
-
-        void reset_tail() {
-            // todo Improve
-            MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
-            Node* p = head;
-            while (p->next != nullptr) {
-                p = p->next;
-            }
-            tail = p;
         }
 
         void shorten(usize count) {

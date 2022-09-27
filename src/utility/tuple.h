@@ -392,8 +392,9 @@ namespace mstl::utility {
     using Pair = Tuple<T, U>;
 
     template<typename T, typename U>
-    Pair<T, U> make_pair(T&& t, U&& u) {
-        return make_tuple(std::forward<T>(t), std::forward<U>(u));
+    Pair<std::remove_reference_t<T>, std::remove_reference_t<U>> make_pair(T&& t, U&& u) {
+        return make_tuple<std::remove_reference_t<T>,
+                        std::remove_reference_t<U>>(std::forward<T>(t), std::forward<U>(u));
     }
 } // utility
 
