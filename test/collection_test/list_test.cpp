@@ -238,6 +238,14 @@ BOOST_AUTO_TEST_CASE(OPERATIONS_TEST) {
     List<std::string> ls4 = {"a", "a", "b", "b"};
     ls4.unique();
     BOOST_TEST_CHECK(to_string(ls4) == "List [a, b]");
+
+    ls4.splice_after(ls4.before_begin(), ls1);
+    BOOST_TEST_CHECK(ls4.size() == 8);
+    BOOST_TEST_CHECK(to_string(ls4) == "List [a, b, c, d, e, f, a, b]");
+
+    ls4.splice(ls4.end(), ls3);
+    BOOST_TEST_CHECK(ls4.size() == 9);
+    BOOST_TEST_CHECK(to_string(ls4) == "List [a, b, c, d, e, f, a, b, hello]");
 }
 
 BOOST_AUTO_TEST_CASE(MEMORY_TRACK) {

@@ -1006,68 +1006,58 @@ namespace mstl::collection {
             }
         }
 
-        // todo splice_after
-
         void splice_after(const_iterator pos, BaseList& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
-            Node* t = pos.cur->next;
+            Node* t = other.real_tail();
+
+            t->set_next(pos.cur->next);
             pos.cur->set_next(h);
-            if (t == nullptr) {
-                tail = other.tail;
-            } else {
-                other.tail->set_next(t);
-            }
+
+            other.head->set_next(other.tail);
             len += other.len;
-            other.head->set_next(nullptr);
-            other.tail = head;
             other.len = 0;
         }
 
         void splice(const_iterator pos, BaseList& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
-            Node* t = pos.cur;
+            Node* t = other.real_tail();
+
             pos.cur->prev->set_next(h);
-            if (t == nullptr) {
-                tail = other.tail;
-            } else {
-                other.tail->set_next(t);
-            }
+            t->set_next(pos.cur);
+
+            other.head->set_next(other.tail);
             len += other.len;
-            other.head->set_next(nullptr);
-            other.tail = head;
             other.len = 0;
         }
 
         void splice_after(const_iterator pos, BaseList&& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
-            Node* t = pos.cur->next;
+            Node* t = other.real_tail();
+
+            t->set_next(pos.cur->next);
             pos.cur->set_next(h);
-            if (t == nullptr) {
-                tail = other.tail;
-            } else {
-                other.tail->set_next(t);
-            }
+
             len += other.len;
-            other.destroy_node(other.head);
-            other.head = other.tail = nullptr;
             other.len = 0;
+            other.destroy_node(other.head);
+            other.destroy_node(other.tail);
+            other.head = other.tail = nullptr;
         }
 
         void splice(const_iterator pos, BaseList&& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
-            Node* t = pos.cur;
+            Node* t = other.real_tail();
+
             pos.cur->prev->set_next(h);
-            if (t == nullptr) {
-                tail = other.tail;
-            } else {
-                other.tail->set_next(t);
-            }
+            t->set_next(pos.cur);
+
             len += other.len;
-            other.destroy_node(other.head);
-            other.head = other.tail = nullptr;
             other.len = 0;
+            other.destroy_node(other.head);
+            other.destroy_node(other.tail);
+            other.head = other.tail = nullptr;
         }
 
         usize remove(const T& val) noexcept requires ops::Eq<T, T> {
@@ -1343,6 +1333,18 @@ namespace mstl::collection {
                 p = tmp;
             }
             len = count;
+        }
+
+        Node* real_tail() const {
+            Node* p = head;
+            while (p->next != tail) {
+                p = p->next;
+            }
+            return p;
+        }
+
+        Node* real_tail() const requires is_double_linked_list {
+            return tail->prev;
         }
     };
 
