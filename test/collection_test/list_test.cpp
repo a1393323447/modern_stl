@@ -76,8 +76,8 @@ BOOST_AUTO_TEST_CASE(CONSTRUCT_ASSIGN_TEST) {
 
 BOOST_AUTO_TEST_CASE(ITER_TEST) {
     List<std::string> ls1 = STRS;
-    auto vec1cls1 = iter::collect<collection::Vector<std::string>>(ls1.iter());
-    BOOST_TEST_CHECK(to_string(vec1cls1) == "Vec [foo, bar, hello, world]");
+    auto ls2c1 = iter::collect<collection::List<std::string>>(ls1.iter());
+    BOOST_TEST_CHECK(to_string(ls2c1) == "List [foo, bar, hello, world]");
 
     std::cout << "ITERATION_TEST [";  // Test for range-based for statement
     for (const auto &i: ls1) {
@@ -102,6 +102,11 @@ BOOST_AUTO_TEST_CASE(ITER_TEST) {
 
     auto r = ls1.rbegin();
     BOOST_TEST_CHECK(*r == "world");
+
+    auto iter = ls2c1.into_iter();
+    BOOST_TEST_CHECK(iter.next().unwrap() == "foo");
+    BOOST_TEST_CHECK(iter.prev().unwrap() == "world");
+    BOOST_TEST_CHECK(ls2c1.moved());
 }
 
 BOOST_AUTO_TEST_CASE(EDITOR_TEST) {

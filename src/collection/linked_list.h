@@ -88,10 +88,48 @@ namespace mstl::collection {
     static_assert(concepts::Node<ListNode<int>>);
 
     template<typename T,
+            concepts::ForwardNode Node>
+    requires (!basic::RefType<T>)
+    class ListIter{
+        Node* start;        // must be init to head->next
+        Node* end;          // must be init to tail
+
+    public:
+        using Item = T&;
+
+        ListIter(Node *start, Node *anEnd) : start(start), end(anEnd) {}
+
+        ListIter(const ListIter&) = default;
+
+        Option<Item> next() {
+            if (start != end) {
+                auto res = Option<T&>::some(*start->data);
+                start  = start->next;
+                return res;
+            } else {
+                return Option<T&>::none();
+            }
+        }
+
+        Option<Item> prev()
+        requires concepts::Node<Node> {
+            if (end != start) {
+                end = end->prev;
+                return Option<T&>::some(*end->data);
+            } else {
+                return Option<T&>::none();
+            }
+        }
+    };
+
+    static_assert(mstl::iter::Iterator<ListIter<int, ForwardListNode<int>>>);
+    static_assert(mstl::iter::DoubleEndedIterator<ListIter<int, ListNode<int>>>);
+
+    template<typename T,
             concepts::ForwardNode Node,
             bool Reversed=false>
     requires (!basic::RefType<T>) && (!Reversed || (Reversed && concepts::Node<Node>))
-    class ListIter {
+    class ListIterSTL {
         Node* cur;
 
         template<typename T_,
@@ -101,31 +139,20 @@ namespace mstl::collection {
         friend class BaseList;
 
     public:
-        using Item = T&;
         using value_type = T;
 
-        ListIter(Node *cur) : cur(cur) {}
-        ListIter(const ListIter& r): cur(r.cur) {}
+        ListIterSTL(Node *cur) : cur(cur) {}
+        ListIterSTL(const ListIterSTL& r): cur(r.cur) {}
 
-        ListIter& operator=(const ListIter& r) {
+        ListIterSTL& operator=(const ListIterSTL& r) {
             if (&r == this) {
                 return *this;
             }
             cur = r.cur;
             return *this;
         }
-        operator ListIter<const T, Node> () {
-            return ListIter<const T, Node>{cur};
-        }
-
-        Option<Item> next() {
-            if (cur != nullptr && cur->data != nullptr) {
-                auto res = Option<Item>::some(*cur->data);
-                cur = cur->next;
-                return res;
-            } else {
-                return Option<Item>::none();
-            }
+        operator ListIterSTL<const T, Node> () {
+            return ListIterSTL<const T, Node>{cur};
         }
 
         T& operator*() {
@@ -136,49 +163,49 @@ namespace mstl::collection {
             return *cur->data;
         }
 
-        ListIter& operator++() {
+        ListIterSTL& operator++() {
             cur = cur->next;
             return *this;
         }
 
-        ListIter operator++(int) {
+        ListIterSTL operator++(int) {
             auto tmp = *this;
             cur = cur->next;
             return tmp;
         }
 
-        ListIter& operator++() requires Reversed {
+        ListIterSTL& operator++() requires Reversed {
             return operator--();
         }
 
-        ListIter operator++(int) requires Reversed {
+        ListIterSTL operator++(int) requires Reversed {
             return operator--(0);
         }
 
-        ListIter& operator--()
+        ListIterSTL& operator--()
         requires concepts::Node<Node> && Reversed {
             return operator++();
         }
 
-        ListIter operator--(int)
+        ListIterSTL operator--(int)
         requires concepts::Node<Node> && Reversed {
             return operator++(0);
         }
 
-        ListIter& operator--()
+        ListIterSTL& operator--()
         requires concepts::Node<Node> {
             cur = cur->prev;
             return *this;
         }
 
-        ListIter operator--(int)
+        ListIterSTL operator--(int)
         requires concepts::Node<Node> {
             auto tmp = *this;
             cur = cur->prev;
             return tmp;
         }
 
-        bool operator==(const ListIter &rhs) const {
+        bool operator==(const ListIterSTL &rhs) const {
             return cur == rhs.cur;
         }
     };
@@ -264,6 +291,12 @@ namespace mstl::collection {
 
     template<typename T,
             concepts::ForwardNode Node,
+            mstl::memory::concepts::Allocator A>
+    requires (!basic::RefType<T>)
+    class ListIntoIter;
+
+    template<typename T,
+            concepts::ForwardNode Node,
             mstl::memory::concepts::Allocator A=mstl::memory::allocator::Allocator>
     requires (!basic::RefType<T>)
     class BaseList {
@@ -279,7 +312,9 @@ namespace mstl::collection {
         using Pointer = T*;
         using Reference = T&;
         using Iter = ListIter<T, Node>;
-        using ConstIter = ListIter<const T, Node>;
+        using IntoIter = ListIntoIter<T, Node, A>;
+        using iterator = ListIterSTL<T, Node>;
+        using const_iterator = ListIterSTL<const T, Node>;
 
         BaseList() noexcept requires std::default_initializable<A>
         : alloc{} {
@@ -482,7 +517,6 @@ namespace mstl::collection {
         }
 
     public:  // visitor
-        // todo from_iter and into_iter
         Option<T&> front() noexcept {
             if (empty()) {
                 return Option<T&>::none();
@@ -519,53 +553,73 @@ namespace mstl::collection {
             }
         }
     public:  // iter
-        Iter iter() noexcept {
-            return begin();
+        IntoIter into_iter() {
+            return IntoIter{std::move(*this)};
         }
 
-        ConstIter iter() const noexcept {
+        template<iter::Iterator Iter>
+        static decltype(auto) from_iter(Iter iter) {
+            BaseList res;
+            Node* p = res.head;
+            auto val = iter.next();
+            while (val.is_some()) {
+                Node* tmp = res.template construct_node(val.unwrap_uncheck());
+                p->set_next(tmp);
+                p = tmp;
+                val = iter.next();
+                res.len++;
+            }
+            p->set_next(res.tail);
+            return res;
+        }
+
+        Iter iter() noexcept {
+            return {head->next, tail};
+        }
+
+        const_iterator iter() const noexcept {
             return cbegin();
         }
 
-        Iter before_begin() noexcept {
-            return ListIter<T, Node>(head);
+        iterator before_begin() noexcept {
+            return ListIterSTL<T, Node>(head);
         }
 
-        ConstIter before_begin() const noexcept {
+        const_iterator before_begin() const noexcept {
             return cbefore_begin();
         }
 
-        ConstIter cbefore_begin() const noexcept {
-            return ListIter<const T, Node>(head);
+        const_iterator cbefore_begin() const noexcept {
+            return ListIterSTL<const T, Node>(head);
         }
 
-        Iter begin() noexcept{
-            return ListIter<T, Node>(head->next);
+        iterator begin() noexcept{
+            return ListIterSTL<T, Node>(head->next);
         }
 
-        ConstIter begin() const noexcept {
+        const_iterator begin() const noexcept {
             return cbegin();
         }
 
-        ConstIter cbegin() const noexcept{
-            return ListIter<const T, Node>(head->next);
+        const_iterator cbegin() const noexcept{
+            return ListIterSTL<const T, Node>(head->next);
         }
 
-        Iter end() noexcept{
-            return ListIter<T, Node>(tail);
+        iterator end() noexcept{
+            return ListIterSTL<T, Node>(tail);
         }
 
-        ConstIter end() const noexcept{
+        const_iterator end() const noexcept{
             return cend();
         }
 
-        ConstIter cend() const noexcept{
-            return ListIter<const T, Node>(tail);
+        const_iterator cend() const noexcept{
+            return ListIterSTL<const T, Node>(tail);
         }
 
         decltype(auto) rbegin() noexcept
         requires is_double_linked_list {
-            return ListIter<T, Node, true>(tail->prev);
+            return ListIterSTL<T, Node, true>(tail->prev);
         }
 
         decltype(auto) rbegin() const noexcept
@@ -575,12 +629,12 @@ namespace mstl::collection {
 
         decltype(auto) crbegin() const noexcept
         requires is_double_linked_list {
-            return ListIter<const T, Node, true>(tail->prev);
+            return ListIterSTL<const T, Node, true>(tail->prev);
         }
 
         decltype(auto) rend() noexcept
         requires is_double_linked_list {
-            return ListIter<T, Node, true>(head);
+            return ListIterSTL<T, Node, true>(head);
         }
 
         decltype(auto) rend() const noexcept
@@ -590,7 +644,7 @@ namespace mstl::collection {
 
         decltype(auto) crend() const noexcept
         requires is_double_linked_list {
-            return ListIter<const T, Node, true>(head);
+            return ListIterSTL<const T, Node, true>(head);
         }
 
     public:  // capacity
@@ -615,21 +669,21 @@ namespace mstl::collection {
             head->set_next(tail);
         }
 
-        Iter insert_after(ConstIter pos, const T& val)
+        iterator insert_after(const_iterator pos, const T& val)
         requires basic::CopyAble<T> {
             return emplace_after(pos, val);
         }
 
-        Iter insert_after(ConstIter pos, T&& val)
+        iterator insert_after(const_iterator pos, T&& val)
         {
             return emplace_after(pos, std::forward<T>(val));
         }
 
-        Iter insert_after(ConstIter pos, usize count, const T& val)
+        iterator insert_after(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (count == 0) {
-                return Iter(pos.cur);
+                return iterator(pos.cur);
             }
             Node* p = pos.cur;
             Node* r = p;
@@ -645,7 +699,7 @@ namespace mstl::collection {
         }
 
         template<iter::LegacyInputIterator InputIt>
-        Iter insert_after(ConstIter pos, InputIt first, InputIt last) {
+        iterator insert_after(const_iterator pos, InputIt first, InputIt last) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (first == last) {
                 return {pos.cur};
@@ -664,21 +718,21 @@ namespace mstl::collection {
             return {r->next};
         }
 
-        Iter insert_after(ConstIter pos, std::initializer_list<T> ilist) {
+        iterator insert_after(const_iterator pos, std::initializer_list<T> ilist) {
             return insert_after(pos, ilist.begin(), ilist.end());
         }
 
         template<typename ...Args>
-        Iter emplace_after(ConstIter pos, Args&& ...args) {
+        iterator emplace_after(const_iterator pos, Args&& ...args) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
             tmp->set_next(pos.cur->next);
             pos.cur->set_next(tmp);
             len++;
-            return ListIter<T, Node>(tmp);
+            return ListIterSTL<T, Node>(tmp);
         }
 
-        Iter erase_after(ConstIter pos) {
+        iterator erase_after(const_iterator pos) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to erase element after the tail.");
             if (pos.cur->next == tail) {
                 return end();
@@ -692,7 +746,7 @@ namespace mstl::collection {
             }
         }
 
-        Iter erase_after(ConstIter first, ConstIter last) {
+        iterator erase_after(const_iterator first, const_iterator last) {
             while (true) {
                 if (first == last || first.cur->next == last.cur)
                     break;
@@ -702,7 +756,7 @@ namespace mstl::collection {
         }
 
         template<class ...Args>
-        Iter emplace(ConstIter pos, Args&& ...args)
+        iterator emplace(const_iterator pos, Args&& ...args)
         requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
@@ -711,24 +765,24 @@ namespace mstl::collection {
             prev->set_next(tmp);
             tmp->set_next(pos.cur);
             len++;
-            return ListIter<T, Node>(tmp);
+            return ListIterSTL<T, Node>(tmp);
         }
 
-        Iter insert(ConstIter pos, const T& val)
+        iterator insert(const_iterator pos, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             return emplace(pos, val);
         }
 
-        Iter insert(ConstIter pos, T&& val)
+        iterator insert(const_iterator pos, T&& val)
             requires is_double_linked_list {
             return emplace(pos, std::forward<T>(val));
         }
 
-        Iter insert(ConstIter pos, usize count, const T& val)
+        iterator insert(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             if (count == 0) {
-                return Iter(pos.cur);
+                return iterator(pos.cur);
             }
             Node* p = pos.cur->prev;
             Node* r = p;
@@ -744,7 +798,7 @@ namespace mstl::collection {
         }
 
         template<iter::LegacyInputIterator InputIt>
-        Iter insert(ConstIter pos, InputIt first, InputIt last)
+        iterator insert(const_iterator pos, InputIt first, InputIt last)
         requires is_double_linked_list {
             if (first == last) {
                 return {pos.cur};
@@ -763,11 +817,11 @@ namespace mstl::collection {
             return {r->next};
         }
 
-        Iter insert(ConstIter pos, std::initializer_list<T> ilist) {
+        iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
             return insert(pos, ilist.begin(), ilist.end());
         }
 
-        Iter erase(ConstIter pos)
+        iterator erase(const_iterator pos)
         requires is_double_linked_list {
             if (pos.cur == tail || pos.cur == head) {
                 return {pos.cur};
@@ -781,7 +835,7 @@ namespace mstl::collection {
             }
         }
 
-        Iter erase(ConstIter first, ConstIter last)
+        iterator erase(const_iterator first, const_iterator last)
         requires is_double_linked_list {
             if (first == last) {
                 return {last.cur};
@@ -954,7 +1008,7 @@ namespace mstl::collection {
 
         // todo splice_after
 
-        void splice_after(ConstIter pos, BaseList& other) noexcept {
+        void splice_after(const_iterator pos, BaseList& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = pos.cur->next;
             pos.cur->set_next(h);
@@ -969,7 +1023,7 @@ namespace mstl::collection {
             other.len = 0;
         }
 
-        void splice(ConstIter pos, BaseList& other) noexcept
+        void splice(const_iterator pos, BaseList& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = pos.cur;
@@ -985,7 +1039,7 @@ namespace mstl::collection {
             other.len = 0;
         }
 
-        void splice_after(ConstIter pos, BaseList&& other) noexcept {
+        void splice_after(const_iterator pos, BaseList&& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = pos.cur->next;
             pos.cur->set_next(h);
@@ -1000,7 +1054,7 @@ namespace mstl::collection {
             other.len = 0;
         }
 
-        void splice(ConstIter pos, BaseList&& other) noexcept
+        void splice(const_iterator pos, BaseList&& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = pos.cur;
@@ -1333,10 +1387,47 @@ namespace mstl::collection {
         os << "]";
         return os;
     }
+
+    template<typename T,
+            concepts::ForwardNode Node,
+            mstl::memory::concepts::Allocator A>
+    requires (!basic::RefType<T>)
+    class ListIntoIter {
+        BaseList<T, Node, A> list;
+
+    public:
+        using Item = T;
+
+        explicit ListIntoIter(BaseList<T, Node, A> &&list) : list(std::forward<BaseList<T, Node, A>>(list)) {}
+
+        Option<Item> next() {
+            if (!list.empty()) {
+                auto res = Option<T>::some(std::move(list.front().unwrap_uncheck()));
+                list.pop_front();
+                return res;
+            } else {
+                return Option<T>::none();
+            }
+        }
+
+        Option<Item> prev()
+        requires concepts::Node<Node> {
+            if (!list.empty()) {
+                auto res = Option<T>::some(std::move(list.back().unwrap_uncheck()));
+                list.pop_back();
+                return res;
+            } else {
+                return Option<T>::none();
+            }
+        }
+    };
+
+    static_assert(mstl::iter::Iterator<ListIntoIter<int, ForwardListNode<int>, memory::allocator::Allocator>>);
+    static_assert(mstl::iter::DoubleEndedIterator<ListIntoIter<int, ListNode<int>, memory::allocator::Allocator>>);
 }
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIter<T, mstl::collection::ForwardListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::ForwardListNode<T>>>
 {
     typedef forward_iterator_tag       iterator_category;
     typedef T                          value_type;
@@ -1346,7 +1437,7 @@ struct std::iterator_traits<mstl::collection::ListIter<T, mstl::collection::Forw
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIter<const T, mstl::collection::ForwardListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::ForwardListNode<T>>>
 {
     typedef forward_iterator_tag             iterator_category;
     typedef T                                value_type;
@@ -1356,7 +1447,7 @@ struct std::iterator_traits<mstl::collection::ListIter<const T, mstl::collection
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIter<T, mstl::collection::ListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::ListNode<T>>>
 {
     typedef bidirectional_iterator_tag iterator_category;
     typedef T                          value_type;
@@ -1366,7 +1457,7 @@ struct std::iterator_traits<mstl::collection::ListIter<T, mstl::collection::List
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIter<const T, mstl::collection::ListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::ListNode<T>>>
 {
     typedef bidirectional_iterator_tag  iterator_category;
     typedef T                           value_type;
