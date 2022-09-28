@@ -53,12 +53,17 @@ endif()
 
 find_package(benchmark)
 if (benchmark_FOUND)
+    add_library(init_list STATIC collection_test/init_list.cpp)
+
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
     target_link_libraries(try_benchmark benchmark::benchmark)
 
     add_executable(array_benchmark_2 collection_test/array_benchmark_2.cpp)
     target_link_libraries(array_benchmark_2 benchmark::benchmark)
 
-    add_executable(vector_benchmark collection_test/vector_benchmark.cpp collection_test/init_list.cpp)
-    target_link_libraries(vector_benchmark benchmark::benchmark)
+    add_executable(vector_benchmark collection_test/vector_benchmark.cpp)
+    target_link_libraries(vector_benchmark benchmark::benchmark init_list)
+
+    add_executable(list_benchmark collection_test/list_benchmark.cpp)
+    target_link_libraries(list_benchmark benchmark::benchmark init_list)
 endif()

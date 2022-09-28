@@ -1433,7 +1433,7 @@ struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::F
 {
     typedef forward_iterator_tag       iterator_category;
     typedef T                          value_type;
-    typedef void                       difference_type;
+    typedef mstl::usize                difference_type;
     typedef T*                         pointer;
     typedef T&                         reference;
 };
@@ -1443,7 +1443,7 @@ struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collect
 {
     typedef forward_iterator_tag             iterator_category;
     typedef T                                value_type;
-    typedef void                             difference_type;
+    typedef mstl::usize                      difference_type;
     typedef const T*                         pointer;
     typedef const T&                         reference;
 };
