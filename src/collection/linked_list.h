@@ -39,15 +39,17 @@ namespace mstl::collection {
         ForwardListNode* next;
         T* data;
 
+        // cannot be null
         template<typename ...Args>
         void construct(Args&& ...args) {
             MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
             std::construct_at(data, std::forward<Args>(args)...);
         }
 
+        // cannot be null
         void destroy() {
-            if (data != nullptr)
-                std::destroy_at(data);
+            MSTL_DEBUG_ASSERT(data != nullptr, "Trying to destroy an object at nullptr.");
+            std::destroy_at(data);
         }
 
         void set_next(ForwardListNode* n) {
@@ -286,6 +288,37 @@ namespace mstl::collection {
                 p = p->next;
             }
             return utility::make_pair(res, p);
+        }
+
+        template<typename T, concepts::ForwardNode Node>
+        struct NodeAllocHelper {
+            Node* next;
+            T* data;
+            T _d;
+
+        public:
+            NodeAllocHelper() = delete;
+        };
+
+        template<typename T, concepts::Node Node>
+        struct NodeAllocHelper<T, Node> {
+            Node* prev;
+            Node* next;
+            T* data;
+            T _d;
+
+        public:
+            NodeAllocHelper() = delete;
+        };
+
+        template<typename T, concepts::ForwardNode Node>
+        static constexpr memory::Layout get_layout() {
+            return memory::Layout::from_type<NodeAllocHelper<T, Node>>();
+        }
+
+        template<typename T, concepts::ForwardNode Node>
+        static constexpr usize get_offset() {
+            return (usize)(&((NodeAllocHelper<T, Node>*)0)->_d);
         }
     }
 
@@ -1181,9 +1214,25 @@ namespace mstl::collection {
             return memory::Layout::from_type<T>();
         }
 
+        constexpr static memory::Layout get_data_node_layout() {
+            return _private::get_layout<T, Node>();
+        }
+
+        constexpr static usize get_data_offset() {
+            return _private::get_offset<T, Node>();
+        }
+
         // allocate data node without initialize it
         Node* alloc_node() {
             Node* node = static_cast<Node*>(alloc.allocate(get_node_layout(), 1));
+            return node;
+        }
+
+        // allocate node and data within a continious space
+        Node* alloc_node_with_data() {
+            Node* node = (Node*)(alloc.allocate(get_data_node_layout(), 1));
+            T* data = (T*)(((u8*)node) + get_data_offset());
+            node->data = data;
             return node;
         }
 
@@ -1202,28 +1251,26 @@ namespace mstl::collection {
             alloc.deallocate(node, get_node_layout(), 1);
         }
 
-        T* alloc_data() {
-            T* data = static_cast<T*>(alloc.allocate(get_layout(), 1));
-            return data;
-        }
-
-        void dealloc_data(T* data) {
-            alloc.deallocate(data, get_layout(), 1);
+        void dealloc_node_with_data(Node* node) {
+            alloc.deallocate(node, get_data_node_layout(), 1);
         }
 
         template<typename ...Args>
         Node* construct_node(Args&& ...args) {
-            Node* n = alloc_node();
-            n->data = alloc_data();
+            Node* n = alloc_node_with_data();
             n->construct(std::forward<Args>(args)...);
             return n;
         }
 
         // Destroy data and the node
         void destroy_node(Node* node) {
-            node->destroy();           // destroy data that the node holds
-            dealloc_data(node->data);  // deallocate the memory of the data
-            dealloc_node(node);        // deallocate the memory of the node
+            if (node->data != nullptr) {
+                node->destroy();  // destroy data
+                dealloc_node_with_data(node);
+            } else {
+                dealloc_node(node);
+            }
+
         }
 
         // DO NOT INVOKE when the list is not empty

@@ -39,4 +39,9 @@ namespace mstl::memory {
     };
 } // memory
 
+std::ostream& operator<<(std::ostream& os, const mstl::memory::Layout& layout) {
+    os << "Layout [size: " << layout.size << ", align: " << layout.align << "]";
+    return os;
+}
+
 #endif //MODERN_STL_LAYOUT_H
