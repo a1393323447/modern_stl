@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <collection/vector.h>
-#include <collection/arrary.h>
+#include <collection/array.h>
 #include <iter/iterator.h>
 #include "../TrackingAllocator.h"
 
