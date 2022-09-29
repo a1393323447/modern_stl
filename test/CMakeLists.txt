@@ -53,7 +53,7 @@ endif()
 
 find_package(benchmark)
 if (benchmark_FOUND)
-    add_library(init_list STATIC collection_test/init_list.cpp)
+    link_directories(lib)
 
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
     target_link_libraries(try_benchmark benchmark::benchmark)
