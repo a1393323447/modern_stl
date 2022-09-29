@@ -31,64 +31,6 @@ namespace mstl::collection {
         };
     }
 
-    template<typename T>
-    requires (!basic::RefType<T>)
-    struct ForwardListNode {
-        using Item = T;
-
-        ForwardListNode* next;
-        T* data;
-
-        // cannot be null
-        template<typename ...Args>
-        void construct(Args&& ...args) {
-            MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
-            std::construct_at(data, std::forward<Args>(args)...);
-        }
-
-        // cannot be null
-        void destroy() {
-            MSTL_DEBUG_ASSERT(data != nullptr, "Trying to destroy an object at nullptr.");
-            std::destroy_at(data);
-        }
-
-        void set_next(ForwardListNode* n) {
-            next = n;
-        }
-    };
-
-    template<typename T>
-    requires (!basic::RefType<T>)
-    struct ListNode {
-        using Item = T;
-
-        ListNode* prev;
-        ListNode* next;
-        T* data;
-
-        template<typename ...Args>
-        void construct(Args&& ...args) {
-            MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
-            std::construct_at(data, std::forward<Args>(args)...);
-        }
-
-        void destroy() {
-            if (data != nullptr)
-                std::destroy_at(data);
-        }
-
-        // set the next node to n, and set the prev node of n to this, if possible
-        void set_next(ListNode* n) {
-            next = n;
-            if (n != nullptr) {
-                n->prev = this;
-            }
-        }
-    };
-    static_assert(concepts::ForwardNode<ForwardListNode<int>>);
-    static_assert(!concepts::Node<ForwardListNode<int>>);
-    static_assert(concepts::Node<ListNode<int>>);
-
     template<typename T,
             concepts::ForwardNode Node>
     requires (!basic::RefType<T>)
@@ -123,9 +65,6 @@ namespace mstl::collection {
             }
         }
     };
-
-    static_assert(mstl::iter::Iterator<ListIter<int, ForwardListNode<int>>>);
-    static_assert(mstl::iter::DoubleEndedIterator<ListIter<int, ListNode<int>>>);
 
     template<typename T,
             concepts::ForwardNode Node,
@@ -320,6 +259,68 @@ namespace mstl::collection {
         static constexpr usize get_offset() {
             return (usize)(&((NodeAllocHelper<T, Node>*)0)->_d);
         }
+
+        template<typename T>
+        requires (!basic::RefType<T>)
+        struct ForwardListNode {
+            using Item = T;
+
+            ForwardListNode* next;
+            T* data;
+
+            // cannot be null
+            template<typename ...Args>
+            void construct(Args&& ...args) {
+                MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
+                std::construct_at(data, std::forward<Args>(args)...);
+            }
+
+            // cannot be null
+            void destroy() {
+                MSTL_DEBUG_ASSERT(data != nullptr, "Trying to destroy an object at nullptr.");
+                std::destroy_at(data);
+            }
+
+            void set_next(ForwardListNode* n) {
+                next = n;
+            }
+        };
+
+        template<typename T>
+        requires (!basic::RefType<T>)
+        struct ListNode {
+            using Item = T;
+
+            ListNode* prev;
+            ListNode* next;
+            T* data;
+
+            template<typename ...Args>
+            void construct(Args&& ...args) {
+                MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
+                std::construct_at(data, std::forward<Args>(args)...);
+            }
+
+            void destroy() {
+                if (data != nullptr)
+                    std::destroy_at(data);
+            }
+
+            // set the next node to n, and set the prev node of n to this, if possible
+            void set_next(ListNode* n) {
+                next = n;
+                if (n != nullptr) {
+                    n->prev = this;
+                }
+            }
+        };
+
+        static_assert(concepts::ForwardNode<ForwardListNode<int>>);
+        static_assert(!concepts::Node<ForwardListNode<int>>);
+        static_assert(concepts::Node<ListNode<int>>);
+
+        static_assert(mstl::iter::Iterator<ListIter<int, ForwardListNode<int>>>);
+        static_assert(mstl::iter::DoubleEndedIterator<ListIter<int, ListNode<int>>>);
     }
 
     template<typename T,
@@ -1396,10 +1397,10 @@ namespace mstl::collection {
     };
 
     template <typename T, memory::concepts::Allocator A=memory::allocator::Allocator>
-    using List = BaseList<T, ListNode<T>, A>;
+    using List = BaseList<T, _private::ListNode<T>, A>;
 
     template <typename T, memory::concepts::Allocator A=memory::allocator::Allocator>
-    using ForwardList = BaseList<T, ForwardListNode<T>, A>;
+    using ForwardList = BaseList<T, _private::ForwardListNode<T>, A>;
 
     template <basic::Printable T, memory::concepts::Allocator A>
     std::ostream &operator<<(std::ostream& os, const List<T, A>& list) {
@@ -1471,12 +1472,12 @@ namespace mstl::collection {
         }
     };
 
-    static_assert(mstl::iter::Iterator<ListIntoIter<int, ForwardListNode<int>, memory::allocator::Allocator>>);
-    static_assert(mstl::iter::DoubleEndedIterator<ListIntoIter<int, ListNode<int>, memory::allocator::Allocator>>);
+    static_assert(mstl::iter::Iterator<ListIntoIter<int, _private::ForwardListNode<int>, memory::allocator::Allocator>>);
+    static_assert(mstl::iter::DoubleEndedIterator<ListIntoIter<int, _private::ListNode<int>, memory::allocator::Allocator>>);
 }
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::ForwardListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::_private::ForwardListNode<T>>>
 {
     typedef forward_iterator_tag       iterator_category;
     typedef T                          value_type;
@@ -1486,7 +1487,7 @@ struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::F
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::ForwardListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::_private::ForwardListNode<T>>>
 {
     typedef forward_iterator_tag             iterator_category;
     typedef T                                value_type;
@@ -1496,7 +1497,7 @@ struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collect
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::ListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::_private::ListNode<T>>>
 {
     typedef bidirectional_iterator_tag iterator_category;
     typedef T                          value_type;
@@ -1506,7 +1507,7 @@ struct std::iterator_traits<mstl::collection::ListIterSTL<T, mstl::collection::L
 };
 
 template<typename T>
-struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::ListNode<T>>>
+struct std::iterator_traits<mstl::collection::ListIterSTL<const T, mstl::collection::_private::ListNode<T>>>
 {
     typedef bidirectional_iterator_tag  iterator_category;
     typedef T                           value_type;
