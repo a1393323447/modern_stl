@@ -281,7 +281,7 @@ namespace mstl::collection {
                 std::destroy_at(data);
             }
 
-            void set_next(ForwardListNode* n) {
+            MSTL_INLINE inline void set_next(ForwardListNode* n) {
                 next = n;
             }
         };
@@ -307,7 +307,7 @@ namespace mstl::collection {
             }
 
             // set the next node to n, and set the prev node of n to this, if possible
-            void set_next(ListNode* n) {
+            MSTL_INLINE inline void set_next(ListNode* n) {
                 next = n;
                 if (n != nullptr) {
                     n->prev = this;
