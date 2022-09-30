@@ -12,14 +12,19 @@
 namespace mstl::result {
 
     namespace _private {
-        // Substitute E as reference types is forbiden.
-        template<typename T, mstl::basic::Error E> requires (!std::same_as<T, E> && !mstl::basic::RValRefType<T>)
+
+        template<typename T, mstl::basic::Error E>
+        requires (!std::same_as<T, E> &&
+                  !mstl::basic::RValRefType<T> &&
+                  !mstl::basic::RefType<E>)
         class ResultBase {
         public:
-            ResultBase(const T& t): type(Ok) {
+            ResultBase(const T& t) requires basic::CopyAble<T>
+                    : type(Ok) {
                 construct(t);
             }
-            ResultBase(T&& t): type(Ok) {
+            ResultBase(T&& t) requires basic::Movable<T>
+                    : type(Ok) {
                 construct(std::forward<T>(t));
             }
 
@@ -30,7 +35,12 @@ namespace mstl::result {
                 construct(std::forward<E>(e));
             }
 
-            ResultBase(ResultBase&& r) noexcept : type(r.type) {
+            ResultBase(const ResultBase& r) noexcept requires basic::CopyAble<T> {
+                copy_impl(r);
+            }
+
+            ResultBase(ResultBase&& r) noexcept requires basic::Movable<T>
+                    : type(r.type) {
                 move_impl(std::forward<ResultBase<T, E>>(r));
             }
 
@@ -42,7 +52,8 @@ namespace mstl::result {
                 }
             }
 
-            ResultBase& operator=(ResultBase&& rhs)  noexcept {
+            ResultBase& operator=(ResultBase&& rhs) noexcept
+                    requires basic::Movable<T> {
                 if (this == &rhs) {
                     return *this;
                 }
@@ -64,7 +75,28 @@ namespace mstl::result {
                 return *this;
             }
 
-             bool operator==(const ResultBase& rhs) const {
+            ResultBase& operator=(const ResultBase& rhs) noexcept requires basic::CopyAble<T> {
+                if (this == &rhs) {
+                    return *this;
+                }
+                if (this->type != rhs.type) {  // destroy holding object of self
+                    if (this->is_ok()) {
+                        this->template destroy<T>();
+                    } else {
+                        this->template destroy<E>();
+                    }
+                    copy_impl(rhs);
+                } else {
+                    if (this->is_ok()) {
+                        this->ok_ref_unchecked() = rhs.ok_ref_unchecked();
+                    } else {
+                        this->err_ref_unchecked() = rhs.err_ref_unchecked();
+                    }
+                }
+                return *this;
+            }
+
+            bool operator==(const ResultBase& rhs) const {
                 if (type != rhs.type) {
                     return false;
                 } else {
@@ -201,7 +233,8 @@ namespace mstl::result {
             ResultBase() = default;
 
         private:
-            void move_impl(ResultBase&& r) {
+
+            void move_impl(ResultBase&& r) requires basic::Movable<T> {
                 type = r.type;
                 if (r.type == Ok) {
                     auto rInner = reinterpret_cast<T*>(r.inner);
@@ -211,40 +244,48 @@ namespace mstl::result {
                     construct(std::move(*rInner));
                 }
             }
+
+            void copy_impl(const ResultBase& r) requires basic::CopyAble<T> {
+                type = r.type;
+                if (is_ok()) {
+                    construct(r.ok_ref_unchecked());
+                } else {
+                    construct(r.err_ref_unchecked());
+                }
+            }
         };
 
-        template<typename T, mstl::basic::Error E>
-        class ResultRef: public ResultBase<T, E>{
+        template<typename T, basic::Error E>
+        class ResultRef: public ResultBase<T, E> {
             using Base = ResultBase<T, E>;
         public:
             using Base::ResultBase;
 
-            ResultRef(ResultRef&& r) noexcept : Base(std::forward<Base>(r)) {}
+            ResultRef(ResultRef&& r) noexcept requires basic::Movable<T>
+                    :Base(std::forward<ResultRef<T, E>>(r)) {}
 
-            ResultRef& operator=(ResultRef&& rhs) noexcept {
+            ResultRef(const ResultRef& r) noexcept requires basic::CopyAble<T>
+                    :Base(r) {}
+
+            ResultRef& operator=(ResultRef&& rhs) noexcept requires basic::Movable<T> {
                 if (this == &rhs)
                     return *this;
 
                 Base::operator=(std::forward<ResultRef>(rhs));
                 return *this;
             }
-        protected:
-            using UnderlyingType = T;
-            using ConstUnderlyingType = const T;
 
-            UnderlyingType& get_underlying_object(){
-                return Base::ok_ref_unchecked();
+            ResultRef& operator=(const ResultRef& rhs) noexcept requires basic::CopyAble<T> {
+                if (this == &rhs)
+                    return *this;
+
+                Base::operator=(rhs);
+                return *this;
             }
-
-            ConstUnderlyingType& get_underlying_object() const{
-                return Base::ok_ref_unchecked();
-            }
-
-            ResultRef(): Base() {}
         };
 
         template<mstl::basic::LValRefType T, mstl::basic::Error E>
-        class ResultRef<T, E>: public ResultBase<std::remove_reference_t<T>*, E>{
+        class ResultRef<T, E>: public ResultBase<std::remove_reference_t<T>*, E> {
             using TPointer = std::remove_reference_t<T>*;
             using Base = ResultBase<TPointer , E>;
         public:
@@ -260,6 +301,14 @@ namespace mstl::result {
                     return *this;
 
                 Base::operator=(std::forward<ResultRef>(rhs));
+                return *this;
+            }
+
+            ResultRef& operator=(const ResultRef& rhs) noexcept {
+                if (this == &rhs)
+                    return *this;
+
+                Base::operator=(rhs);
                 return *this;
             }
 
@@ -291,94 +340,10 @@ namespace mstl::result {
             const T& ok_ref_unchecked() const {
                 return *this->template reinterpret_as<TPointer>();
             }
-
-        protected:
-            using UnderlyingType = TPointer;
-            // Get remove_reference_t<T>* (aka TPointer) underlying. Assuming this Result is Ok.
-            TPointer get_underlying_object() const{
-                return Base::ok_ref_unchecked();
-            }
-            ResultRef(): Base() {}
         };
     }
-
-    template<typename T, mstl::basic::Error E>
-    class Result: public _private::ResultRef<T, E> {
-        using Base = _private::ResultRef<T, E>;
-    public:
-        using Base::ResultRef;
-        Result(Result&& r) noexcept : Base(std::forward<Base>(r)) {}
-        Result() = delete;
-
-        Result& operator=(Result&& rhs)  noexcept {
-            Base::operator=(std::forward<Result>(rhs));
-            return *this;
-        }
-    private:
-    };
-
-    template<typename T, mstl::basic::Error E>
-    requires basic::CopyAble<T> || mstl::basic::LValRefType<T>
-    class Result<T, E> final: public _private::ResultRef<T, E> {
-        using Base = _private::ResultRef<T, E>;
-    public:
-        Result(const Result& r): Base() {
-            copy_impl(r);
-        }
-        Result& operator=(const Result& rhs) {
-            if (this == &rhs) {
-                return *this;
-            }
-            if (this->type != rhs.type) {
-                if (this->is_ok()) {
-                    this->template destroy<typename Base::UnderlyingType>();
-                } else {
-                    this->template destroy<E>();
-                }
-                copy_impl(rhs);
-            } else {
-                if (this->is_ok()) {
-                    this->ok_ref_unchecked() = rhs.ok_ref_unchecked();
-                } else {
-                    this->err_ref_unchecked() = rhs.err_ref_unchecked();
-                }
-            }
-            return *this;
-        }
-
-        Result& operator=(Result&& rhs)  noexcept {
-            Base::operator=(std::forward<Result>(rhs));
-            return *this;
-        }
-
-        Result(Result&& r) noexcept : Base(std::forward<Base>(r)) {}
-
-        Result() = delete;
-        using Base::ResultRef;
-
-        Option<T> ok() const {
-            if (this->is_ok()) {
-                return Option<T>::some(this->template reinterpret_as<T>());
-            } else {
-                return Option<T>::none();
-            }
-        }
-
-        T ok_unchecked() const {
-                return this->template reinterpret_as<T>();
-        }
-
-    private:
-        void copy_impl(const Result& r) {
-            this->type = r.type;
-            if (this->is_ok()) {
-                this->construct(r.get_underlying_object());
-            } else {
-                this->construct(r.err_ref_unchecked());
-            }
-        }
-    };
+    template <typename T, basic::Error E>
+    using Result = _private::ResultRef<T, E>;
 }
-
 
 #endif //MODERN_STL_RESULT_H
