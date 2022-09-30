@@ -1133,19 +1133,15 @@ namespace mstl::collection {
                 return;
             }
 
-            Node* p1 = head;
-            Node* p2 = p1->next;
-            Node* p3 = p2->next;
-            Node* h = head;  // the former header
-            while (p2 != nullptr) {
-                p2->set_next(p1);
-                p1 = p2;
-                p2 = p3;
-                if (p3 != nullptr)
-                    p3 = p3->next;
+            Node* p = head->next;
+            Node* pr = tail;
+            while (p != tail) {
+                Node* tmp = p->next;
+                p->set_next(pr);
+                pr = p;
+                p = tmp;
             }
-            h->set_next(nullptr);
-            std::swap(head, tail);
+            head->set_next(pr);
         }
 
         void reverse() requires is_double_linked_list {
