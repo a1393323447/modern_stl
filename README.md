@@ -1,12 +1,12 @@
 # Modern STL
-`Modern STL` (简称: `mstl`) 是一个基于 `concept` 构建的 `STL`。目前正在开发。
+`Modern STL` (简称: `mstl`) 是一个基于 `concept` 构建的 C++模板库，致力于以更现代化的方法实现STL提供的功能。目前正在开发。
 
 ## 组成
 `mstl` 包含:
 - `iter`: 定义了迭代器相关的 `concept` 以及一些用于操作迭代器的函数
 - `collection`: `mstl` 的容器库, 现有:
     - `Array<T, N>`: 固定大小的数组
-    -  `Vector<T, A>`: 可变长的随机访问容器
+    - `Vector<T, A>`: 可变长的随机访问容器
 - `utility`: 通用库, 现有:
   - `Tuple`: 可包含任意数量异构类型的容器
 - `Option<T>`: 用于表示有或无的类型
@@ -14,6 +14,8 @@
 
 ## 目标🎯
 - [x] 实现自己的*Allocator*.
+- [ ] 重构Tuple.
+- [ ] 实现带编码的字符串.
 
 ## 示例
 `mstl::collection::Array<T>` 及迭代器的使用:
