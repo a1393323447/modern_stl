@@ -67,5 +67,5 @@ if (benchmark_FOUND)
     add_executable(list_benchmark collection_test/list_benchmark.cpp)
     target_link_libraries(list_benchmark benchmark::benchmark init_list)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 endif()
