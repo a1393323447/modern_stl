@@ -281,7 +281,7 @@ namespace mstl::collection {
                 std::destroy_at(data);
             }
 
-            void set_next(ForwardListNode* n) {
+            MSTL_INLINE inline void set_next(ForwardListNode* n) {
                 next = n;
             }
         };
@@ -307,7 +307,7 @@ namespace mstl::collection {
             }
 
             // set the next node to n, and set the prev node of n to this, if possible
-            void set_next(ListNode* n) {
+            MSTL_INLINE inline void set_next(ListNode* n) {
                 next = n;
                 if (n != nullptr) {
                     n->prev = this;
@@ -569,6 +569,16 @@ namespace mstl::collection {
             }
         }
 
+        T& front_unchecked() noexcept {
+            T* data = head->next->data;
+            return *data;
+        }
+
+        const T& front_unchecked() const noexcept {
+            T* data = head->next->data;
+            return *data;
+        }
+
         Option<T&> back() noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<T&>::none();
@@ -586,6 +596,17 @@ namespace mstl::collection {
                 return Option<const T&>::some(*data);
             }
         }
+
+        T& back_unchecked() noexcept requires is_double_linked_list {
+            T* data = tail->prev->data;
+            return *data;
+        }
+
+        const T& front_unchecked() const noexcept requires is_double_linked_list {
+            T* data = tail->prev->data;
+            return *data;
+        }
+
     public:  // iter
         IntoIter into_iter() {
             return IntoIter{std::move(*this)};
@@ -928,7 +949,7 @@ namespace mstl::collection {
         }
 
         template<typename ...Args>
-        Reference emplace_back(Args... args) noexcept
+        Reference emplace_back(Args&&... args) noexcept
         requires is_double_linked_list {
             Node* node = construct_node(std::forward<Args>(args)...);
 
@@ -1133,19 +1154,15 @@ namespace mstl::collection {
                 return;
             }
 
-            Node* p1 = head;
-            Node* p2 = p1->next;
-            Node* p3 = p2->next;
-            Node* h = head;  // the former header
-            while (p2 != nullptr) {
-                p2->set_next(p1);
-                p1 = p2;
-                p2 = p3;
-                if (p3 != nullptr)
-                    p3 = p3->next;
+            Node* p = head->next;
+            Node* pr = tail;
+            while (p != tail) {
+                Node* tmp = p->next;
+                p->set_next(pr);
+                pr = p;
+                p = tmp;
             }
-            h->set_next(nullptr);
-            std::swap(head, tail);
+            head->set_next(pr);
         }
 
         void reverse() requires is_double_linked_list {
@@ -1232,7 +1249,7 @@ namespace mstl::collection {
         // allocate node and data within a continious space
         Node* alloc_node_with_data() {
             Node* node = (Node*)(alloc.allocate(get_data_node_layout(), 1));
-            T* data = (T*)(((u8*)node) + get_data_offset());
+            T* data = (T*)((usize)node + get_data_offset());
             node->data = data;
             return node;
         }
