@@ -18,6 +18,24 @@
 #include <cstdlib>
 
 namespace mstl::str {
+    template <typename Encoding>
+    class Chars {
+    public:
+        using Item = BasicChar<Encoding>;
+        using InnerIter = SliceRefIter<u8, const u8&>;
+
+        Chars(InnerIter iter): iter(iter) { }
+
+        MSTL_INLINE constexpr
+        Option<Item> next() noexcept
+        requires concepts::DecodeNext<Encoding, InnerIter> {
+            return Encoding::next(iter);
+        }
+
+    private:
+        InnerIter iter;
+    };
+
     template <typename Encoding, memory::concepts::Allocator Allocator = memory::allocator::Allocator>
     class BasicString {
         friend std::ostream& operator<<(std::ostream& os, const mstl::str::BasicString<Encoding>& str) {
@@ -51,7 +69,7 @@ namespace mstl::str {
                 // FIXME: 可能会溢出
                 constexpr usize CAP = N + N / 2;
                 storge.cap = CAP;
-                alloc.bytes = alloc.allocate(LAYOUT, CAP);
+                alloc.bytes = (u8*)alloc.allocate(LAYOUT, CAP);
                 copy(alloc.bytes, &bytes.arr[0], N);
             }
         }
@@ -62,7 +80,7 @@ namespace mstl::str {
             if (other.len > LOCAL_STORAGE_SIZE) {
                 // FIXME: 可能会溢出
                 storge.cap = other.storge.cap;
-                alloc.bytes = alloc.allocate(LAYOUT, storge.cap);
+                alloc.bytes = (u8*)alloc.allocate(LAYOUT, storge.cap);
                 copy(alloc.bytes, other.alloc.bytes, other.len);
             } else {
                 this->storge = other.storge;
@@ -94,7 +112,7 @@ namespace mstl::str {
                 this->alloc = other.alloc;
                 this->storge.cap = other.storge.cap;
 
-                this->alloc.bytes = this->alloc.allocate(LAYOUT, storge.cap);
+                this->alloc.bytes = (u8*)this->alloc.allocate(LAYOUT, storge.cap);
                 copy(this->alloc.bytes, other.alloc.bytes, other.len);
             }
             // 3. 需要解分配 this 的空间
@@ -115,7 +133,7 @@ namespace mstl::str {
                     this->alloc.deallocate(this->alloc.bytes, LAYOUT, this->storge.cap);
                     this->alloc = other.alloc;
                     this->storge.cap = len + len / 2;
-                    this->alloc.bytes = this->alloc.allocate(LAYOUT, storge.cap);
+                    this->alloc.bytes = (u8*)this->alloc.allocate(LAYOUT, storge.cap);
                 }
                 copy(this->alloc.bytes, other.alloc.bytes, len);
             }
@@ -194,12 +212,30 @@ namespace mstl::str {
         }
 
         constexpr
-        void push_back(Char ch) {
-            usize new_len = this->len + ch.get_len();
-            check_and_extent_space(new_len);
-            copy(this->bytes + len, ch.bytes, ch.get_len());
+        void push_back(const Char ch) {
+            usize new_len = len + ch.get_len();
 
-            len += ch.get_len();
+            if (new_len > LOCAL_STORAGE_SIZE) {
+                if (new_len > storge.cap) {
+                    auto* old = alloc.bytes;
+                    // allocate new space
+                    auto new_cap = new_len + new_len / 2;
+                    alloc.bytes = (u8*)alloc.allocate(LAYOUT, new_cap);
+                    // copy original data to new space
+                    copy(alloc.bytes, old, len);
+                    // deallocate old space
+                    alloc.deallocate(old, LAYOUT, storge.cap);
+                    // set new cap
+                    storge.cap = new_cap;
+                }
+                // copy new char data to new space
+                copy(&alloc.bytes[len], &ch.bytes[0], ch.get_len());
+            } else {
+                // copy new char data to new space
+                copy(&storge.local[len], &ch.bytes[0], ch.get_len());
+            }
+
+            len = new_len;
         }
 
         MSTL_INLINE constexpr
@@ -237,33 +273,22 @@ namespace mstl::str {
             return this->len;
         }
 
+        constexpr Chars<Encoding> chars() {
+            auto slice = make_slice();
+            return Chars<Encoding> { slice.iter() };
+        }
+
     private:
         /// 扩大空间, 要求 new_cap > this->cap
         constexpr void extent_space(usize new_cap) {
-            this->cap = new_cap;
-            u8 *new_space = alloc.allocate(LAYOUT, new_cap);
+            this->storge.cap = new_cap;
+            u8 *new_space = (u8*)alloc.allocate(LAYOUT, new_cap);
             // copy to new space
             copy(new_space, alloc.bytes, len);
             // deallocate
             alloc.deallocate(alloc.bytes, LAYOUT, len);
 
             this->bytes = new_space;
-        }
-
-        /// 根据当前的 cap 和 new_len 选择性地扩容, 会将旧数据复制到新的空间, 会设置新的 cap
-        /// cap -> 1.5 * new_len
-        constexpr void check_and_extent_space(usize new_len) {
-            if (new_len > storge.cap) {
-                // FIXME: 这个乘法可能会溢出
-                extent_space(new_len * 3 / 2);
-            }
-        }
-
-        constexpr void check_and_extent_space() {
-            if (len > storge.cap) {
-                // FIXME: 这个乘法可能会溢出
-                extent_space(len * 3 / 2);
-            }
         }
 
         MSTL_INLINE constexpr

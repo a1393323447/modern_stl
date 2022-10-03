@@ -149,7 +149,7 @@ namespace mstl::collection {
             }
         }
         constexpr Array(const T (& raw)[N]) {
-            for (int i = 0; i < N; i++) {
+            for (usize i = 0; i < N; i++) {
                 values[i] = raw[i];
             }
         }
