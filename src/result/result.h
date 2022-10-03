@@ -20,22 +20,19 @@ namespace mstl::result {
         class ResultBase {
         public:
             constexpr ResultBase(const T& t) requires basic::CopyAble<T>
-                    : type(Ok) {
-                construct(t);
+                    : type(Ok), t(t) {
             }
             constexpr ResultBase(T&& t) requires basic::Movable<T>
-                    : type(Ok) {
-                construct(std::forward<T>(t));
+                    : type(Ok), t(std::forward<T>(t)) {
             }
 
-            constexpr ResultBase(const E& e): type(Err) {
-                construct(e);
-            }
-            constexpr ResultBase(E&& e): type(Err) {
-                construct(std::forward<E>(e));
+            constexpr ResultBase(const E& e): type(Err), e(e) {
             }
 
-            constexpr ResultBase(const ResultBase& r) noexcept requires basic::CopyAble<T> {
+            constexpr ResultBase(E&& e): type(Err), e(std::forward<E>(e)) {
+            }
+
+            constexpr ResultBase(const ResultBase& r) noexcept requires basic::CopyAble<T>: type(r.type) {
                 copy_impl(r);
             }
 
@@ -46,9 +43,9 @@ namespace mstl::result {
 
             constexpr ~ResultBase() {
                 if (type == Ok) {
-                    destroy<T>();
+                    destroy_t();
                 } else {
-                    destroy<E>();
+                    destroy_e();
                 }
             }
 
@@ -59,9 +56,9 @@ namespace mstl::result {
                 }
                 if (this->type != rhs.type) {
                     if (this->is_ok()) {
-                        this->template destroy<T>();
+                        destroy_t();
                     } else {
-                        this->template destroy<E>();
+                        destroy_e();
                     }
                     move_impl(std::forward<ResultBase<T, E>>(rhs));
                 } else {
@@ -81,9 +78,9 @@ namespace mstl::result {
                 }
                 if (this->type != rhs.type) {  // destroy holding object of self
                     if (this->is_ok()) {
-                        this->template destroy<T>();
+                        destroy_t();
                     } else {
-                        this->template destroy<E>();
+                        destroy_e();
                     }
                     copy_impl(rhs);
                 } else {
@@ -119,7 +116,7 @@ namespace mstl::result {
             // Comsume the Result, so that it's illegal after invoking this method
             constexpr T&& unwrap() {
                 if (type == Ok) {
-                    return std::move(reinterpret_as<T>());
+                    return std::move(t);
                 } else {
                     MSTL_PANIC(err_ref_unchecked());
                 }
@@ -127,7 +124,7 @@ namespace mstl::result {
 
             constexpr E&& unwrap_err() {
                 if (type == Err) {
-                    return std::move(reinterpret_as<E>());
+                    return std::move(e);
                 } else {
                     MSTL_PANIC("Result is \"Ok\".");
                 }
@@ -135,7 +132,7 @@ namespace mstl::result {
 
             constexpr Option<T&> ok_ref() {
                 if (type == Ok) {
-                    return Option<T&>::some(reinterpret_as<T>());
+                    return Option<T&>::some(t);
                 } else {
                     return Option<T&>::none();
                 }
@@ -143,7 +140,7 @@ namespace mstl::result {
 
             constexpr Option<const T&> ok_ref() const {
                 if (type == Ok) {
-                    return Option<const T&>::some(reinterpret_as<T>());
+                    return Option<const T&>::some(t);
                 } else {
                     return Option<T&>::none();
                 }
@@ -151,19 +148,19 @@ namespace mstl::result {
 
             constexpr Option<E> err() const {
                 if (type == Err) {
-                    return Option<E>::some(reinterpret_as<E>());
+                    return Option<E>::some(e);
                 } else {
                     return Option<E>::none();
                 }
             }
 
             constexpr E err_unchecked() const {
-                return reinterpret_as<E>();
+                return e;
             }
 
             constexpr Option<E&> err_ref() {
                 if (type == Err) {
-                    return Option<E&>::some(reinterpret_as<E>());
+                    return Option<E&>::some(e);
                 } else {
                     return Option<E&>::none();
                 }
@@ -171,26 +168,26 @@ namespace mstl::result {
 
             constexpr Option<const E&> err_ref() const {
                 if (type == Err) {
-                    return Option<const E&>::some(reinterpret_as<E>());
+                    return Option<const E&>::some(e);
                 } else {
                     return Option<const E&>::none();
                 }
             }
 
             constexpr T& ok_ref_unchecked() {
-                return reinterpret_as<T>();
+                return t;
             }
 
             constexpr const T& ok_ref_unchecked() const {
-                return reinterpret_as<T>();
+                return t;
             }
 
             constexpr E& err_ref_unchecked() {
-                return reinterpret_as<E>();
+                return e;
             }
 
             constexpr const E& err_ref_unchecked() const {
-                return reinterpret_as<E>();
+                return e;
             }
 
         protected:
@@ -199,35 +196,21 @@ namespace mstl::result {
                 Err
             } type;
 
-            static constexpr usize max_size = std::max(
-                    sizeof(T), sizeof(E)
-            );
+            union {
+                T t;
+                E e;
+            };
 
-            u8 inner[max_size] = {0};
-
-            template<typename In>
-            constexpr void construct(In&& in)
-            requires basic::OneOf<std::remove_cvref_t<In>, T, E> {
-                auto ptr = reinterpret_cast<std::remove_cvref_t<In>*>(inner);
-                std::construct_at(ptr, std::forward<In>(in));
+            constexpr void destroy_t() {
+                if constexpr (std::is_class_v<T>) {
+                    t.~T();
+                }
             }
 
-            template<basic::OneOf<T, E> In>
-            constexpr void destroy() {
-                auto ptr = reinterpret_cast<std::remove_cvref_t<In>*>(inner);
-                std::destroy_at(ptr);
-            }
-
-            template<basic::OneOf<T, E> In>
-            constexpr In& reinterpret_as() {
-                auto ptr = reinterpret_cast<In*>(inner);
-                return *ptr;
-            }
-
-            template<basic::OneOf<T, E> In>
-            constexpr const In& reinterpret_as() const {
-                auto ptr = reinterpret_cast<const In*>(inner);
-                return *ptr;
+            constexpr void destroy_e() {
+                if constexpr (std::is_class_v<E>) {
+                    e.~E();
+                }
             }
 
             constexpr ResultBase() = default;
@@ -235,22 +218,18 @@ namespace mstl::result {
         private:
 
             constexpr void move_impl(ResultBase&& r) requires basic::Movable<T> {
-                type = r.type;
                 if (r.type == Ok) {
-                    auto rInner = reinterpret_cast<T*>(r.inner);
-                    construct(std::move(*rInner));
+                    std::construct_at(&t, std::move(r.t));
                 } else {
-                    auto rInner = reinterpret_cast<E*>(r.inner);
-                    construct(std::move(*rInner));
+                    std::construct_at(&e, std::move(r.e));
                 }
             }
 
             constexpr void copy_impl(const ResultBase& r) requires basic::CopyAble<T> {
-                type = r.type;
-                if (is_ok()) {
-                    construct(r.ok_ref_unchecked());
+                if (r.type == Ok) {
+                    std::construct_at(&t, r.t);
                 } else {
-                    construct(r.err_ref_unchecked());
+                    std::construct_at(&e, r.e);
                 }
             }
         };
@@ -312,33 +291,45 @@ namespace mstl::result {
                 return *this;
             }
 
+            constexpr bool operator==(const ResultRef& rhs) const {
+                if (this->type != rhs.type) {
+                    return false;
+                } else {
+                    if (this->is_ok()) {
+                        return ok_ref_unchecked() == rhs.ok_ref_unchecked();
+                    } else {
+                        return this->err_ref_unchecked() == rhs.err_ref_unchecked();
+                    }
+                }
+            }
+
             constexpr T unwrap() {
                 if (this->is_ok())
-                    return *this->template reinterpret_as<TPointer>();
+                    return *Base::ok_ref_unchecked();
                 else
                     MSTL_PANIC(this->err_ref_unchecked());
             }
 
             constexpr Option<T&> ok_ref() {
                 if (this->is_ok())
-                    return Option<T&>::some(*this->template reinterpret_as<TPointer>());
+                    return Option<T&>::some(*Base::ok_ref_unchecked());
                 else
                     return Option<T&>::none();
             }
 
             constexpr Option<const T&> ok_ref() const {
                 if (this->is_ok())
-                    return Option<const T&>::some(*this->template reinterpret_as<TPointer>());
+                    return Option<const T&>::some(*Base::ok_ref_unchecked());
                 else
                     return Option<const T&>::none();
             }
 
             constexpr T& ok_ref_unchecked() {
-                return *this->template reinterpret_as<TPointer>();
+                return *Base::ok_ref_unchecked();
             }
 
             constexpr const T& ok_ref_unchecked() const {
-                return *this->template reinterpret_as<TPointer>();
+                return *Base::ok_ref_unchecked();
             }
         };
     }
