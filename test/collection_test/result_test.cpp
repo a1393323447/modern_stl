@@ -151,3 +151,22 @@ BOOST_AUTO_TEST_CASE(COPYABLE_TEST) {
     BOOST_TEST_CHECK(rstr1 == str2);
     BOOST_TEST_CHECK(rstr1 == rstr2);
 }
+
+BOOST_AUTO_TEST_CASE(CONSTEXPR_TEST) {
+    constexpr Result<int, double> a(10);
+    static_assert(a.is_ok());
+    static_assert(a.ok_ref_unchecked() == 10);
+
+    constexpr Result<int, double> b(1.0);
+    static_assert(b.is_err());
+    static_assert(b.err_ref_unchecked() == 1.0);
+
+    constexpr auto c = a, d = b;
+    static_assert(c.is_ok());
+    static_assert(c.ok_ref_unchecked() == 10);
+    static_assert(c == a);
+
+    static_assert(d.is_err());
+    static_assert(d.err_ref_unchecked() == 1.0);
+    static_assert(d == b);
+}
