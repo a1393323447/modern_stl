@@ -4,7 +4,6 @@
 #include <global.h>
 #include <ops/range.h>
 #include <iter/iterator.h>
-#include <span>
 
 #define BOOST_TEST_MODULE Range Test
 #include <boost/test/unit_test.hpp>

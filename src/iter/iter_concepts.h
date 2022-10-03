@@ -20,12 +20,12 @@ namespace mstl::iter {
         typename Iter::Item;
 
         /**
-         * <h1>Require</h1>
+         * # Require
          * 以 Option<Item>::some(Item) 的形式返回迭代器当前指向的元素, 并将迭代器前移.
          * 如果迭代结束, 则返回 Option<Item>::none().
          *
-         * <h1>Example</h1>
-         * @code
+         * # Example
+         * ```cpp
          * using namespace mstl::collection;
          * using namespace mstl;
          *
@@ -46,7 +46,7 @@ namespace mstl::iter {
          *
          * value = iter.next();
          * assert(value.is_none());
-         * @endcode
+         * ```
          */
         { iter.next() } -> std::same_as<Option<typename Iter::Item>>;
     };

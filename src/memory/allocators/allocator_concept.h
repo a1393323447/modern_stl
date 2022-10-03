@@ -11,7 +11,7 @@
 namespace mstl::memory::concepts {
 
     template<typename T>
-    concept Allocator = basic::Movable<T> && requires(T a, Layout layout, usize length, void *ptr){
+    concept Allocator = basic::CopyAble<T> && requires(T a, Layout layout, usize length, void *ptr){
         { a.allocate(layout, length) } -> std::same_as<void *>;
         { a.deallocate(ptr, layout, length) } -> std::same_as<void>;
     };
