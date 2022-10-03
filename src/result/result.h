@@ -15,7 +15,7 @@ namespace mstl::result {
 
         template<typename T, mstl::basic::Error E>
         requires (!std::same_as<T, E> &&
-                  !mstl::basic::RValRefType<T> &&
+                  !mstl::basic::RefType<T> &&
                   !mstl::basic::RefType<E>)
         class ResultBase {
         public:
