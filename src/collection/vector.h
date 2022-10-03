@@ -100,6 +100,7 @@ namespace mstl::collection {
             clear();
         }
 
+        // fixme
         constexpr Vector &operator=(const Vector &other) {
             if (&other == this) {
                 return *this;
@@ -112,6 +113,9 @@ namespace mstl::collection {
         }
 
         constexpr Vector &operator=(Vector &&r) noexcept {
+            if (&r == this) {
+                return *this;
+            }
             clear();
 
             move_impl(std::forward<Vector&&>(r));
