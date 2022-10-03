@@ -569,6 +569,16 @@ namespace mstl::collection {
             }
         }
 
+        T& front_unchecked() noexcept {
+            T* data = head->next->data;
+            return *data;
+        }
+
+        const T& front_unchecked() const noexcept {
+            T* data = head->next->data;
+            return *data;
+        }
+
         Option<T&> back() noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<T&>::none();
@@ -586,6 +596,17 @@ namespace mstl::collection {
                 return Option<const T&>::some(*data);
             }
         }
+
+        T& back_unchecked() noexcept requires is_double_linked_list {
+            T* data = tail->prev->data;
+            return *data;
+        }
+
+        const T& front_unchecked() const noexcept requires is_double_linked_list {
+            T* data = tail->prev->data;
+            return *data;
+        }
+
     public:  // iter
         IntoIter into_iter() {
             return IntoIter{std::move(*this)};
@@ -928,7 +949,7 @@ namespace mstl::collection {
         }
 
         template<typename ...Args>
-        Reference emplace_back(Args... args) noexcept
+        Reference emplace_back(Args&&... args) noexcept
         requires is_double_linked_list {
             Node* node = construct_node(std::forward<Args>(args)...);
 
@@ -1228,7 +1249,7 @@ namespace mstl::collection {
         // allocate node and data within a continious space
         Node* alloc_node_with_data() {
             Node* node = (Node*)(alloc.allocate(get_data_node_layout(), 1));
-            T* data = (T*)(((u8*)node) + get_data_offset());
+            T* data = (T*)((usize)node + get_data_offset());
             node->data = data;
             return node;
         }
