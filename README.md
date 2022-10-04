@@ -22,8 +22,9 @@
   - [ ] Deque
   - [ ] Map
   - [ ] Set
-- [ ] 重构Tuple.
+- [ ] 重构Tuple为可常量求值.
 - [ ] 实现带编码的字符串.
+- [ ] 文档
 
 ## 示例
 `mstl::collection::Array<T>` 及迭代器的使用:

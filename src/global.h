@@ -5,6 +5,7 @@
 #ifndef __MODERN_STL_GLOBAL_H__
 #define __MODERN_STL_GLOBAL_H__
 
+/// 引发`panic`, 使程序异常退出, 并打印问题发生的文件, 代码行数以及预先定义的错误信息.
 #define MSTL_PANIC(...) mstl::panic(__FILE__, __LINE__, __VA_ARGS__)
 
 #ifdef DEBUG

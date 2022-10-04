@@ -92,6 +92,12 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST, * utf::tolerance(1e-6)) {
     BOOST_CHECK(c.is_ok());
     BOOST_CHECK(d.is_ok());
     BOOST_CHECK(c == d);
+
+    auto e = Result<TestClass, int>::ok("foo"), f = Result<TestClass, int>::err(0);
+    BOOST_CHECK(e.is_ok());
+    BOOST_CHECK(f.is_err());
+    BOOST_CHECK(e.ok_unchecked().x == "foo");
+    BOOST_CHECK(f.err_unchecked() == 0);
 }
 
 BOOST_AUTO_TEST_CASE(REFERENCE_TEST) {
