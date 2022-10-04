@@ -39,27 +39,48 @@ namespace mstl::iter {
         return terminalFunc(iter, args...);
     }
 
-    /**
-     * 用于将 Combinator 进行组合, 并可选地以一个 Terminal 结尾
-     *
-     * <h1>Example</h1>
-     * @code
-     * Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-     * auto iter = combine(arr.into_iter(),
-     *     Map{}, [](auto ele) {
-     *         return ele * ele;
-     *     },
-     *     Map{}, [](auto ele) {
-     *         return Pow<usize>{ static_cast<usize>(ele * ele) };
-     *     }
-     * );
-     * auto next = iter.next();
-     * while (next.is_some()) {
-     *     std::cout << next.unwrap().pow << " ";
-     *     next = iter.next();
-     * }
-     * @endcode
-     */
+    ///
+    /// 用于将 Combinator 进行组合, 并可选地以一个 Terminal 结尾
+    ///
+    /// @param iter 迭代器
+    /// @param Com 由 Combinator 生成的辅助结构
+    /// @param lambda 对应的 lambda 函数
+    ///
+    /// # Example
+    /// ```cpp
+    /// #include <collection/array.h>
+    /// #include <iter/iterator.h>
+    ///
+    /// using namespace mstl::collection;
+    /// using namespace mstl::iter;
+    ///
+    /// template<typename T>
+    /// struct Pow {
+    ///     T pow;
+    /// };
+    ///
+    /// Array<i32, 10> arr { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    ///
+    /// Array<Pow<usize> , 5> pow_arr = combine(arr.into_iter(),
+    ///     Map{}, [](auto ele) {
+    ///         return ele * ele;
+    ///     },
+    ///     Map{}, [](auto ele) {
+    ///         return Pow<usize>{ static_cast<usize>(ele * ele) };
+    ///     },
+    ///     Filter{}, [](auto& ele) {
+    ///         return ele.pow % 2 == 0;
+    ///     },
+    ///     CollectAs<Array<Pow<usize> , 5>>{}
+    /// );
+    ///
+    /// combine(pow_arr.iter(),
+    ///     ForEach{}, [](const auto& ele) {
+    ///         std::cout << ele.pow << " ";
+    ///     }
+    /// );
+    /// ```
+    ///
     template<Iterator Iter, typename Com, typename Lambda, typename... Args>
     requires combinator::Combinator<Com, Iter, Lambda>
     MSTL_INLINE constexpr
@@ -71,6 +92,35 @@ namespace mstl::iter {
         return combine(combinatorFunc(iter, lambda), args...);
     }
 
+    /// 提供 `|` 运算符, 是迭代器处理方式的抽象, 用于对 filter, map 等操作的组合
+    ///
+    /// # Example
+    /// ```cpp
+    /// #include <collection/array.h>
+    /// #include <iter/iterator.h>
+    ///
+    /// using namespace mstl::collection;
+    /// using namespace mstl::iter;
+    ///
+    /// template<typename T>
+    /// struct Pow {
+    ///     T pow;
+    /// };
+    /// Array<usize, 1000> arr = { ... };
+    /// Array<Pow<usize>, 100> pow_arr =
+    ///       arr.iter() |
+    ///       map([](const auto& ele) {
+    ///           return ele * ele;
+    ///       }) |
+    ///       map([](const auto& ele) {
+    ///           return Pow<usize>{ static_cast<usize>(ele * ele) };
+    ///       }) |
+    ///       filter([](const auto& ele) {
+    ///           return ele.pow % 2 == 0;
+    ///       }) |
+    ///       collect<Array<Pow<usize>, 100>>();
+    /// ```
+    ///
     template<Iterator Iter, typename AdapterHolder>
     requires _private::AdapterHolder<AdapterHolder, Iter>
     MSTL_INLINE constexpr

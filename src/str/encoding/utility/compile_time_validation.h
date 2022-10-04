@@ -6,14 +6,15 @@
 #define __MODERN_STL_VALIDATE_BYTES_H__
 
 #include <bit>
-#include <global.h>
-#include <collection/array.h>
+#include "global.h"
+#include "collection/array.h"
 
 #define define_str_suffix(name, encoding, msg)                                 \
 template<mstl::str::CharsWrap wrap>                                            \
 constexpr                                                                      \
 decltype(auto) operator ""_##name() noexcept {                                 \
     constexpr usize LEN = decltype(wrap)::LEN - 1;                             \
+    static_assert(LEN > 0, "empty string.\n");                                 \
     using ReturnType =  mstl::str::ValidBytes<LEN>;                            \
     constexpr mstl::collection::Array <u8, LEN> arr { wrap.chars };            \
     constexpr auto op = encoding::validate(arr.iter());                        \

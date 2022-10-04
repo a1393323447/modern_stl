@@ -6,7 +6,7 @@
 #define __MODERN_STL_CONCEPTS_H__
 
 #include "str/basic_char.h"
-#include "str/encoding/code_type.h"
+#include "str/encoding/utility/code_type.h"
 #include "iter/iter_concepts.h"
 
 namespace mstl::str::concepts {

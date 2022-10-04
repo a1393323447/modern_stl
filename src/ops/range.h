@@ -127,7 +127,8 @@ namespace mstl::ops {
             }
         }
 
-        bool empty() {
+        MSTL_INLINE constexpr
+        bool is_empty() {
             // partial order
             return !(low < high);
         }

@@ -78,6 +78,20 @@ namespace mstl::collection {
                 return item;
             });
         }
+        /// impl ExactSizeIterator
+        MSTL_INLINE constexpr
+        usize len() {
+            return N;
+        }
+        MSTL_INLINE constexpr
+        bool is_empty() {
+            return range.is_empty();
+        }
+        /// impl ContinuousIterator
+        MSTL_INLINE constexpr
+        const T* start_addr() {
+            return &data[0];
+        }
     private:
         Item data[N];
         ops::Range<usize> range = {0, N};
@@ -91,7 +105,7 @@ namespace mstl::collection {
 
         MSTL_INLINE constexpr
         Option<Item> next() {
-            if (start >= end) {
+            if (is_empty()) {
                 return Option<Item>::none();
             } else {
                 auto op = Option<Item>::some(*start);
@@ -102,13 +116,27 @@ namespace mstl::collection {
 
         MSTL_INLINE constexpr
         Option<Item> prev() {
-            if (start >= end) {
+            if (is_empty()) {
                 return Option<Item>::none();
             } else {
                 end--;
                 auto op = Option<Item>::some(*end);
                 return op;
             }
+        }
+        /// impl ExactSizeIterator
+        MSTL_INLINE constexpr
+        usize len() {
+            return end - start;
+        }
+        MSTL_INLINE constexpr
+        bool is_empty() {
+            return start == end;
+        }
+        /// impl ContinuousIterator
+        MSTL_INLINE constexpr
+        const T* start_addr() {
+            return start;
         }
     private:
         T *start = nullptr;

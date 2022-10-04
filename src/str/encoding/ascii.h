@@ -9,8 +9,8 @@
 #include <option/option.h>
 #include <str/basic_char.h>
 #include <iter/iter_concepts.h>
-#include <str/encoding/compile_time_validation.h>
-#include <str/encoding/code_type.h>
+#include "str/encoding/utility/compile_time_validation.h"
+#include "str/encoding/utility/code_type.h"
 #include <str/encoding/concepts/decode.h>
 
 namespace mstl::str::encoding {

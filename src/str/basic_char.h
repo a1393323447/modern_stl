@@ -6,7 +6,7 @@
 #define __MODERN_STL_BASIC_CHAR_H__
 
 #include <str/encoding/concepts/validate.h>
-#include <str/encoding/compile_time_validation.h>
+#include "str/encoding/utility/compile_time_validation.h"
 #include "str/encoding/concepts/encoding_info.h"
 #include <ostream>
 
@@ -78,7 +78,7 @@ namespace mstl::str {
             return Encoding::MAX_LEN;
         }
 
-        u8 bytes[Encoding::MAX_LEN]{};
+        u8 bytes[Encoding::MAX_LEN]{0};
     };
 
     template<concepts::EncodingInfo Encoding>
@@ -86,13 +86,23 @@ namespace mstl::str {
     struct BasicChar<Encoding> {
         BasicChar() = default;
 
+        template<usize N>
+        requires (N > 0)
+        constexpr BasicChar(const ValidBytes<N>& valid) {
+            static_assert(N <= Encoding::MAX_LEN, "too many letter in a char");
+            len = N;
+            for (usize i = 0; i < N; i++) {
+                bytes[i] = valid.arr[i];
+            }
+        }
+
         MSTL_INLINE constexpr
         u8 get_len() const {
             return len;
         }
 
-        u8 len{};
-        u8 bytes[Encoding::MAX_LEN]{};
+        u8 len{0};
+        u8 bytes[Encoding::MAX_LEN]{0};
     };
 }
 
