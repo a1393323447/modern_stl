@@ -105,6 +105,21 @@ namespace mstl::result {
                 }
             }
 
+            template<class ...Args>
+            constexpr static ResultBase ok(Args&& ...args)
+            requires (sizeof...(Args) != 0) {
+                static_assert(std::constructible_from<T, Args...>, "Ok-type T cannot be construct from the arguments.");
+                return ResultBase(T{std::forward<Args>(args)...});
+            }
+
+            template<class ...Args>
+            constexpr static ResultBase err(Args&& ...args)
+            requires (sizeof...(Args) != 0) {
+                static_assert(std::constructible_from<E, Args...>, "Err-type E cannot be construct from the arguments.");
+                return ResultBase(E{std::forward<Args>(args)...});
+            }
+
+        public:
             constexpr inline bool is_ok() const {
                 return type == Ok;
             }
@@ -128,6 +143,18 @@ namespace mstl::result {
                 } else {
                     MSTL_PANIC("Result is \"Ok\".");
                 }
+            }
+
+            constexpr Option<T> ok() requires basic::CopyAble<T> {
+                if (type == Ok) {
+                    return Option<T>::some(t);
+                } else {
+                    return Option<T>::none();
+                }
+            }
+
+            constexpr T ok_unchecked() requires basic::CopyAble<T> {
+                return t;
             }
 
             constexpr Option<T&> ok_ref() {
@@ -303,11 +330,32 @@ namespace mstl::result {
                 }
             }
 
+            constexpr static ResultRef ok(T t) {
+                return ResultRef(t);
+            }
+
+        public:
             constexpr T unwrap() {
                 if (this->is_ok())
                     return *Base::ok_ref_unchecked();
                 else
                     MSTL_PANIC(this->err_ref_unchecked());
+            }
+
+            constexpr Option<T&> ok() {
+                return ok_ref();
+            }
+
+            constexpr Option<const T&> ok() const {
+                return ok_ref();
+            }
+
+            constexpr T& ok_unchecked() {
+                return ok_ref_unchecked();
+            }
+
+            constexpr const T& ok_unchecked() const {
+                return ok_ref_unchecked();
             }
 
             constexpr Option<T&> ok_ref() {
