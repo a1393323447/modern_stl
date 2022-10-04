@@ -8,7 +8,7 @@
 #include "global.h"
 #include "option/option.h"
 #include "iter/iter_concepts.h"
-#include "str/encoding/decode_error.h"
+#include "str/encoding/utility/decode_error.h"
 
 namespace mstl::str::concepts {
     template<typename E, typename Iter>

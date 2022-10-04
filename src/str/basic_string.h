@@ -5,7 +5,10 @@
 #ifndef __MODERN_STL_BASIC_STRING_H__
 #define __MODERN_STL_BASIC_STRING_H__
 
+// std
+#include <cstdlib>
 #include <algorithm>
+
 #include <slice.h>
 #include <memory/allocators/allocator.h>
 #include <memory/allocators/allocator_concept.h>
@@ -13,9 +16,7 @@
 #include <str/basic_char.h>
 #include <str/encoding/concepts/decode.h>
 #include <str/encoding/concepts/validate.h>
-#include <str/encoding/compile_time_validation.h>
-
-#include <cstdlib>
+#include <str/encoding/utility/compile_time_validation.h>
 
 namespace mstl::str {
     template <typename Encoding>

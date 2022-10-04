@@ -6,8 +6,8 @@
 #define __MODERN_STL_VALIDATE_BYTES_H__
 
 #include <bit>
-#include <global.h>
-#include <collection/array.h>
+#include "global.h"
+#include "collection/array.h"
 
 #define define_str_suffix(name, encoding, msg)                                 \
 template<mstl::str::CharsWrap wrap>                                            \

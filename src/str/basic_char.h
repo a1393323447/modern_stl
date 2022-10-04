@@ -6,7 +6,7 @@
 #define __MODERN_STL_BASIC_CHAR_H__
 
 #include <str/encoding/concepts/validate.h>
-#include <str/encoding/compile_time_validation.h>
+#include "str/encoding/utility/compile_time_validation.h"
 #include "str/encoding/concepts/encoding_info.h"
 #include <ostream>
 

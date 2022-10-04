@@ -10,47 +10,68 @@
 
 namespace mstl::iter {
     /**
-     * @tparam Iter 迭代器类型
+     * Rust 风格的迭代器
+     * # typename 标注要求
+     * - Item: 迭代器中需要使用 Item 标注迭代器所迭代的元素
+     *      ```cpp
+     *      class FooIter {
+     *      public:
+     *          using Item = Foo;
+     *          ...
+     *      };
+     *      ```
+     * # 成员函数要求
+     * - next()
+     *      - 返回值要求
+     *
+     *          返回值类型为 Option<Item>
+     *
+     *      - 功能描述
+     *
+     *          返回以 some(Item) 的形式返回下一个元素, 如果没有元素, 则返回 none()
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *      Option<const i32&> one =  iter.next();
+     *      auto two = iter.next();
+     *      auto three = iter.next();
+     *      auto none = iter.next();
+     *      ```
      */
     template<typename Iter>
     concept Iterator = requires(Iter iter) {
-        /**
-         * The type of the elements being iterated over
-         */
         typename Iter::Item;
-
-        /**
-         * # Require
-         * 以 Option<Item>::some(Item) 的形式返回迭代器当前指向的元素, 并将迭代器前移.
-         * 如果迭代结束, 则返回 Option<Item>::none().
-         *
-         * # Example
-         * ```cpp
-         * using namespace mstl::collection;
-         * using namespace mstl;
-         *
-         * auto arr  = Array<i32, 3>{1, 2, 3};
-         * auto iter = arr.iter();
-         *
-         * auto value = iter.next();
-         * assert(value.is_some());
-         * assert(value.unwrap() == 1);
-         *
-         * value = iter.next();
-         * assert(value.is_some());
-         * assert(value.unwrap() == 2);
-         *
-         * value = iter.next();
-         * assert(value.is_some());
-         * assert(value.unwrap() == 4);
-         *
-         * value = iter.next();
-         * assert(value.is_none());
-         * ```
-         */
         { iter.next() } -> std::same_as<Option<typename Iter::Item>>;
     };
 
+    /**
+     * 双向迭代器
+     * # 前提
+     * DoubleEndedIterator 需要实现 Iterator
+     * # 成员函数要求
+     * - prev()
+     *      - 返回值要求
+     *
+     *          返回值类型为 Option<Item>
+     *
+     *      - 功能描述
+     *
+     *          返回以 some(Item) 的形式返回逆向迭代的下一个元素, 如果没有元素, 则返回 none()
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *      Option<const i32&> three =  iter.prev();
+     *      auto two = iter.prev();
+     *      auto one = iter.prev();
+     *      auto none = iter.prev();
+     *      ```
+     */
     template<typename Iter>
     concept DoubleEndedIterator = requires {
         requires Iterator<Iter>;
@@ -59,6 +80,44 @@ namespace mstl::iter {
         };
     };
 
+    /**
+     * 可以获得元素数量的迭代器
+     * # 前提
+     * DoubleEndedIterator 需要实现 Iterator
+     * # 成员函数要求
+     * - len()
+     *      - 返回值要求
+     *
+     *          返回值类型为 usize
+     *
+     *      - 功能描述
+     *
+     *          返回迭代器当前剩余的元素数量
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *      usize three =  iter.len();
+     *      ```
+     * - is_empty()
+     *      - 返回值要求
+     *
+     *          返回值类型为 bool
+     *
+     *      - 功能描述
+     *
+     *          返回迭代器是否为空
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *      bool False =  iter.is_empty();
+     *      ```
+     */
     template<typename Iter>
     concept ExactSizeIterator = requires {
         requires Iterator<Iter>;
@@ -68,6 +127,35 @@ namespace mstl::iter {
         };
     };
 
+    /**
+     * 迭代元素存储在连续空间的迭代器
+     * # 前提
+     * DoubleEndedIterator 需要实现 Iterator
+     * # 成员函数要求
+     * - start_addr()
+     *      - 返回值要求
+     *
+     *          返回值类型为 const T* [T = std::remove_reference_t<Item>]
+     *
+     *      - 功能描述
+     *
+     *          返回迭代器下一个元素所在的地址
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *
+     *      const usize *ptr_1 =  iter.start_addr();
+     *      assert(ptr_1 == &arr[0]);
+     *
+     *      iter.next();
+     *
+     *      const usize *ptr_2 = iter.start_addr();
+     *      assert(ptr_2 == &arr[1]);
+     *      ```
+     */
     template<typename Iter>
     concept ContinuousIterator = requires {
         requires ExactSizeIterator<Iter>;
@@ -75,21 +163,39 @@ namespace mstl::iter {
             { iter.start_addr() } -> std::same_as<const std::remove_reference_t<typename Iter::Item> *>;
         };
     };
+
     /**
-     * @tparam Into 可以转化为 Iterator 的类型
+     * IntoIterator 描述了:
+     * - 一个类型(T)如何转换为迭代器
+     * - 转换为哪种迭代器
+     *
+     * # typename 标注要求
+     * - Item
+     *
+     *      类型 T 中持有的元素类型
+     *
+     * # 成员函数要求
+     * - into_iter()
+     *      - 返回值要求
+     *
+     *          返回值类型为一个迭代器, 并且迭代元素类型为 Item
+     *
+     *      - 功能描述
+     *
+     *          将类型 T 转换为迭代器
+     *
+     *      示例
+     *
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.iter();
+     *
+     *      Option<i32> one = iter.next();
+     *      ```
      */
     template<typename Into>
     concept IntoIterator = requires {
-        /**
-         * 迭代的元素类型
-         */
         typename Into::Item;
-
-        /**
-         * <h1>Require</h1>
-         * 要求 Into 类型具有成员函数 into_iter
-         * 返回一个 Iterator , Iterator::Item 应和 Into::Item 相同
-         */
         requires requires(Into into) {
             { into.into_iter() } ->  Iterator;
             requires std::same_as<
@@ -100,8 +206,52 @@ namespace mstl::iter {
     };
 
     /**
-     * @tparam FromIter 可以从一个迭代器 Iter 构建的类型
-     * @tparam Iter 一个迭代器
+     * 实现了 FromIterator 的类型 T (一般是一个容器), 可以将一个符合要求 Iterator 转化 T
+     *
+     * # 前提
+     * - 类型 T 需要实现 IntoIterator
+     * - 被转化的 Iterator 所迭代的元素类型和 T 的元素类型相同
+     *
+     * # 静态函数要求
+     * - from_iter(Iterator auto iter)
+     *      - 函数参数要求
+     *          - iter: 要求实现 Iterator [Item = T::Item]
+     *
+     *      - 返回值要求
+     *
+     *          返回值类型为 T
+     *
+     *      - 功能描述
+     *
+     *          将迭代器转换为类型 T , 得到的 T 中包含迭代器所持有的元素
+     *
+     *      示例
+     *
+     *      基础用法
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *      Iterator auto iter = arr.into_iter();
+     *
+     *      auto arr_2 = mstl::collection::Array<i32, 3>::from_iter(iter);
+     *      ```
+     *
+     *      关联用法
+     *      ```cpp
+     *      mstl::collection::Array<i32, 3> arr = { 1, 2, 3 };
+     *
+     *      // 1. 使用 mstl::iter::combine
+     *      auto arr_2 = mstl::iter::combine(arr.into_iter(),
+     *          mstl::iter::CollectAs<mstl::collection::Array<i32, 3>>{}
+     *      );
+     *
+     *      // 2. 使用 mstl::iter::operator|
+     *      using namespace mstl::iter;
+     *      auto arr_2 = arr.into_iter() |
+     *          collect<mstl::collection::Array<i32, 3>>();
+     *
+     *      // 3. 直接使用 mstl::iter::collect
+     *      auto arr_2 = mstl::iter::collect(arr.into_iter());
+     *      ```
      */
     template<typename FromIter, typename Iter>
     concept FromIterator = requires {

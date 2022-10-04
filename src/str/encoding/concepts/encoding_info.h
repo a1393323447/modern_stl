@@ -6,7 +6,7 @@
 #ifndef __MODERN_STL_ENCODING_INFO_H__
 #define __MODERN_STL_ENCODING_INFO_H__
 
-#include "str/encoding/code_type.h"
+#include "str/encoding/utility/code_type.h"
 #include "iter/iter_concepts.h"
 
 namespace mstl::str::concepts {

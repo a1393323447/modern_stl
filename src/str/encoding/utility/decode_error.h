@@ -5,8 +5,8 @@
 #ifndef __MODERN_STL_DECODE_RESULT_H__
 #define __MODERN_STL_DECODE_RESULT_H__
 
-#include <global.h>
-#include <option/option.h>
+#include "global.h"
+#include "option/option.h"
 
 // std
 #include <ostream>

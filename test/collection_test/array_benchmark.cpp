@@ -20,17 +20,17 @@ struct Pow {
 
 Array<Pow<usize>, 100> combine_for_ben_vec_1(const Array<i32, 1000>& arr) {
     auto pow_arr =
-    arr.iter() |
-    map([](const auto& ele) {
-        return ele * ele;
-    }) |
-    map([](const auto& ele) {
-        return Pow<usize>{ static_cast<usize>(ele * ele) };
-    }) |
-    filter([](const auto& ele) {
-        return ele.pow % 2 == 0;
-    }) |
-    collect<Array<Pow<usize>, 100>>();
+        arr.iter() |
+        map([](const auto& ele) {
+            return ele * ele;
+        }) |
+        map([](const auto& ele) {
+            return Pow<usize>{ static_cast<usize>(ele * ele) };
+        }) |
+        filter([](const auto& ele) {
+            return ele.pow % 2 == 0;
+        }) |
+        collect<Array<Pow<usize>, 100>>();
 
     return pow_arr;
 }
