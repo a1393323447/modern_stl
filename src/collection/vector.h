@@ -41,6 +41,20 @@ namespace mstl::collection {
         }
     }
 
+    /**
+     * @brief 连续储存的, 空间可增长的数组. 与`std::vector`相类似.
+     *
+     * @tparam T 储存的元素类型
+     * @tparam A 分配器类型
+     *
+     * ## Example
+     * @code
+     *      Vector<int> vec = {1, 2, 3};
+     *      assert(vec[0] == 1);
+     *      vec.push_back(4);
+     *      assert(vec[3] == 4);
+     * @endcode
+     */
     template<typename T, mstl::memory::concepts::Allocator A = mstl::memory::allocator::Allocator>
     requires (!basic::RefType<T>)
     class Vector {
@@ -122,18 +136,32 @@ namespace mstl::collection {
             return *this;
         }
 
-        Vector &operator=(std::initializer_list<T> list) {
+        constexpr Vector &operator=(std::initializer_list<T> list) {
             clear();
 
             copy_impl(list);
             return *this;
         }
 
+        /**
+         * @brief 获取位于pos的元素.
+         * @note 在DEBUG模式下, 该函数进行越界检查: 当下标越界, 则引发panic.
+         * @param pos 元素的索引.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec = {1, 2, 3};
+         *      assert(vec[0] == 1);
+         *      // vec[4];  // this will raise panic.
+         * @endcode
+         */
         constexpr T &operator[](usize pos) {
+            MSTL_DEBUG_ASSERT(pos < len, "Out of range.");
             return beginPtr[pos];
         }
 
         constexpr const T &operator[](usize pos) const {
+            MSTL_DEBUG_ASSERT(pos < len, "Out of range.");
             return beginPtr[pos];
         }
 
@@ -142,8 +170,21 @@ namespace mstl::collection {
         }
 
     public:
+        /**
+         * @brief 对Vector赋值, 以使其储存count个val.
+         *
+         * @param[in] count
+         * @param[in] val
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec;
+         *      vec.assign(3, 2);
+         *      assert(vec == Vector<int>{2, 2, 2});
+         * @endcode
+         */
         constexpr void assign(usize count, const T &val) {
-            clear();
+            clear();  // fixme reuse
 
             allocate(count);
 
@@ -161,8 +202,17 @@ namespace mstl::collection {
         }
 
         /**
-         * 返回Vector位于pos处的元素的引用. 若数组越界, 则返回Option::none().
-         * */
+         * @brief 安全地取出Vector中储存的元素.
+         * @param pos 元素的索引
+         * @return 返回第pos个元素的引用的Option.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec{1, 2, 3};
+         *      assert(vec.at(0).unwrap() == 1);
+         *      assert(vec.at(4).is_none());
+         * @endcode
+         */
         constexpr Option<T &> at(usize pos) {
             if (pos < len) {
                 return Option<T &>::some(beginPtr[pos]);
@@ -179,6 +229,17 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 取出Vector中储存的元素, 且不进行越界检查.
+         * @param pos 元素的索引
+         * @return 返回第pos个元素的引用. 若下标越界, 则行为未定义.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec{1, 2, 3};
+         *      assert(vec.at_unchecked(0) == 1);
+         * @endcode
+         */
         constexpr T &at_unchecked(usize pos) {
             return beginPtr[pos];
         }
@@ -187,6 +248,18 @@ namespace mstl::collection {
             return beginPtr[pos];
         }
 
+        /**
+         * @brief 安全地取出Vector中的第一个元素的引用.
+         * @return 返回第一个元素的引用的Option.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec{1, 2, 3};
+         *      assert(vec.front().unwrap() == 1);
+         *      vec.clear();
+         *      assert(vec.front().is_none());
+         * @endcode
+         */
         constexpr Option<T &> front() {
             if (len != 0) {
                 return Option<T &>::some(beginPtr[0]);
@@ -203,6 +276,10 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 取出Vector中储存的第一个元素, 且不进行越界检查.
+         * @return 返回第pos个元素的引用. 若Vector为空, 则行为未定义.
+         */
         constexpr T &front_unchecked() {
             return beginPtr[0];
         }
@@ -211,6 +288,18 @@ namespace mstl::collection {
             return beginPtr[0];
         }
 
+        /**
+         * @brief 安全地取出Vector中储存的最后一个元素.
+         * @return 返回最后一个元素的引用的Option.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec{1, 2, 3};
+         *      assert(vec.back().unwrap() == 3);
+         *      vec.clear();
+         *      assert(vec.back().is_none());
+         * @endcode
+         */
         constexpr Option<T &> back() {
             if (len != 0) {
                 return Option<T &>::some(beginPtr[len - 1]);
@@ -227,6 +316,10 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 取出Vector中储存的最后一个元素, 且不进行越界检查.
+         * @return 返回最后一个元素的引用. 若Vector为空, 则行为未定义.
+         */
         constexpr T &back_unchecked() {
             return beginPtr[len - 1];
         }
@@ -235,6 +328,17 @@ namespace mstl::collection {
             return beginPtr[len - 1];
         }
 
+        /**
+         * @brief 取出Vector的底层数组.
+         * @return Vector的底层数组.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec{1, 2, 3};
+         *      int* ptr = vec.data();
+         *      assert(ptr[0] == 1);
+         * @endcode
+         */
         constexpr T *data() noexcept {
             return beginPtr;
         }
@@ -244,18 +348,48 @@ namespace mstl::collection {
         }
 
     public:
+        /**
+         * @brief 把Vector转换为迭代器.
+         *
+         * 该迭代器将接管Vector中的所有元素的所有权.
+         *
+         * @attention 调用该函数后, Vector将被消耗(或视为已被移动).
+         * @return Vector转换而来的迭代器.
+         */
         IntoIter into_iter() {
             return _private::vec_into_iter(std::move(*this));
         }
 
+        /**
+         * @brief 把Vector转换为迭代器(逆向).
+         *
+         * 该迭代器将接管Vector中的所有元素的所有权. 该迭代器逆向迭代Vector中的元素.
+         *
+         * @attention 调用该函数后, Vector将被消耗(或视为已被移动).
+         * @return Vector转换而来的迭代器.
+         */
         IntoIterReversed into_iter_reversed() {
             return _private::vec_into_iter_reversed(std::move(*this));
         }
 
+        /**
+         * @brief 获取Vector的迭代器.
+         *
+         * 该迭代器将储存Vector的引用.
+         *
+         * @return Vector的迭代器.
+         */
         Iter iter() {
             return Iter{beginPtr, beginPtr + len};
         }
 
+        /**
+         * @brief 获取Vector的迭代器.
+         *
+         * 该迭代器将储存Vector的引用. 该迭代器迭代各元素的常量引用.
+         *
+         * @return Vector的迭代器.
+         */
         ConstIter citer() const {
             return ConstIter{beginPtr, beginPtr + len};
         }
@@ -284,6 +418,13 @@ namespace mstl::collection {
             return cend();
         }
 
+        /**
+         * @brief 从一个MSTL风格的迭代器构建一个Vector.
+         * 它一般由collect()函数调用.
+         * @param iter MSTL风格的迭代器.
+         * @attention 由于Vector不能储存引用, 因此, 迭代左值引用的迭代器将生成其所迭代的元素的副本, 而迭代右值引用的迭代器将使得其迭代元素被移入新Vector.
+         * @return 新构造的Vector.
+         */
         template<iter::Iterator Iter>
         static decltype(auto) from_iter(Iter iter) {
             Vector v;
@@ -296,26 +437,56 @@ namespace mstl::collection {
         }
 
     public:
+        /**
+         * @brief 检查当前Vector是否储存有元素.
+         * @return 若Vector为空, 则返回true; 否则, 返回false.
+         */
         constexpr bool empty() const {
             return len == 0;
         }
 
+        /**
+         * @brief 检查当前Vector储存元素的数量.
+         * @return 返回当前Vector储存元素的数量.
+         */
         constexpr usize size() const {
             return len;
         }
 
+        /**
+         * @brief 为Vector预留空间.
+         *
+         * 若当前容量小于newCap, 则扩展到该容量; 否则什么也不做.
+         *
+         * @param newCap 为Vector预留的容量
+         */
         constexpr void reserve(usize newCap) {
             if (newCap > cap) {
                 allocate_reserve(newCap);
             }
         }
 
+        /**
+         * @brief 检查Vector的容量.
+         * @return Vector的容量
+         */
         constexpr usize capacity() const {
             return cap;
         }
 
     public:
-        // Destroy all elements and deallocate reserved space
+        /**
+         * @brief 清空Vector.
+         *
+         * 销毁所有元素, 并解分配预分配的空间.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec = {1, 2, 3};
+         *      vec.clear();
+         *      assert(vec.empty());
+         * @endcode
+         */
         constexpr void clear() {
             for (usize i = 0; i < len; i++) {
                 destroy_at(i);
@@ -323,8 +494,23 @@ namespace mstl::collection {
             deallocate();
         }
 
+        /**
+         * @brief 在pos所指向的位置构造一个元素.
+         *
+         * 在pos指向的位置, 以vs构造一个元素.
+         *
+         * @param pos 指向希望构造元素的位置.
+         * @param vs  构造元素所需的参数.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec = {1, 2, 3};
+         *      vec.emplace(vec.begin(), 2);
+         *      assert(vec[0] == 2);
+         * @endcode
+         */
         template<typename ...Args>
-        void emplace(ConstIter pos, Args...vs) {
+        constexpr void emplace(ConstIter pos, Args...vs) {
             if (len == cap) {
                 extend_space();
             }
@@ -334,6 +520,18 @@ namespace mstl::collection {
             construct_at(p, std::forward<Args>(vs)...);
         }
 
+        /**
+         * @brief 擦除pos所指向的元素.
+         * @param pos 指向需擦除的元素的迭代器.
+         * @return 指向被擦除的元素的下一个元素的迭代器.
+         *
+         * ## Example
+         * @code
+         *      Vector<int> vec = {1, 2, 3};
+         *      vec.erase(vec.begin());
+         *      assert(vec[0] == 2);
+         * @endcode
+         */
         constexpr Iter erase(ConstIter pos) {
             auto p = pos.pos();
             if (p == len - 1) {
@@ -348,6 +546,13 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 擦除区间内的元素.
+         *
+         * 擦除[first, last)范围内的元素.
+         *
+         * @return 返回指向最后被擦除的元素的下一个元素的迭代器.
+         */
         constexpr Iter erase(ConstIter first, ConstIter last) {
             if (first < begin() || last > end()) {  // UB
                 return VectorIter<T>{nullptr, nullptr};
@@ -365,18 +570,33 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 在pos所指向的位置以复制的方法插入一个元素.
+         *
+         * @return 返回指向被插入的元素的迭代器.
+         */
         constexpr Iter insert(ConstIter pos, const T& val) {
             usize p = pos.pos();
-            emplace(pos, std::forward<const T&>(val));
+            emplace(pos, val);
             return begin() + p;
         }
 
+        /**
+         * @brief 在pos所指向的位置以移动的方法插入一个元素.
+         *
+         * @return 返回指向被插入的元素的迭代器.
+         */
         constexpr Iter insert(ConstIter pos, T&& val) {
             usize p = pos.pos();
             emplace(pos, std::forward<T&&>(val));
             return begin() + p;
         }
 
+        /**
+         * @brief 在pos所指向的位置以复制的方法插入count个元素.
+         *
+         * @return 返回指向第一个被插入的元素的迭代器.
+         */
         constexpr Iter insert(ConstIter pos, usize count, const T& val) {
             auto p = pos.pos();
 
@@ -389,6 +609,13 @@ namespace mstl::collection {
             return begin() + p;
         }
 
+        /**
+         * @brief 在pos所指向的位置以复制的方法插入特定范围的元素.
+         *
+         * 在pos所指向的位置插入[first, pos)范围内的元素.
+         *
+         * @return 返回指向第一个被插入的元素的迭代器.
+         */
         template<iter::LegacyInputIterator InputIt>
         constexpr Iter insert(ConstIter pos, InputIt first, InputIt last) {
             auto p = pos.pos();
@@ -411,6 +638,9 @@ namespace mstl::collection {
             return insert(pos, ilist.begin(), ilist.end());
         }
 
+        /**
+         * @brief 在末尾以复制的方法插入一个元素.
+         */
         constexpr void push_back(const T &v) {
             if (len >= cap) {
                 extend_space();
@@ -419,14 +649,20 @@ namespace mstl::collection {
             construct_at(len++, v);
         }
 
+        /**
+         * @brief 在末尾以移动的方法插入一个元素.
+         */
         constexpr void push_back(T &&v) {
             if (len >= cap) {
                 extend_space();
             }
 
-            construct_at(len++, std::forward<T &&>(v));
+            construct_at(len++, std::forward<T>(v));
         }
 
+        /**
+         * @brief 在末尾构造一个元素.
+         */
         template<typename ... Args>
         constexpr T &emplace_back(Args &&... args) {
             if (len >= cap) {
@@ -434,9 +670,15 @@ namespace mstl::collection {
             }
 
             construct_at(len++, std::forward<Args>(args)...);
+            return back_unchecked();
         }
 
-         void resize(usize count) {
+        /**
+         * @brief 改变Vector的大小.
+         *
+         * 若count < `size()`, 则缩小Vector到count, 并销毁多余的元素; 否则, 扩大Vector到count, 并在尾部填充默认构造的T.
+         */
+         constexpr void resize(usize count) {
             if (count < len) {
                 usize d = len - count;
                 while (d > 0) {
@@ -449,12 +691,17 @@ namespace mstl::collection {
                 }
                 usize d = count - len;
                 while (d > 0) {
-                    push_back(T{});
+                    emplace_back();
                     d--;
                 }
             }
         }
 
+        /**
+         * @brief 改变Vector的大小.
+         *
+         * 若count < `size()`, 则缩小Vector到count, 并销毁多余的元素; 否则, 扩大Vector到count, 并在尾部以复制的方法填充r.
+         */
         constexpr void resize(usize count, const T& r) {
             if (count < len) {
                 usize d = len - count;
@@ -474,11 +721,24 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 从尾部删除一个元素.
+         */
         constexpr void pop_back() noexcept {
             destroy_at(len - 1);
             len--;
         }
 
+        /**
+         * @brief 交换两个Vector中储存的元素, 同时交换两者的Allocator.
+         * ## Example
+         * @code
+         *      Vector<int> a = {1, 2, 3}, b = {4, 5, 6};
+         *      a.swap(b);
+         *      assert(to_string(a) == "Vec [4, 5, 6]");
+         *      assert(to_string(b) == "Vec [1, 2, 3]");
+         * @endcode
+         */
         constexpr void swap(Vector &o) noexcept {
             std::swap(len, o.len);
             std::swap(cap, o.cap);
