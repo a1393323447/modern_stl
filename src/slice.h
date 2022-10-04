@@ -40,6 +40,22 @@ namespace mstl {
             }
         }
 
+        MSTL_INLINE constexpr
+        usize len() {
+            return end - start;
+        }
+
+        MSTL_INLINE constexpr
+        bool is_empty() {
+            return start == end;
+        };
+
+        /// impl ContinuousIterator
+        MSTL_INLINE constexpr
+        const T* start_addr() {
+            return start;
+        }
+
     private:
         T* start = nullptr;
         T* end = nullptr;
@@ -81,6 +97,11 @@ namespace mstl {
         MSTL_INLINE constexpr
         MutRefIter iter_mut() {
             return MutRefIter { ptr, size };
+        }
+
+        MSTL_INLINE constexpr
+        const T* start_addr() {
+            return ptr;
         }
 
     private:

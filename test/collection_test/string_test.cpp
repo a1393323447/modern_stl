@@ -34,4 +34,10 @@ BOOST_AUTO_TEST_CASE(ASCII_STR_TEST) {
     str.chars() | for_each([](auto ch) {
        std::cout << ch << std::endl;
     });
+
+    UTF8String s = "你好啊\xf0\xa0\x80\x80"_utf8;
+    s.chars() | for_each([](auto ch) {
+        std::cout << ch << std::endl;
+    });
+    std::cout << s << std::endl;
 }

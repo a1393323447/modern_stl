@@ -14,6 +14,7 @@ template<mstl::str::CharsWrap wrap>                                            \
 constexpr                                                                      \
 decltype(auto) operator ""_##name() noexcept {                                 \
     constexpr usize LEN = decltype(wrap)::LEN - 1;                             \
+    static_assert(LEN > 0, "empty string.\n");                                 \
     using ReturnType =  mstl::str::ValidBytes<LEN>;                            \
     constexpr mstl::collection::Array <u8, LEN> arr { wrap.chars };            \
     constexpr auto op = encoding::validate(arr.iter());                        \

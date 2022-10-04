@@ -59,6 +59,22 @@ namespace mstl::iter {
         };
     };
 
+    template<typename Iter>
+    concept ExactSizeIterator = requires {
+        requires Iterator<Iter>;
+        requires requires(Iter iter) {
+            { iter.len() } -> std::same_as<usize>;
+            { iter.is_empty() } -> std::same_as<bool>;
+        };
+    };
+
+    template<typename Iter>
+    concept ContinuousIterator = requires {
+        requires ExactSizeIterator<Iter>;
+        requires requires(Iter iter) {
+            { iter.start_addr() } -> std::same_as<const std::remove_reference_t<typename Iter::Item> *>;
+        };
+    };
     /**
      * @tparam Into 可以转化为 Iterator 的类型
      */
