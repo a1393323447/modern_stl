@@ -55,7 +55,21 @@ namespace mstl {
         }
 
         MSTL_INLINE constexpr
+        const T& as_ref() const {
+            if (this->hold_value) {
+                return this->value;
+            } else {
+                MSTL_PANIC("get a ref of none value.");
+            }
+        }
+
+        MSTL_INLINE constexpr
         T& as_ref_uncheck() {
+            return this->value;
+        }
+
+        MSTL_INLINE constexpr
+        const T& as_ref_uncheck() const {
             return this->value;
         }
 
@@ -129,7 +143,7 @@ namespace mstl {
     private:
         constexpr Option(T&& t): value(std::forward<T&&>(t)), hold_value(true) {}
         constexpr Option(const T& t):   value(t), hold_value(true) {}
-        constexpr Option(): hold_value(false) {}
+        constexpr Option(): value(T{}), hold_value(false) {}
 
         T value;
         bool hold_value = false;
@@ -188,7 +202,21 @@ namespace mstl {
         }
 
         MSTL_INLINE constexpr
+        const T as_ref() const {
+            if (this->hold_value) {
+                return *this->ptr;
+            } else {
+                MSTL_PANIC("try to get a None value ref.");
+            }
+        }
+
+        MSTL_INLINE constexpr
         T as_ref_uncheck() {
+            return *this->ptr;
+        }
+
+        MSTL_INLINE constexpr
+        const T as_ref_uncheck() const {
             return *this->ptr;
         }
 

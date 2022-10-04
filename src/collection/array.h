@@ -91,7 +91,7 @@ namespace mstl::collection {
 
         MSTL_INLINE constexpr
         Option<Item> next() {
-            if (start == end) {
+            if (start >= end) {
                 return Option<Item>::none();
             } else {
                 auto op = Option<Item>::some(*start);
@@ -102,11 +102,11 @@ namespace mstl::collection {
 
         MSTL_INLINE constexpr
         Option<Item> prev() {
-            if (start == end) {
+            if (start >= end) {
                 return Option<Item>::none();
             } else {
-                auto op = Option<Item>::some(*end);
                 end--;
+                auto op = Option<Item>::some(*end);
                 return op;
             }
         }
@@ -148,6 +148,11 @@ namespace mstl::collection {
                 }
             }
         }
+        constexpr Array(const T (& raw)[N]) {
+            for (usize i = 0; i < N; i++) {
+                values[i] = raw[i];
+            }
+        }
         /// impl Copy for Array
         constexpr Array(const Array&) requires basic::CopyAble<T> = default;
         constexpr Array& operator=(const Array& other)
@@ -187,11 +192,11 @@ namespace mstl::collection {
         Array& operator=(Array&& other)
         requires (!basic::Movable<T>) = delete;
         /// impl IntoIter
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         IntoIter into_iter() {
             return IntoIter { const_cast<T*>(values) };
         }
-        MSTL_INLINE
+        MSTL_INLINE constexpr
         IterRef iter() const {
             return IterRef { const_cast<T*>(values) };
         }
