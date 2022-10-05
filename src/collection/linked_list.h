@@ -17,20 +17,80 @@
 
 namespace mstl::collection {
     namespace concepts {
+        /**
+         * @brief 单向链表节点.
+         * # typename 标注要求
+         * - Item: 节点中所储存的元素
+         *      ```cpp
+         *      class FooForwordNode {
+         *      public:
+         *          using Item = Foo;
+         *          ...
+         *      };
+         *      ```
+         * # 成员变量要求
+         * - next
+         *      - 类型要求
+         *
+         *          指向节点本身的指针.
+         *
+         *      - 功能描述
+         *
+         *          指向下一个节点.
+         *
+         * - data
+         *      - 类型要求
+         *
+         *          指向Item的指针.
+         *
+         *      - 功能描述
+         *
+         *          指向节点本身所存的数据.
+         *
+         * # 成员函数要求
+         * - set_next(node)
+         *      - 参数要求
+         *          - node
+         *
+         *              指向节点的指针.
+         *
+         *      - 功能描述
+         *
+         *          设置当前节点的下一个节点. 若节点为双向节点, 则当下一个节点不为nullptr时, 设置其上一个节点为当前节点,
+         */
         template <typename T>
         concept ForwardNode = requires (T node, T* node_ptr){
-            { node.next } -> std::convertible_to<T*>;
-            *node.data;
-            node.set_next(node_ptr);
             typename T::Item;
+            { node.next }  -> std::convertible_to<T*>;
+            { *node.data } -> std::convertible_to<typename T::Item&>;
+            node.set_next(node_ptr);
         };
 
+        /**
+         * 双向迭代器
+         * # 前提
+         * 满足 \link mstl::collection::concepts::ForwardNode ForwardNode \endlink
+         * # 成员变量要求
+         * - prev
+         *      - 类型要求
+         *
+         *          指向节点的指针
+         *
+         *      - 功能描述
+         *
+         *          指向当前节点的上一个节点.
+         */
         template <typename T>
         concept Node = ForwardNode<T> && requires (T node) {
             { node.prev } -> std::convertible_to<T*>;
         };
     }
 
+    /**
+     * @brief 链表的MSTL风格迭代器.
+     * @tparam T 迭代类型
+     * @tparam Node 节点类型
+     */
     template<typename T,
             concepts::ForwardNode Node>
     requires (!basic::RefType<T>)
@@ -66,6 +126,16 @@ namespace mstl::collection {
         }
     };
 
+    /**
+     * @brief 链表的STL风格迭代器
+     *
+     * ## 约束
+     * 若Node不满足`Node`, 则Reversed不能为true.
+     *
+     * @tparam T 迭代的元素类型
+     * @tparam Node 节点类型
+     * @tparam Reversed 标记迭代器是否为逆序
+     */
     template<typename T,
             concepts::ForwardNode Node,
             bool Reversed=false>
@@ -260,6 +330,10 @@ namespace mstl::collection {
             return (usize)(&((NodeAllocHelper<T, Node>*)0)->_d);
         }
 
+        /**
+         * @brief 单链表节点.
+         * @tparam T 节点储存的元素类型.
+         */
         template<typename T>
         requires (!basic::RefType<T>)
         struct ForwardListNode {
@@ -268,14 +342,14 @@ namespace mstl::collection {
             ForwardListNode* next;
             T* data;
 
-            // cannot be null
+            /// 在节点处构造一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             template<typename ...Args>
             void construct(Args&& ...args) {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
                 std::construct_at(data, std::forward<Args>(args)...);
             }
 
-            // cannot be null
+            /// 在节点处销毁一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             void destroy() {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to destroy an object at nullptr.");
                 std::destroy_at(data);
@@ -286,6 +360,10 @@ namespace mstl::collection {
             }
         };
 
+        /**
+         * @brief 双链表的节点
+         * @tparam T 节点储存的元素的类型
+         */
         template<typename T>
         requires (!basic::RefType<T>)
         struct ListNode {
@@ -295,12 +373,14 @@ namespace mstl::collection {
             ListNode* next;
             T* data;
 
+            /// 在节点处构造一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             template<typename ...Args>
             void construct(Args&& ...args) {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
                 std::construct_at(data, std::forward<Args>(args)...);
             }
 
+            /// 在节点处销毁一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             void destroy() {
                 if (data != nullptr)
                     std::destroy_at(data);
@@ -329,6 +409,23 @@ namespace mstl::collection {
     requires (!basic::RefType<T>)
     class ListIntoIter;
 
+    /**
+     * @brief 非连续的可扩容容器类型(链表).
+     *
+     *  类似于`std::list`和`std::forward_list`, 取决于节点的类型.
+     *
+     * ## Example
+     * @code
+     *      List<int> ls = {1, 2, 3};  // List<int> is aka BaseList<int, Node<int>>
+     *      assert(ls.front_unchecked() == 1);
+     *      ls.push_back(4);
+     *      assert(ls.back_unchecked() == 4);
+     * @endcode
+     *
+     * @tparam T 储存的元素类型
+     * @tparam Node 节点类型
+     * @tparam A 分配器类型
+     */
     template<typename T,
             concepts::ForwardNode Node,
             mstl::memory::concepts::Allocator A=mstl::memory::allocator::Allocator>
@@ -337,7 +434,7 @@ namespace mstl::collection {
         static constexpr bool is_double_linked_list = concepts::Node<Node>;
 
         Node* head = nullptr;  // head node is always an invalid node
-        Node* tail = nullptr;
+        Node* tail = nullptr;  // tail node is always an invalid node
         usize len = 0;
         A alloc;
 
@@ -546,11 +643,17 @@ namespace mstl::collection {
             return alloc;
         }
 
+        /// 判断该链表是否已被移动或销毁.
+        /// 当该方法返回true, 则调用该方法的行为在事实上也是非法的.
         bool moved() const noexcept {
             return head == nullptr;
         }
 
     public:  // visitor
+        /**
+         * @brief 安全地返回第一个元素的引用.
+         * @return 若链表不为空, 则返回第一个元素的引用的Option; 否则, 返回None.
+         */
         Option<T&> front() noexcept {
             if (empty()) {
                 return Option<T&>::none();
@@ -569,6 +672,10 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 返回第一个元素的引用.
+         * @return 若链表不为空, 则返回第一个元素的引用; 否则, 行为未定义.
+         */
         T& front_unchecked() noexcept {
             T* data = head->next->data;
             return *data;
@@ -579,6 +686,14 @@ namespace mstl::collection {
             return *data;
         }
 
+        /**
+         * @brief 安全地返回最后一个元素的引用.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @return 若链表不为空, 则返回最后一个元素的引用的Option; 否则, 返回None.
+         */
         Option<T&> back() noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<T&>::none();
@@ -597,6 +712,13 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @brief 返回最后一个元素的引用.
+         * @return 若链表不为空, 则返回最后一个元素的引用; 否则, 行为未定义.
+         */
         T& back_unchecked() noexcept requires is_double_linked_list {
             T* data = tail->prev->data;
             return *data;
@@ -608,10 +730,25 @@ namespace mstl::collection {
         }
 
     public:  // iter
+        /**
+         * @brief 把链表转换为迭代器.
+         *
+         * 该迭代器将接管链表中的所有元素的所有权.
+         *
+         * @attention 调用该函数后, 链表将被消耗(或视为已被移动).
+         * @return 链表转换而来的迭代器.
+         */
         IntoIter into_iter() {
             return IntoIter{std::move(*this)};
         }
 
+        /**
+         * @brief 从一个MSTL风格的迭代器构建一个链表.
+         * 它一般由collect()函数调用.
+         * @param iter MSTL风格的迭代器.
+         * @attention 由于链表不能储存引用, 因此, 迭代左值引用的迭代器将生成其所迭代的元素的副本, 而迭代右值引用的迭代器将使得其迭代元素被移入新链表.
+         * @return 新构造的链表.
+         */
         template<iter::Iterator Iter>
         static decltype(auto) from_iter(Iter iter) {
             BaseList res;
@@ -628,6 +765,13 @@ namespace mstl::collection {
             return res;
         }
 
+        /**
+         * @brief 获取链表的迭代器.
+         *
+         * 该迭代器将引用该链表.
+         *
+         * @return 链表的迭代器.
+         */
         Iter iter() noexcept {
             return {head->next, tail};
         }
@@ -703,15 +847,35 @@ namespace mstl::collection {
         }
 
     public:  // capacity
+        /**
+         * @brief 检查当前链表是否储存有元素.
+         * @return 若链表为空, 则返回true; 否则, 返回false.
+         */
         inline bool empty() const noexcept {
             return len == 0;
         }
 
+        /**
+         * @brief 检查当前链表储存元素的数量.
+         * @return 返回当前链表储存元素的数量.
+         */
         inline usize size() const noexcept {
             return len;
         }
 
     public:  // editors
+        /**
+         * @brief 清空链表.
+         *
+         * 销毁所有元素, 并解分配对应节点的空间.
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.clear();
+         *      assert(ls.empty());
+         * @endcode
+         */
         void clear() noexcept {
             Node* cur = head->next;
             while (cur != tail) {
@@ -724,16 +888,59 @@ namespace mstl::collection {
             head->set_next(tail);
         }
 
+        /**
+         * @brief 在pos指向的位置后插入一个元素.
+         *
+         * 元素以复制的方式插入.
+         *
+         * @param pos 指向插入元素的位置
+         * @param val 要插入的值
+         * @return 指向新插入的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      int t = 0;
+         *      ls.insert_after(ls.before_begin(), t);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         iterator insert_after(const_iterator pos, const T& val)
         requires basic::CopyAble<T> {
             return emplace_after(pos, val);
         }
 
+        /**
+         * @brief 在pos指向的位置后插入一个元素.
+         *
+         * 元素以移动的方式插入.
+         *
+         * @param pos 指向插入元素的位置
+         * @param val 要插入的值
+         * @return 指向新插入的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.insert_after(ls.before_begin(), 0);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         iterator insert_after(const_iterator pos, T&& val)
         {
             return emplace_after(pos, std::forward<T>(val));
         }
 
+        /**
+         * @brief 在pos指向的位置后插入count个元素.
+         *
+         * 元素以复制的方式插入.
+         *
+         * @param pos 指向插入元素的位置
+         * @param count 要插入的元素的个数.
+         * @param val 要插入的值
+         * @return 指向第一个插入的元素的迭代器
+         */
         iterator insert_after(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
@@ -753,6 +960,16 @@ namespace mstl::collection {
             return {r->next};
         }
 
+        /**
+         * @brief 在pos指向的位置后插入范围内的元素.
+         *
+         * 插入[first, last)范围内的元素.
+         *
+         * @param pos 指向插入元素的位置
+         * @param first 指向范围的的第一个元素的迭代器.
+         * @param last 指向范围的最后一个元素(不含)的迭代器.
+         * @return 指向第一个插入的元素的迭代器
+         */
         template<iter::LegacyInputIterator InputIt>
         iterator insert_after(const_iterator pos, InputIt first, InputIt last) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
@@ -777,6 +994,19 @@ namespace mstl::collection {
             return insert_after(pos, ilist.begin(), ilist.end());
         }
 
+        /**
+         * @brief 在pos指向的位置后构造一个元素.
+         *
+         * @param pos 指向插入元素的位置
+         * @return 指向新构造的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.emplace_after(ls.before_begin(), 0);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         template<typename ...Args>
         iterator emplace_after(const_iterator pos, Args&& ...args) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
@@ -787,6 +1017,18 @@ namespace mstl::collection {
             return ListIterSTL<T, Node>(tmp);
         }
 
+        /**
+         * @brief 删除pos所指向的元素的写下一个元素
+         * @param pos 指向欲删除的元素
+         * @return 被删除的元素的下一个元素. 若不存在这样的元素, 则返回end().
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.erase_after(ls.before_begin());
+         *      assert(ls.front_unchecked() == 2);
+         * @endcode
+         */
         iterator erase_after(const_iterator pos) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to erase element after the tail.");
             if (pos.cur->next == tail) {
@@ -801,6 +1043,19 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 删除(first, last)范围内的元素.
+         * @param first 指向欲删除的第一个元素(不含)
+         * @param last 指向欲删除的最后一个元素(不含)
+         * @return 被删除的元素的下一个元素. 若不存在这样的元素, 则返回end().
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.erase_after(ls.before_begin(), ls.end());
+         *      assert(ls.empty());
+         * @endcode
+         */
         iterator erase_after(const_iterator first, const_iterator last) {
             while (true) {
                 if (first == last || first.cur->next == last.cur)
@@ -810,6 +1065,19 @@ namespace mstl::collection {
             return {last.cur};
         }
 
+        /**
+         * @brief 在pos指向的位置构造一个元素.
+         *
+         * @param pos 指向插入元素的位置
+         * @return 指向新构造的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.emplace(ls.begin(), 0);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         template<class ...Args>
         iterator emplace(const_iterator pos, Args&& ...args)
         requires is_double_linked_list {
@@ -823,16 +1091,66 @@ namespace mstl::collection {
             return ListIterSTL<T, Node>(tmp);
         }
 
+        /**
+         * @brief 在pos指向的位置插入一个元素.
+         *
+         * 以复制的方式插入元素
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param pos 指向插入元素的位置
+         * @return 指向新构造的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      int t = 0;
+         *      ls.insert(ls.begin(), t);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         iterator insert(const_iterator pos, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             return emplace(pos, val);
         }
 
+        /**
+         * @brief 在pos指向的位置插入一个元素.
+         *
+         * 以移动的方式插入元素
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param pos 指向插入元素的位置
+         * @return 指向新构造的元素的迭代器
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.insert(ls.begin(), 0);
+         *      assert(ls.front_unchecked() == 0);
+         * @endcode
+         */
         iterator insert(const_iterator pos, T&& val)
             requires is_double_linked_list {
             return emplace(pos, std::forward<T>(val));
         }
 
+        /**
+         * @brief 在pos指向的位置插入count个元素.
+         *
+         * 元素以复制的方式插入.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param pos 指向插入元素的位置
+         * @param count 要插入的元素的个数.
+         * @param val 要插入的值
+         * @return 指向第一个插入的元素的迭代器
+         */
         iterator insert(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
@@ -852,6 +1170,19 @@ namespace mstl::collection {
             return {r->next};
         }
 
+        /**
+         * @brief 在pos指向的位置插入范围内的元素.
+         *
+         * 插入[first, last)范围内的元素.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param pos 指向插入元素的位置
+         * @param first 指向范围的的第一个元素的迭代器.
+         * @param last 指向范围的最后一个元素(不含)的迭代器.
+         * @return 指向第一个插入的元素的迭代器
+         */
         template<iter::LegacyInputIterator InputIt>
         iterator insert(const_iterator pos, InputIt first, InputIt last)
         requires is_double_linked_list {
@@ -876,6 +1207,22 @@ namespace mstl::collection {
             return insert(pos, ilist.begin(), ilist.end());
         }
 
+        /**
+         * @brief 删除pos所指向的元素
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param pos 指向欲删除的元素
+         * @return 被删除的元素的下一个元素. 若不存在这样的元素, 则返回end().
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.erase_after(ls.begin());
+         *      assert(ls.front_unchecked() == 2);
+         * @endcode
+         */
         iterator erase(const_iterator pos)
         requires is_double_linked_list {
             if (pos.cur == tail || pos.cur == head) {
@@ -890,6 +1237,23 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 删除[first, last)范围内的元素.
+         *
+         * @note 若`first == before_begin()`, 则行为未定义.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @return 最后被删除的元素的下一个元素. 若不存在这样的元素, 则返回end().
+         *
+         * ## Example
+         * @code
+         *      Listr<int> ls = {1, 2, 3};
+         *      ls.erase_after(ls.begin(), ls.end());
+         *      assert(ls.empty());
+         * @endcode
+         */
         iterator erase(const_iterator first, const_iterator last)
         requires is_double_linked_list {
             if (first == last) {
@@ -909,17 +1273,28 @@ namespace mstl::collection {
             return {last.cur};
         }
 
-
+        /**
+         * @brief 在链表前以移动的方式插入一个元素.
+         * @param value 欲插入的元素.
+         */
         void push_front(T&& value) noexcept
         {
             emplace_front(std::forward<T>(value));
         }
 
+        /**
+         * @brief 在链表前以复制的方式插入一个元素.
+         * @param value 欲插入的元素.
+         */
         void push_front(const T& value) noexcept
         requires basic::CopyAble<T> {
             emplace_front(value);
         }
 
+        /**
+         * @brief 在链表前构造一个元素.
+         * @return 所插入的元素的引用.
+         */
         template<typename ...Args>
         Reference emplace_front(Args&& ...args) noexcept {
             Node* node = construct_node(std::forward<Args>(args)...);
@@ -930,6 +1305,9 @@ namespace mstl::collection {
             return *node->data;
         }
 
+        /**
+         * @brief 在链表前删除一个元素.
+         */
         void pop_front() noexcept {
             Node* tmp = head->next;
             MSTL_DEBUG_ASSERT(tmp != nullptr, "Trying to pop front at an empty list.");
@@ -938,16 +1316,40 @@ namespace mstl::collection {
             len--;
         }
 
+        /**
+         * @brief 在链表后以移动的方式插入一个元素.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param value 欲插入的元素.
+         */
         void push_back(T&& val) noexcept
         requires is_double_linked_list {
             emplace_back(std::forward<T>(val));
         }
 
+        /**
+         * @brief 在链表后以复制的方式插入一个元素.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @param value 欲插入的元素.
+         */
         void push_back(const T& val) noexcept
         requires basic::CopyAble<T> && is_double_linked_list {
             emplace_back(val);
         }
 
+        /**
+         * @brief 在链表后构造一个元素.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         *
+         * @return 新插入的元素的引用.
+         */
         template<typename ...Args>
         Reference emplace_back(Args&&... args) noexcept
         requires is_double_linked_list {
@@ -960,6 +1362,12 @@ namespace mstl::collection {
             return *node->data;
         }
 
+        /**
+         * @brief 在链表后删除一个元素.
+         *
+         * ## 约束
+         * 节点必须满足`Node`. 即, 链表必须是双链表.
+         */
         void pop_back() noexcept
         requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
@@ -970,6 +1378,11 @@ namespace mstl::collection {
             destroy_node(tmp);
         }
 
+        /**
+         * @brief 改变链表的大小.
+         *
+         * 若count < `size()`, 则缩小链表到count, 并销毁多余的元素; 否则, 扩大链表到count, 并在尾部填充默认构造的元素.
+         */
         void resize(usize count) noexcept {
             if (count == 0) {
                 clear();
@@ -982,6 +1395,11 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 改变链表的大小.
+         *
+         * 若count < `size()`, 则缩小链表到count, 并销毁多余的元素; 否则, 扩大链表到count, 并在尾部以复制的方法填充r.
+         */
         void resize(usize count, const T& val) noexcept {
             if (count == 0) {
                 clear();
@@ -994,6 +1412,16 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 交换两个链表中储存的元素, 同时交换两者的Allocator.
+         * ## Example
+         * @code
+         *      List<int> a = {1, 2, 3}, b = {4, 5, 6};
+         *      a.swap(b);
+         *      assert(to_string(a) == "List [4, 5, 6]");
+         *      assert(to_string(b) == "List [1, 2, 3]");
+         * @endcode
+         */
         void swap(BaseList& list) noexcept {
             std::swap(alloc, list.alloc);
             std::swap(head, list.head);
@@ -1002,10 +1430,40 @@ namespace mstl::collection {
         }
 
     public:  // Operations
+        /**
+         * @brief 合并两个有序链表.
+         *
+         * 被合并的链表将被清空.
+         *
+         * ## Example
+         * @code
+         *      List<int> a = {1, 3, 5}, b = {2, 4, 6};
+         *      a.merge(b);
+         *      assert(to_string(a) == "List [1, 2, 3, 4, 5, 6]");
+         *      assert(b.empty());
+         * @endcode
+         *
+         * @param other 欲合并的链表
+         */
         void merge(BaseList& other) {
             merge(other, std::less<T>{});
         }
 
+        /**
+         * @brief 合并两个有序链表.
+         *
+         * ## Example
+         * @code
+         *      List<int> a = {5, 3, 1}, b = {6, 4, 2};
+         *      a.merge(b, [](const auto& a, const auto& b){ return a > b; });
+         *      assert(to_string(a) == "List [6, 5, 4, 3, 2, 1]");
+         *      assert(b.empty());
+         * @endcode
+         *
+         * @tparam Compare 谓词, 判断元素之间的全序关系.
+         * @param other 欲合并的链表
+         * @param p 谓词. 比较两个元素, 若元素a应在元素b前, 则返回true; 否则返回false.
+         */
         template<class Compare>
         void merge(BaseList& other, Compare p)
         requires ops::Predicate<Compare, T, T> {
@@ -1030,10 +1488,26 @@ namespace mstl::collection {
             }
         }
 
+        /**
+         * @brief 合并两个有序链表.
+         *
+         * 与`merge(BaseList& other)`类似, 但合并后, other视为已移动.
+         *
+         * @param other
+         */
         void merge(BaseList&& other) {
             merge(std::forward<BaseList>(other), std::less<T>{});
         }
 
+        /**
+         * @brief 合并两个有序链表.
+         *
+         * 与`merge(BaseList& other)`类似, 但合并后, other视为已移动.
+         *
+         * @tparam Compare 谓词, 判断元素之间的全序关系.
+         * @param other 欲合并的链表
+         * @param p 谓词. 比较两个元素, 若元素a应在元素b前, 则返回true; 否则返回false.
+         */
         template<class Compare>
         void merge(BaseList&& other, Compare p)
         requires ops::Predicate<Compare, T, T> {
@@ -1115,12 +1589,27 @@ namespace mstl::collection {
             other.head = other.tail = nullptr;
         }
 
+        /**
+         * @brief 删除链表中等于val的元素.
+         *
+         * ## 约束
+         * T必须实现相等运算符.
+         *
+         * @param val 欲删除的元素.
+         * @return 删除的元素的数量.
+         */
         usize remove(const T& val) noexcept requires ops::Eq<T, T> {
             return remove_if([&](const T& val1) {
                 return val == val1;
             });
         }
 
+        /**
+         *  @brief 删除链表中满足谓词`predicate`的元素.
+         * @tparam P 谓词
+         * @param predicate 谓词, 若一个元素需要被删除, 则返回true; 否则, 返回false.
+         * @return 删除的元素的数量.
+         */
         template<typename P>
         usize remove_if(P predicate) noexcept
         requires ops::Predicate<P, T>{
@@ -1148,6 +1637,9 @@ namespace mstl::collection {
             return cnt;
         }
 
+        /**
+         * @brief 逆转一个链表.
+         */
         void reverse() requires (!is_double_linked_list) {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             if (len < 2) {
@@ -1165,6 +1657,9 @@ namespace mstl::collection {
             head->set_next(pr);
         }
 
+        /**
+         * @brief 逆转一个链表.
+         */
         void reverse() requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             Node* p = head;
@@ -1178,10 +1673,23 @@ namespace mstl::collection {
             std::swap(head, tail);
         }
 
+        /**
+         * @brief 删除相邻的相同元素, 仅保留一个.
+         * @return 删除的元素的数量
+         */
         usize unique() requires ops::Eq<T, T> {
             return unique(std::equal_to<T>());
         }
 
+        /**
+         * @brief 删除相邻的等价元素, 仅保留一个.
+         *
+         * 等价元素由谓词`p`定义.
+         *
+         * @tparam BinaryPredicate 谓词
+         * @param p 谓词, 判断两个元素是否等价
+         * @return
+         */
         template<class BinaryPredicate>
         usize unique(BinaryPredicate p) requires ops::Predicate<BinaryPredicate, const T&, const T&> {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
@@ -1208,10 +1716,18 @@ namespace mstl::collection {
             return cnt;
         }
 
+        /**
+         * @brief 对链表进行排序.
+         */
         void sort() {
             sort(std::less<T>());
         }
 
+        /**
+         * @brief 对链表进行排序.
+         * @tparam P 谓词
+         * @param predicate 谓词
+         */
         template<typename P>
         void sort(P predicate)
         requires ops::Predicate<P, T, T> {

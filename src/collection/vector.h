@@ -676,7 +676,7 @@ namespace mstl::collection {
         /**
          * @brief 改变Vector的大小.
          *
-         * 若count < `size()`, 则缩小Vector到count, 并销毁多余的元素; 否则, 扩大Vector到count, 并在尾部填充默认构造的T.
+         * 若count < `size()`, 则缩小Vector到count, 并销毁多余的元素; 否则, 扩大Vector到count, 并在尾部填充默认构造的元素.
          */
          constexpr void resize(usize count) {
             if (count < len) {
