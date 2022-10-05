@@ -10,6 +10,27 @@
 
 namespace mstl::memory::concepts {
 
+    /**
+     * 分配器
+     * # 成员函数要求
+     * - allocate(Layout layout, usize len)
+     *      - 返回值要求
+     *
+     *          返回值类型为 void*.
+     *
+     *      - 功能描述
+     *
+     *          以layout中描述的参数, 分配一片至少能容纳len个layout所描述的类型的对象的空间. 返回所分配的空间.
+     *
+     * - deallocate(void* ptr, Layout layout, usize len)
+     *      - 返回值要求
+     *
+     *          要求无返回值.
+     *
+     *      - 功能描述
+     *
+     *          以layout和len中描述的参数, 解分配ptr所指向的空间.
+     */
     template<typename T>
     concept Allocator = basic::CopyAble<T> && requires(T a, Layout layout, usize length, void *ptr){
         { a.allocate(layout, length) } -> std::same_as<void *>;

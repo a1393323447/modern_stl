@@ -11,7 +11,7 @@ namespace mstl::memory {
     class LayoutError{};
 
     std::ostream &operator<<(std::ostream& os, const LayoutError&) {
-        return os << "invalid parameters to Layout::from_size_align";
+        return os << "Invalid parameters to Layout::from_size_align";
     }
 }
 
