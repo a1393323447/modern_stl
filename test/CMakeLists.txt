@@ -56,6 +56,13 @@ if (Boost_FOUND)
             NAME string_test
             COMMAND list_test
     )
+
+    add_executable(match_test utility_test/match_test.cpp)
+    target_link_libraries(match_test PRIVATE Boost::unit_test_framework)
+    add_test(
+            NAME match_test
+            COMMAND match_test
+    )
 endif()
 
 find_package(benchmark)
@@ -73,6 +80,5 @@ if (benchmark_FOUND)
 
     add_executable(list_benchmark collection_test/list_benchmark.cpp)
     target_link_libraries(list_benchmark benchmark::benchmark init_list)
-
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 endif()

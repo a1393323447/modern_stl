@@ -7,6 +7,7 @@
 
 #include "print.h"
 #include "tuple.h"
+#include "match.h"
 #include "type_traits.h"
 
 #endif //MODERN_STL_UTILITY_H

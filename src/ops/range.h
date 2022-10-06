@@ -103,7 +103,7 @@ namespace mstl::ops {
 
         template<typename U>
         requires PartialOrd<Idx, U> && PartialOrd<U, Idx>
-        bool contains(U&& item) {
+        bool contains(U&& item) const {
             return low <= item && item < high;
         }
 
