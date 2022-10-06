@@ -27,6 +27,11 @@ namespace mstl::ops {
     concept Sub = requires (L lhs, R rhs) {
         { lhs - rhs } -> std::same_as<Out>;
     };
+
+    template<typename T, typename U>
+    concept Assign = requires (T t, U u) {
+        t = u;
+    };
 }
 
 #endif //__MODERN_STL_ARITHMETICAL_H__
