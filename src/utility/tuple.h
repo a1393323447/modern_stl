@@ -25,7 +25,20 @@ namespace mstl::utility {
     class Tuple {
     };
 
-
+    /**
+     * @brief 非空元组.
+     *
+     * ## Example
+     *
+     * @code
+     *      Tuple<int, std::string> tuple = {1, "foo"};
+     *      assert(get<0>(tuple) == 1);
+     *      assert(get<1>(tuple) == "foo");
+     * @endcode
+     *
+     * @tparam First 第一个元素类型
+     * @tparam Rest  参数包, 剩余元素类型
+     */
     template<typename First, typename ...Rest>
     class Tuple<First, Rest...> {
         First f;
@@ -73,15 +86,23 @@ namespace mstl::utility {
             return *this;
         }
 
-        template<class F, class ...R>
+        template<typename F, typename ...R>
         constexpr bool operator==(const Tuple<F, R...>& rhs) const
-        requires ops::Eq<First, F> && (ops::Eq<Rest, R> && ...) {
+        requires (ops::Eq<First, F> && (ops::Eq<Rest, R> && ...)) {
             return f == rhs.get_first() && r == rhs.get_rest();
         }
 
     public:
+        /**
+         * @brief 检查元组的长度.
+         * @return 元组所容纳的元素的数量.
+         */
         static constexpr usize size() { return 1 + sizeof...(Rest); }
 
+        /**
+         * @brief 获取元组所容纳的第一个元素.
+         * @return 元组所容纳的第一个元素的引用.
+         */
         constexpr First& get_first() {
             return f;
         }
@@ -90,6 +111,10 @@ namespace mstl::utility {
             return f;
         }
 
+        /**
+         * @brief 获取元组所容纳的剩余元素.
+         * @return 容纳元组所容纳的剩余元素的元组的引用.
+         */
         constexpr auto& get_rest() {
             return r;
         }
@@ -98,6 +123,11 @@ namespace mstl::utility {
             return r;
         }
 
+        /**
+         * @brief 获取元组所容纳的特定元素.
+         * @tparam pos 元素的索引
+         * @return 元组所容纳的第pos个元素
+         */
         template <usize pos>
         constexpr auto& get() noexcept
         requires (pos < size()) {
@@ -118,6 +148,10 @@ namespace mstl::utility {
             }
         }
 
+        /**
+         * @brief 获取Pair的第一个元素.
+         * @return Pair的第一个元素的引用.
+         */
         constexpr auto& first() noexcept requires (size() == 2) {
             return f;
         }
@@ -126,6 +160,18 @@ namespace mstl::utility {
             return f;
         }
 
+        /**
+         * @brief 获取Pair的第二个元素.
+         *
+         * ## Example
+         * @code
+         *      auto p = make_pair(1, 2);
+         *      assert(p.first == 1);
+         *      assert(p.second == 2);
+         * @endcode
+         *
+         * @return Pair的第二个元素的引用.
+         */
         constexpr auto& second() noexcept requires (size() == 2) {
             return r.get_first();
         }
@@ -163,13 +209,16 @@ namespace mstl::utility {
     constexpr Unit unit = {};
 
     /**
-     * 元函数<br>
-     * 返回元组T的第I个元素的类型<br>
-     * 传入空元组或非元组, 则程序非良构
+     * @brief 返回元组T的第I个元素的类型
+     *
+     * 若元组非空且索引合法, 则存在type成员, 使得该成员为元组T的第I个元素的类型.
+     *
+     * 否则, 不存在type成员.
      *
      * @tparam I 索引
      * @tparam T 一个元组类型
-     *<h3>Example</h3>
+     *
+     * ## Example
      * @code
      * using T = Tuple<int, double>;
      * using V = typename TupleElenemt<1, T>::type;
@@ -192,8 +241,8 @@ namespace mstl::utility {
      * @return 元组tuple在第I个位置储存的值
      *<h3>Example</h3>
      * @code
-     * auto t = Tuple<int, double>{1, 2.0};
-     * assert(get<1>(t) == 2.0);
+     * auto t = Tuple<int, std::string>{1, "foo"};
+     * assert(get<1>(t) == "foo");
      * @endcode
      * */
     template<usize I, typename Arg, typename ...Args>
@@ -233,9 +282,7 @@ namespace mstl::utility {
         return Tuple<T, Ts...>{T{}, Ts{}...};
     }
 
-    /**
-     * 返回一个空元组的单例
-     * */
+    /// 返回一个空元组的单例
     constexpr Unit make_tuple() {
         return unit;
     }
