@@ -6,6 +6,9 @@
 #define MODERN_STL_ALLOCATOR_H
 
 #include <memory/layout.h>
+#include <new>
+
+// fixme constexpr alloc
 
 namespace mstl::memory::allocator {
 
@@ -21,15 +24,17 @@ namespace mstl::memory::allocator {
          * @param length 需要容纳的layout所描述的类型的对象的数量.
          * @return 若分配成功, 则返回指向新分配的空间的首地址的指针; 否则, 返回nullptr.
          */
-        void* allocate(const Layout& layout, usize length) noexcept { // NOLINT(readability-convert-member-functions-to-static)
-#if __cpp_aligned_new
-            if (layout.align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+        constexpr void* allocate(const Layout& layout, const usize length) noexcept { // NOLINT(readability-convert-member-functions-to-static)
+            if (std::is_constant_evaluated())
             {
-                auto al = std::align_val_t(layout.align);
-                return ::operator new(layout.size * length, al, std::nothrow_t{});
+                return ::operator new(layout.size * length);
+            } else {
+                if (layout.align > __STDCPP_DEFAULT_NEW_ALIGNMENT__) {
+                    auto al = std::align_val_t(layout.align);
+                    return ::operator new(layout.size * length, al, std::nothrow_t{});
+                } else
+                    return ::operator new(layout.size * length, std::nothrow_t{});
             }
-#endif
-            return ::operator new(layout.size * length, std::nothrow_t{});
         }
 
         /**
@@ -38,21 +43,18 @@ namespace mstl::memory::allocator {
          * 使用 [`::operator delete(void*, usize, std::nothrow_t{})`](https://en.cppreference.com/w/cpp/memory/new/operator_delete)
          * 或 [`::operator delete(void*, usize, std::align_val_t, std::nothrow_t{})`](https://en.cppreference.com/w/cpp/memory/new/operator_delete) 解分配空间.
          */
-        void deallocate(void* ptr, const Layout& layout, usize len) noexcept{ // NOLINT(readability-convert-member-functions-to-static)
-#if __cpp_sized_deallocation
-# define MSTL_SIZED_DEALLOC(p, n) (p), (n) * (layout.size)
-#else
-# define MSTL_SIZED_DEALLOC(p, n) (p)
-#endif
-
-#if __cpp_aligned_new
-            if (layout.align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+        constexpr void deallocate(void* const ptr, const Layout& layout, const usize len) noexcept { // NOLINT(readability-convert-member-functions-to-static)
+            if (std::is_constant_evaluated())
             {
-                ::operator delete(MSTL_SIZED_DEALLOC(ptr, len), std::align_val_t{layout.align});
+                ::operator delete(ptr);
                 return;
             }
-#endif
-            ::operator delete(MSTL_SIZED_DEALLOC(ptr, len));
+            if (layout.align > __STDCPP_DEFAULT_NEW_ALIGNMENT__)
+            {
+                ::operator delete(ptr, len * layout.size, std::align_val_t{layout.align});
+                return;
+            }
+            ::operator delete(ptr);
         }
     };
 }
