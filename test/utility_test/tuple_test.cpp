@@ -72,3 +72,14 @@ BOOST_AUTO_TEST_CASE(PAIR_TEST) {
     BOOST_CHECK(a.first() == 0);
     BOOST_CHECK(a.second() == "HH");
 }
+
+BOOST_AUTO_TEST_CASE(CONSTEXPR_TEST) {
+    constexpr auto a = mstl::utility::make_tuple(1, 2, 3);
+    static_assert(get<0>(a) == 1);
+    static_assert(get<1>(a) == 2);
+    static_assert(get<2>(a) == 3);
+
+    constexpr auto b = mstl::utility::make_pair(1, 2);
+    static_assert(b.first() == 1);
+    static_assert(b.second() == 2);
+}
