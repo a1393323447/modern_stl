@@ -15,16 +15,20 @@ namespace mstl::utility {
     /**
      * @brief 值匹配工具.
      *
+     * 对需匹配的值t, 依次判断是否满足条件. 若满足, 则返回分支函数的值.
+     *
+     * t满足某一条件后, 便不再检查其是否满足后续条件.
+     *
      * ## Example
      * @code
-     *      i32 x = 15;
+     *      i32 x = 7;
      *      auto y = match(x)
-     *              .when(1, [](){return 5;})
-     *              .when(ops::Range(2, 10), [](){return 10;})
-     *              .rest([](){return 20;})
+     *              .when(1, [](){return 5;})                   // 失配
+     *              .when(ops::Range(2, 10), [](){return 10;})  // 匹配
+     *              .rest([](){return 20;})                     // 不再检查
      *              .finale();
      *
-     *      assert(y == 20);
+     *      assert(y == 10);
      *
      *      auto z = match(x)
      *             | when(1, [](){return 5;})
@@ -32,7 +36,7 @@ namespace mstl::utility {
      *             | rest([](){return 20;})
      *             | finale();
      *
-     *      assert(z == 20);
+     *      assert(z == 10);
      * @endcode
      *
      * @tparam T 需要匹配的元素类型
@@ -46,13 +50,19 @@ namespace mstl::utility {
 
     public:
         /**
-         * @brief 值判等.
+         * @brief 等值匹配.
+         *
+         * 当值等于u时, 执行分支函数.
+         *
+         * ## 约束
+         * 对F的实例f, 必须满足表达式f().
+         *
+         * U必须可与T判等.
+         *
          * @tparam U 需要判等的值的类型.
          * @tparam F 分支函数类型.
          * @param u 与匹配对象判等的值.
          * @param fun 分支函数.
-         *
-         * @sa when(const ops::Range<U>& range, F fun)
          */
         template<typename U, typename F>
         constexpr auto when(const U& u, F fun) -> MatchMid<T, std::invoke_result_t<F>>
@@ -65,12 +75,19 @@ namespace mstl::utility {
         }
 
         /**
+         * @brief 范围匹配.
          *
-         * @tparam U
-         * @tparam F
-         * @param range
-         * @param fun
-         * @return
+         * 当值处于范围内时, 执行分支函数.
+         *
+         * ## 约束
+         * U与T必须满足*可偏序比较*.
+         *
+         * 对F的实例f, 必须满足表达式f().
+         *
+         * @tparam U 范围所迭代的类型
+         * @tparam F 分支函数类型.
+         * @param range 范围
+         * @param fun 分支函数
          */
         template<typename U, typename F>
         constexpr auto when(const ops::Range<U>& range, F fun) -> MatchMid<T, std::invoke_result_t<F>>
@@ -83,6 +100,11 @@ namespace mstl::utility {
             return MatchMid<T, R>(target);
         }
 
+        /**
+         * @brief 余项匹配.
+         *
+         * 当此前定义的条件均不满足需匹配的值时, 执行分支函数fun.
+         */
         template<typename F>
         constexpr auto rest(F fun) -> MatchMid<T, std::invoke_result_t<F>>
         requires std::invocable<F>{
@@ -101,6 +123,21 @@ namespace mstl::utility {
         friend class Match<T>;
 
     public:
+        /**
+         * @brief 等值匹配.
+         *
+         * 当值等于u时, 执行分支函数.
+         *
+         * ## 约束
+         * 对F的实例f, 必须满足表达式f().
+         *
+         * U必须可与T判等.
+         *
+         * @tparam U 需要判等的值的类型.
+         * @tparam F 分支函数类型.
+         * @param u 与匹配对象判等的值.
+         * @param fun 分支函数.
+         */
         template<typename U, typename F>
         constexpr MatchMid& when(const U& u, F fun)
         requires ops::Eq<T, U> && ops::Callable<F, R> {
@@ -110,6 +147,21 @@ namespace mstl::utility {
             return *this;
         }
 
+        /**
+         * @brief 范围匹配.
+         *
+         * 当值处于范围内时, 执行分支函数.
+         *
+         * ## 约束
+         * U与T必须满足*可偏序比较*.
+         *
+         * 对F的实例f, 必须满足表达式f().
+         *
+         * @tparam U 范围所迭代的类型
+         * @tparam F 分支函数类型.
+         * @param range 范围
+         * @param fun 分支函数
+         */
         template<typename U, typename F>
         constexpr MatchMid& when(const ops::Range<U>& range, F fun)
         requires ops::PartialOrd<T, U> && ops::Callable<F, R> {
@@ -120,6 +172,11 @@ namespace mstl::utility {
             return *this;
         }
 
+        /**
+         * @brief 余项匹配.
+         *
+         * 当此前定义的条件均不满足需匹配的值时, 执行分支函数fun.
+         */
         template<typename F>
         constexpr MatchMid& rest(F fun) {
             if (res.is_none()) {
@@ -129,6 +186,9 @@ namespace mstl::utility {
             return *this;
         }
 
+        /**
+         * 返回结果值. 若目标未能触及分支, 则引发panic; 若该函数在常量求值语境下调用, 则编译失败.
+         */
         constexpr R finale() {
             return res.unwrap();
         }
@@ -191,6 +251,10 @@ namespace mstl::utility {
         constexpr MatchMid(const T& t): target(t) {}
     };
 
+    /**
+     * 生成Match对象.
+     * @param t 需匹配的值
+     */
     template <typename T>
     constexpr Match<T> match(const T& t) {
         return Match<T>{t};
@@ -205,6 +269,9 @@ namespace mstl::utility {
         const U& u;
     };
 
+    /**
+     * 生成When对象. 为管道风格调用时使用.
+     */
     template<typename U, typename F>
     constexpr When<U, F> when(const U& u, F fun) {
         return {fun, u};
@@ -218,6 +285,9 @@ namespace mstl::utility {
         F fun;
     };
 
+    /**
+     * 生成Rest对象. 为管道风格调用时使用.
+     */
     template<typename F>
     constexpr Rest<F> rest(F fun) {
         return {fun};
@@ -225,6 +295,9 @@ namespace mstl::utility {
 
     struct Finale {};
 
+    /**
+     * 生成Finale对象. 为管道风格调用时使用.
+     */
     constexpr Finale finale() {
         return {};
     }
