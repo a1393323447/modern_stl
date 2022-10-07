@@ -5,8 +5,7 @@
 #ifndef __MODERN_STL_RANGE_H__
 #define __MODERN_STL_RANGE_H__
 
-#include <ops/cmp.h>
-#include <ops/arithmetical.h>
+#include <ops/ops.h>
 #include <basic_concepts.h>
 #include <option/option.h>
 
@@ -14,75 +13,75 @@ namespace mstl::ops {
     template<typename Idx>
     class RangeCursor {
     public:
-        RangeCursor(Idx p): pos(p) {}
+        constexpr RangeCursor(Idx p): pos(p) {}
 
-        RangeCursor(const RangeCursor& other)
+        constexpr RangeCursor(const RangeCursor& other)
         requires basic::CopyAble<Idx> {
             pos = other.pos;
         }
 
-        RangeCursor& operator++() requires Inc<Idx> {
+        constexpr RangeCursor& operator++() requires Inc<Idx> {
             ++pos;
             return *this;
         }
 
-        RangeCursor operator++(int) requires Inc<Idx> {
+        constexpr RangeCursor operator++(int) requires Inc<Idx> {
             RangeCursor old = *this;
             ++pos;
             return old;
         }
 
-        RangeCursor operator+(RangeCursor rhs) requires Add<Idx> {
+        constexpr RangeCursor operator+(RangeCursor rhs) requires Add<Idx> {
             return { pos + rhs.pos };
         }
 
-        RangeCursor& operator--() requires Dec<Idx> {
+        constexpr RangeCursor& operator--() requires Dec<Idx> {
             --pos;
             return *this;
         }
 
-        RangeCursor operator--(int) requires Dec<Idx> {
+        constexpr RangeCursor operator--(int) requires Dec<Idx> {
             RangeCursor old = *this;
             --pos;
             return old;
         }
 
-        RangeCursor operator-(RangeCursor rhs) requires Sub<Idx> {
+        constexpr RangeCursor operator-(RangeCursor rhs) requires Sub<Idx> {
             return { pos - rhs.pos };
         }
 
-        Idx operator*() const
+        constexpr Idx operator*() const
         requires Inc<Idx> {
             return pos;
         }
 
         template<typename I>
         requires PartialOrd<I, Idx> && (!StrongOrd<I, Idx>) && (!WeakOrd<I, Idx>)
-        std::partial_ordering operator<=>(const RangeCursor<I>& rhs) const {
+        constexpr std::partial_ordering operator<=>(const RangeCursor<I>& rhs) const {
             return pos <=> rhs.pos;
         }
 
         template<typename I>
         requires WeakOrd<I, Idx> && (!StrongOrd<I, Idx>)
-        std::weak_ordering operator<=>(const RangeCursor<I>& rhs) const {
+        constexpr std::weak_ordering operator<=>(const RangeCursor<I>& rhs) const {
             return pos <=> rhs.pos;
         }
 
         template<typename I>
         requires WeakOrd<I, Idx> && (!StrongOrd<I, Idx>)
-        bool operator==(const RangeCursor<I>& rhs) const {
+        constexpr bool operator==(const RangeCursor<I>& rhs) const {
             return pos == rhs.pos;
         }
 
         template<typename I>
         requires StrongOrd<I, Idx>
-        std::strong_ordering operator<=>(const RangeCursor<I>& rhs) const {
+        constexpr std::strong_ordering operator<=>(const RangeCursor<I>& rhs) const {
             return pos <=> rhs.pos;
         }
 
         template<typename I>
         requires StrongOrd<I, Idx>
-        bool operator==(const RangeCursor<I>& rhs) const {
+        constexpr bool operator==(const RangeCursor<I>& rhs) const {
             return pos == rhs.pos;
         }
 
@@ -96,18 +95,18 @@ namespace mstl::ops {
     struct Range {
         using Item = Idx;
 
-        Range(Idx low, Idx high): low(low), high(high) {}
+        constexpr Range(Idx low, Idx high): low(low), high(high) {}
 
-        Range(const Range&) = default;
-        Range& operator=(const Range&) = default;
+        constexpr Range(const Range&) = default;
+        constexpr Range& operator=(const Range&) = default;
 
         template<typename U>
         requires PartialOrd<Idx, U> && PartialOrd<U, Idx>
-        bool contains(U&& item) const {
+        constexpr bool contains(U&& item) const {
             return low <= item && item < high;
         }
 
-        Option<Idx> next() requires Inc<Idx> {
+        constexpr Option<Idx> next() requires Inc<Idx> {
             if (low == high) {
                 return Option<Item>::none();
             } else {
@@ -117,7 +116,7 @@ namespace mstl::ops {
             }
         }
 
-        Option<Idx> prev() requires Dec<Idx> {
+        constexpr Option<Idx> prev() requires Dec<Idx> {
             if (low == high) {
                 return Option<Item>::none();
             } else {
@@ -133,19 +132,19 @@ namespace mstl::ops {
             return !(low < high);
         }
 
-        RangeCursor<Idx> begin()
+        constexpr RangeCursor<Idx> begin()
         requires Inc<Idx> && Dec<Idx> {
             return { low };
         }
 
-        RangeCursor<Idx> end()
+        constexpr RangeCursor<Idx> end()
         requires Inc<Idx> && Dec<Idx> {
             return { high };
         }
 
         template<typename U>
         requires Eq<Idx, U>
-        bool operator==(const Range<U>& rhs) {
+        constexpr bool operator==(const Range<U>& rhs) {
             return low == rhs.low && high == rhs.high;
         }
 

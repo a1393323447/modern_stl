@@ -14,7 +14,7 @@ namespace utf = boost::unit_test;
 BOOST_AUTO_TEST_CASE(BASIC_TEST) {
     constexpr i32 x = 10;
 
-    auto y = match(x)
+    constexpr auto y = match(x)
             .when(1, [](){return 5;})
             .when(ops::Range(2, 10), [](){return 10;})
             .rest([](){return 20;})
@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST) {
 
     BOOST_TEST_CHECK(y == 20);
 
-    auto z = match(x)
+    constexpr auto z = match(x)
            | when(1, [](){return 5;})
            | when(ops::Range(2, 10), [](){return 10;})
            | rest([](){return 20;})
