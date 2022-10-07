@@ -14,6 +14,7 @@
   - `Allocator`: 运行时动态分配内存的设施.
 - `utility`: 通用库, 现有:
   - `Tuple`: 可包含任意数量异构类型的容器
+  - `Match`: 值匹配工具, 类似于`switch`.
 - `Option<T>`: 用于表示有或无的类型
 - `ops`: 用于定义一些列操作的 `concept`
 - `result`: 用于表示可能的错误信息
