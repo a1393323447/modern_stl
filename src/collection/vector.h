@@ -379,7 +379,7 @@ namespace mstl::collection {
          *
          * @return Vector的迭代器.
          */
-        Iter iter() {
+        constexpr Iter iter() {
             return Iter{beginPtr, beginPtr + len};
         }
 
@@ -390,31 +390,31 @@ namespace mstl::collection {
          *
          * @return Vector的迭代器.
          */
-        ConstIter citer() const {
+        constexpr ConstIter citer() const {
             return ConstIter{beginPtr, beginPtr + len};
         }
 
-        Iter begin() {
+        constexpr Iter begin() {
             return Iter{beginPtr, beginPtr + len, beginPtr};
         }
 
-        Iter end() {
+        constexpr Iter end() {
             return Iter{beginPtr, beginPtr + len, beginPtr + len};
         }
 
-        ConstIter cbegin() const {
+        constexpr ConstIter cbegin() const {
             return ConstIter{beginPtr, beginPtr + len, beginPtr};
         }
 
-        ConstIter cend() const {
+        constexpr ConstIter cend() const {
             return ConstIter{beginPtr, beginPtr + len, beginPtr + len};
         }
 
-        ConstIter begin() const {
+        constexpr ConstIter begin() const {
             return cbegin();
         }
 
-        ConstIter end() const {
+        constexpr ConstIter end() const {
             return cend();
         }
 
@@ -763,7 +763,7 @@ namespace mstl::collection {
 
         // Deallocate memory without destroy any element.
         constexpr void deallocate() noexcept {
-            alloc.deallocate(beginPtr, get_layout(), cap);
+            alloc.template deallocate(beginPtr, cap);
             beginPtr = nullptr;
             len = cap = 0;
         }
@@ -773,11 +773,11 @@ namespace mstl::collection {
             len = 0;
             cap = size;
 
-            beginPtr = (T*)alloc.allocate(get_layout(), size);
+            beginPtr = alloc.template allocate<T>(size);
         }
 
         constexpr void allocate_reserve(usize size) noexcept {
-            auto nArr = (T*)alloc.allocate(get_layout(), size);  // Alloc
+            auto nArr = alloc.template allocate<T>(size);  // Alloc
             for (usize i = 0; i < len; i++) {
                 std::construct_at(nArr + i, std::move(beginPtr[i]));
             }
@@ -865,17 +865,17 @@ namespace mstl::collection {
         using Item = T&;
         using value_type = T;
 
-        VectorIter(T *beg, T *end) : beg(beg), cur(beg), end(end) {}
+        constexpr VectorIter(T *beg, T *end) : beg(beg), cur(beg), end(end) {}
 
-        VectorIter(T *beg, T *end, T *cur) : beg(beg), cur(cur), end(end) {}
+        constexpr VectorIter(T *beg, T *end, T *cur) : beg(beg), cur(cur), end(end) {}
 
-        VectorIter(const VectorIter& r) : beg(r.beg), cur(r.cur), end(r.end) {}
+        constexpr VectorIter(const VectorIter& r) : beg(r.beg), cur(r.cur), end(r.end) {}
 
-        operator VectorIter<const T> () {
+        constexpr operator VectorIter<const T> () {
             return {beg, end, cur};
         }
 
-        Option<Item> next() {
+        constexpr Option<Item> next() {
             if (cur != end) {
                 return Option<Item>::some(*cur++);
             } else {
@@ -883,73 +883,73 @@ namespace mstl::collection {
             }
         }
 
-        T &operator*() {
+        constexpr T &operator*() {
             return *cur;
         }
 
-        const T &operator*() const {
+        constexpr const T &operator*() const {
             return *cur;
         }
 
-        VectorIter &operator++() {
+        constexpr VectorIter &operator++() {
             cur++;
             return *this;
         }
 
-        VectorIter operator++(int) {
+        constexpr VectorIter operator++(int) {
             auto tmp = *this;
             cur++;
             return tmp;
         }
 
-        VectorIter &operator--() {
+        constexpr VectorIter &operator--() {
             cur--;
             return *this;
         }
 
-        VectorIter operator--(int) {
+        constexpr VectorIter operator--(int) {
             auto tmp = *this;
             cur--;
             return tmp;
         }
 
-        VectorIter operator+(usize i) {
+        constexpr VectorIter operator+(usize i) {
             auto tmp = *this;
             tmp.cur += i;
             return tmp;
         }
 
-        VectorIter operator-(usize i) {
+        constexpr VectorIter operator-(usize i) {
             auto tmp = *this;
             tmp.cur -= i;
             return tmp;
         }
 
-        usize operator-(VectorIter i) {
+        constexpr usize operator-(VectorIter i) {
             return cur - i.cur;
         }
 
-        VectorIter& operator+=(usize i) {
+        constexpr VectorIter& operator+=(usize i) {
             cur += i;
             return *this;
         }
 
-        VectorIter& operator-=(usize i) {
+        constexpr VectorIter& operator-=(usize i) {
             cur -= i;
             return *this;
         }
 
-        bool operator==(const VectorIter &rhs) const {
+        constexpr bool operator==(const VectorIter &rhs) const {
             return beg == rhs.beg &&
                    cur == rhs.cur &&
                    end == rhs.end;
         }
 
-        std::weak_ordering operator<=>(const VectorIter& rhs) const {
+        constexpr std::weak_ordering operator<=>(const VectorIter& rhs) const {
             return { cur <=> rhs.cur };
         }
 
-        usize pos() const {
+        constexpr usize pos() const {
             return cur - beg;
         }
     private:

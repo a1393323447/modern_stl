@@ -31,10 +31,12 @@ namespace mstl::memory::concepts {
      *
      *          以layout和len中描述的参数, 解分配ptr所指向的空间.
      */
-    template<typename T>
-    concept Allocator = basic::CopyAble<T> && requires(T a, Layout layout, usize length, void *ptr){
+    template<typename T, typename N=int>
+    concept Allocator = basic::CopyAble<T> && requires(T a, Layout layout, usize length, void *ptr, N* ptr_){
         { a.allocate(layout, length) } -> std::same_as<void *>;
         { a.deallocate(ptr, layout, length) } -> std::same_as<void>;
+        { a.template allocate<N>(length) } -> std::same_as<N*>;
+        { a.template deallocate(ptr_, length) } -> std::same_as<void>;
     };
 
     static_assert(Allocator<mstl::memory::allocator::Allocator>);

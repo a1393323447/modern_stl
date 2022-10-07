@@ -262,6 +262,26 @@ namespace mstl::collection {
         MSTL_INLINE constexpr
         static usize size() { return N; }
 
+        MSTL_INLINE constexpr
+        T* begin() {
+            return values;
+        }
+
+        MSTL_INLINE constexpr
+        const T* begin() const {
+            return values;
+        }
+
+        MSTL_INLINE constexpr
+        T* end() {
+            return values + N;
+        }
+
+        MSTL_INLINE constexpr
+        const T* end() const {
+            return values + N;
+        }
+
     private:
         T values[N];
     };

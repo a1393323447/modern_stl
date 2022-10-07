@@ -6,6 +6,7 @@
 #include <collection/vector.h>
 #include <collection/array.h>
 #include <iter/iterator.h>
+#include <collection/array.h>
 #include "../TrackingAllocator.h"
 
 #define BOOST_TEST_MODULE Vector Test
@@ -410,4 +411,29 @@ BOOST_AUTO_TEST_CASE(MEMORY_TRACK) {
     std::cout << "================= MEMORY TRACK =================" << std::endl;
 
     BOOST_REQUIRE(TrackingAllocator<>::get_beholding_memory() == 0);
+}
+
+consteval usize pow(const usize b, const usize ex) {
+    usize res = 1;
+    for (usize i = 0; i < ex; i++) {
+        res *= b;
+    }
+    return res;
+}
+
+template<usize b>
+consteval auto get_pows(const usize ex) {
+    mstl::collection::Vector<usize> tmp;
+    Array<usize, b + 1> res = {0};
+    for (usize i = 0; i <= b; i++) {
+        tmp.push_back(pow(i, ex));
+    }
+    std::copy(tmp.begin(), tmp.end(), res.begin());
+    return res;
+}
+
+BOOST_AUTO_TEST_CASE(CONSTEXPR_TEST) {
+    constexpr auto pows = get_pows<10>(2);
+
+    static_assert(pows[2] == 4);
 }

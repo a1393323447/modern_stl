@@ -43,6 +43,16 @@ namespace mstl {
             alloc.deallocate(ptr, layout, length);
         }
 
+        template<class T>
+        T* allocate(usize len) {
+            return alloc.template allocate<T>(len);
+        }
+
+        template<class T>
+        void deallocate(T* ptr, usize len) {
+            alloc.template deallocate(ptr, len);
+        }
+
         static usize get_memory_allocated_cumulative() {
             return memory_allocated_cumulative;
         }

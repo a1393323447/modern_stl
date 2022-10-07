@@ -30,6 +30,17 @@ namespace mstl::memory::allocator {
             return ::operator new(layout.size * length, std::nothrow_t{});
         }
 
+        template <typename T>
+        constexpr T* allocate(usize length) noexcept {
+            if (std::is_constant_evaluated()) {
+                std::allocator<T> a;
+                return a.allocate(length);
+            } else {
+                constexpr Layout layout = Layout::from_type<T>();
+                return (T*) allocate(layout, length);
+            }
+        }
+
         /**
          * @brief 解分配空间.
          *
@@ -43,6 +54,17 @@ namespace mstl::memory::allocator {
                 return;
             }
             ::operator delete(ptr, len * layout.size);
+        }
+
+        template<typename T>
+        constexpr void deallocate(T* ptr, usize len) {
+            if (std::is_constant_evaluated()) {
+                std::allocator<T> a;
+                a.deallocate(ptr, len);
+            } else {
+                constexpr auto layout = Layout::from_type<T>();
+                deallocate(ptr, layout, len);
+            }
         }
     };
 }

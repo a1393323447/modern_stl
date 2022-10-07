@@ -15,18 +15,18 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST) {
     constexpr i32 x = 10;
 
     constexpr auto y = match(x)
-            .when(1, [](){return 5;})
-            .when(ops::Range(2, 10), [](){return 10;})
-            .rest([](){return 20;})
-            .finale();
+                     .when(1, [](){return 5;})
+                     .when(ops::Range(2, 10), [](){return 10;})
+                     .rest([](){return 20;})
+                     .finale();
 
     BOOST_TEST_CHECK(y == 20);
 
     constexpr auto z = match(x)
-           | when(1, [](){return 5;})
-           | when(ops::Range(2, 10), [](){return 10;})
-           | rest([](){return 20;})
-           | finale();
+                     | when(1, [](){return 5;})
+                     | when(ops::Range(2, 10), [](){return 10;})
+                     | rest([](){return 20;})
+                     | finale();
     BOOST_TEST_CHECK(z == 20);
 
 }
