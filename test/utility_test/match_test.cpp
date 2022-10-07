@@ -12,13 +12,21 @@ using namespace mstl::utility;
 namespace utf = boost::unit_test;
 
 BOOST_AUTO_TEST_CASE(BASIC_TEST) {
-    i32 x = 10;
+    constexpr i32 x = 10;
 
-    auto y = match<i32>(x)
+    auto y = match(x)
             .when(1, [](){return 5;})
             .when(ops::Range(2, 10), [](){return 10;})
             .rest([](){return 20;})
-            .go();
+            .finale();
 
     BOOST_TEST_CHECK(y == 20);
+
+    auto z = match(x)
+           | when(1, [](){return 5;})
+           | when(ops::Range(2, 10), [](){return 10;})
+           | rest([](){return 20;})
+           | finale();
+    BOOST_TEST_CHECK(z == 20);
+
 }
