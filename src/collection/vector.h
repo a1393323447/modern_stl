@@ -757,10 +757,6 @@ namespace mstl::collection {
         A alloc;
 
     private:
-        constexpr static memory::Layout get_layout() {
-            return memory::Layout::from_type<T>();
-        }
-
         // Deallocate memory without destroy any element.
         constexpr void deallocate() noexcept {
             alloc.template deallocate(beginPtr, cap);
