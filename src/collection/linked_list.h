@@ -101,11 +101,11 @@ namespace mstl::collection {
     public:
         using Item = T&;
 
-        ListIter(Node *start, Node *anEnd) : start(start), end(anEnd) {}
+        constexpr ListIter(Node *start, Node *anEnd) : start(start), end(anEnd) {}
 
-        ListIter(const ListIter&) = default;
+        constexpr ListIter(const ListIter&) = default;
 
-        Option<Item> next() {
+        constexpr Option<Item> next() {
             if (start != end) {
                 auto res = Option<T&>::some(*start->data);
                 start  = start->next;
@@ -115,7 +115,7 @@ namespace mstl::collection {
             }
         }
 
-        Option<Item> prev()
+        constexpr Option<Item> prev()
         requires concepts::Node<Node> {
             if (end != start) {
                 end = end->prev;
@@ -152,71 +152,72 @@ namespace mstl::collection {
     public:
         using value_type = T;
 
-        ListIterSTL(Node *cur) : cur(cur) {}
-        ListIterSTL(const ListIterSTL& r): cur(r.cur) {}
+        constexpr ListIterSTL(Node *cur) : cur(cur) {}
+        constexpr ListIterSTL(const ListIterSTL& r): cur(r.cur) {}
 
-        ListIterSTL& operator=(const ListIterSTL& r) {
+        constexpr ListIterSTL& operator=(const ListIterSTL& r) {
             if (&r == this) {
                 return *this;
             }
             cur = r.cur;
             return *this;
         }
-        operator ListIterSTL<const T, Node> () {
-            return ListIterSTL<const T, Node>{cur};
+
+        constexpr operator ListIterSTL<const T, Node, Reversed> () {
+            return ListIterSTL<const T, Node, Reversed>{cur};
         }
 
-        T& operator*() {
+        constexpr T& operator*() {
             return *cur->data;
         }
 
-        const T& operator*() const {
+        constexpr const T& operator*() const {
             return *cur->data;
         }
 
-        ListIterSTL& operator++() {
+        constexpr ListIterSTL& operator++() {
             cur = cur->next;
             return *this;
         }
 
-        ListIterSTL operator++(int) {
+        constexpr ListIterSTL operator++(int) {
             auto tmp = *this;
             cur = cur->next;
             return tmp;
         }
 
-        ListIterSTL& operator++() requires Reversed {
+        constexpr ListIterSTL& operator++() requires Reversed {
             return operator--();
         }
 
-        ListIterSTL operator++(int) requires Reversed {
+        constexpr ListIterSTL operator++(int) requires Reversed {
             return operator--(0);
         }
 
-        ListIterSTL& operator--()
+        constexpr ListIterSTL& operator--()
         requires concepts::Node<Node> && Reversed {
             return operator++();
         }
 
-        ListIterSTL operator--(int)
+        constexpr ListIterSTL operator--(int)
         requires concepts::Node<Node> && Reversed {
             return operator++(0);
         }
 
-        ListIterSTL& operator--()
+        constexpr ListIterSTL& operator--()
         requires concepts::Node<Node> {
             cur = cur->prev;
             return *this;
         }
 
-        ListIterSTL operator--(int)
+        constexpr ListIterSTL operator--(int)
         requires concepts::Node<Node> {
             auto tmp = *this;
             cur = cur->prev;
             return tmp;
         }
 
-        bool operator==(const ListIterSTL &rhs) const {
+        constexpr bool operator==(const ListIterSTL &rhs) const {
             return cur == rhs.cur;
         }
     };
@@ -224,16 +225,16 @@ namespace mstl::collection {
     namespace _private {
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate);
+        constexpr utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate);
 
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        utility::Pair<Node*, Node*> mergeSort(Node* head, P predicate) {
+        constexpr utility::Pair<Node*, Node*> mergeSort(Node* head, P predicate) {
             if (head == nullptr || head->next == nullptr) {
                 return utility::make_pair(head, (Node*)nullptr);
             }
 
-            static auto is_end = [](Node* n) -> bool {                      // 检测n是否为实尾节点
+            auto is_end = [](Node* n) -> bool {                      // 检测n是否为实尾节点
                 return (n->next == nullptr || n->next->data == nullptr);
             };
 
@@ -255,13 +256,13 @@ namespace mstl::collection {
 
         template <concepts::ForwardNode Node, typename P>
         requires ops::Predicate<P, typename Node::Item, typename Node::Item>
-        utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate) {
+        constexpr utility::Pair<Node*, Node*> merge(Node* a, Node* b, P predicate) {
             if (a == nullptr || a->data == nullptr)
                 return utility::make_pair(b, (Node*)nullptr);
             if (b == nullptr || b->data == nullptr)
                 return utility::make_pair(a, (Node*)nullptr);
 
-            static auto is_end = [](Node* n) -> bool {          // 检测n是否为虚尾节点(含空节点)
+            auto is_end = [](Node* n) -> bool {          // 检测n是否为虚尾节点(含空节点)
                 return (n == nullptr || n->data == nullptr);
             };
 
@@ -344,18 +345,18 @@ namespace mstl::collection {
 
             /// 在节点处构造一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             template<typename ...Args>
-            void construct(Args&& ...args) {
+            constexpr void construct(Args&& ...args) {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
                 std::construct_at(data, std::forward<Args>(args)...);
             }
 
             /// 在节点处销毁一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
-            void destroy() {
+            constexpr void destroy() {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to destroy an object at nullptr.");
                 std::destroy_at(data);
             }
 
-            MSTL_INLINE inline void set_next(ForwardListNode* n) {
+            constexpr void set_next(ForwardListNode* n) {
                 next = n;
             }
         };
@@ -375,19 +376,19 @@ namespace mstl::collection {
 
             /// 在节点处构造一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
             template<typename ...Args>
-            void construct(Args&& ...args) {
+            constexpr void construct(Args&& ...args) {
                 MSTL_DEBUG_ASSERT(data != nullptr, "Trying to construct an object at nullptr.");
                 std::construct_at(data, std::forward<Args>(args)...);
             }
 
             /// 在节点处销毁一个元素. 若节点的data为nullptr, 且当前为DEBUG模式, 则引发panic, 否则, 行为未定义.
-            void destroy() {
+            constexpr void destroy() {
                 if (data != nullptr)
                     std::destroy_at(data);
             }
 
             // set the next node to n, and set the prev node of n to this, if possible
-            MSTL_INLINE inline void set_next(ListNode* n) {
+            constexpr void set_next(ListNode* n) {
                 next = n;
                 if (n != nullptr) {
                     n->prev = this;
@@ -447,17 +448,17 @@ namespace mstl::collection {
         using iterator = ListIterSTL<T, Node>;
         using const_iterator = ListIterSTL<const T, Node>;
 
-        BaseList() noexcept requires std::default_initializable<A>
+        constexpr BaseList() noexcept requires std::default_initializable<A>
         : alloc{} {
             init_empty_list();
         }
 
-        explicit BaseList(const A& a) noexcept requires basic::CopyAble<A>
+        constexpr explicit BaseList(const A& a) noexcept requires basic::CopyAble<A>
         : alloc(a) {
             init_empty_list();
         }
 
-        BaseList(usize count, const T& value, const A& allocator={})
+        constexpr BaseList(usize count, const T& value, const A& allocator={})
         requires basic::CopyAble<T> : alloc(allocator) {
             if (count == 0) {
                 init_empty_list();
@@ -478,7 +479,7 @@ namespace mstl::collection {
             tail->set_next(nullptr);
         }
 
-        explicit BaseList(usize count, const A& allocator={})
+        constexpr explicit BaseList(usize count, const A& allocator={})
         requires std::default_initializable<T> : alloc(allocator) {
             if (count == 0) {
                 init_empty_list();
@@ -500,7 +501,7 @@ namespace mstl::collection {
         }
 
         template<iter::LegacyInputIterator InputIt>
-        BaseList(InputIt first, InputIt last, const A& allocator=A{})
+        constexpr BaseList(InputIt first, InputIt last, const A& allocator=A{})
         requires basic::CopyAble<T> : alloc(allocator) {
             if (first == last) {
                 init_empty_list();
@@ -522,14 +523,14 @@ namespace mstl::collection {
             tail->set_next(nullptr);
         }
 
-        BaseList(BaseList&& list) noexcept
+        constexpr BaseList(BaseList&& list) noexcept
                 : head(list.head), tail(list.tail), len(list.len), alloc(std::move(list.alloc)) {
             list.head = nullptr;
             list.tail = nullptr;
             list.len = 0;
         }
 
-        BaseList(BaseList&& list, const A& allocator) noexcept {
+        constexpr BaseList(BaseList&& list, const A& allocator) noexcept {
             MSTL_DEBUG_ASSERT(list.head != nullptr, "The list has been moved.");
             alloc = allocator;
 
@@ -575,19 +576,19 @@ namespace mstl::collection {
             list.len = 0;
         }
 
-        BaseList(const BaseList& o)
+        constexpr BaseList(const BaseList& o)
         requires basic::CopyAble<T>: alloc(o.alloc) {
             copy_impl(o);
         }
 
-        BaseList(const BaseList& o, const A& allocator)
+        constexpr BaseList(const BaseList& o, const A& allocator)
         requires basic::CopyAble<T>: alloc(allocator) {
             copy_impl(o);
         }
 
-        BaseList(std::initializer_list<T> init, const A& allocator=A{}): BaseList(init.begin(), init.end(), allocator) {}
+        constexpr BaseList(std::initializer_list<T> init, const A& allocator=A{}): BaseList(init.begin(), init.end(), allocator) {}
 
-        ~BaseList() {
+        constexpr ~BaseList() {
             if (head == nullptr) {  // head should not be nullptr
                 return;             // unless the list has been moved
             } else {
@@ -597,7 +598,7 @@ namespace mstl::collection {
             }
         }
 
-        BaseList& operator=(const BaseList& rhs)
+        constexpr BaseList& operator=(const BaseList& rhs)
         requires basic::CopyAble<T> {
             if (&rhs == this) {
                 return *this;
@@ -608,7 +609,7 @@ namespace mstl::collection {
             return *this;
         }
 
-        BaseList& operator=(BaseList&& rhs) noexcept {
+        constexpr BaseList& operator=(BaseList&& rhs) noexcept {
             if (&rhs == this) {
                 return *this;
             }
@@ -623,7 +624,7 @@ namespace mstl::collection {
             return *this;
         }
 
-        BaseList& operator=(std::initializer_list<T> list) {
+        constexpr BaseList& operator=(std::initializer_list<T> list) {
             clear();
             Node* h = head;
             Node* p = h;
@@ -639,13 +640,13 @@ namespace mstl::collection {
             return *this;
         }
 
-        A get_allocator() const noexcept {
+        constexpr A get_allocator() const noexcept {
             return alloc;
         }
 
         /// 判断该链表是否已被移动或销毁.
         /// 当该方法返回true, 则调用该方法的行为在事实上也是非法的.
-        bool moved() const noexcept {
+        constexpr bool moved() const noexcept {
             return head == nullptr;
         }
 
@@ -654,7 +655,7 @@ namespace mstl::collection {
          * @brief 安全地返回第一个元素的引用.
          * @return 若链表不为空, 则返回第一个元素的引用的Option; 否则, 返回None.
          */
-        Option<T&> front() noexcept {
+        constexpr Option<T&> front() noexcept {
             if (empty()) {
                 return Option<T&>::none();
             } else {
@@ -663,7 +664,7 @@ namespace mstl::collection {
             }
         }
 
-        Option<const T&> front() const noexcept {
+        constexpr Option<const T&> front() const noexcept {
             if (empty()) {
                 return Option<const T&>::none();
             } else {
@@ -676,12 +677,12 @@ namespace mstl::collection {
          * @brief 返回第一个元素的引用.
          * @return 若链表不为空, 则返回第一个元素的引用; 否则, 行为未定义.
          */
-        T& front_unchecked() noexcept {
+        constexpr T& front_unchecked() noexcept {
             T* data = head->next->data;
             return *data;
         }
 
-        const T& front_unchecked() const noexcept {
+        constexpr const T& front_unchecked() const noexcept {
             T* data = head->next->data;
             return *data;
         }
@@ -694,7 +695,7 @@ namespace mstl::collection {
          *
          * @return 若链表不为空, 则返回最后一个元素的引用的Option; 否则, 返回None.
          */
-        Option<T&> back() noexcept requires is_double_linked_list {
+        constexpr Option<T&> back() noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<T&>::none();
             } else {
@@ -703,7 +704,7 @@ namespace mstl::collection {
             }
         }
 
-        Option<const T&> back() const noexcept requires is_double_linked_list {
+        constexpr Option<const T&> back() const noexcept requires is_double_linked_list {
             if (empty()) {
                 return Option<const T&>::none();
             } else {
@@ -719,12 +720,12 @@ namespace mstl::collection {
          * @brief 返回最后一个元素的引用.
          * @return 若链表不为空, 则返回最后一个元素的引用; 否则, 行为未定义.
          */
-        T& back_unchecked() noexcept requires is_double_linked_list {
+        constexpr T& back_unchecked() noexcept requires is_double_linked_list {
             T* data = tail->prev->data;
             return *data;
         }
 
-        const T& front_unchecked() const noexcept requires is_double_linked_list {
+        constexpr const T& front_unchecked() const noexcept requires is_double_linked_list {
             T* data = tail->prev->data;
             return *data;
         }
@@ -738,7 +739,7 @@ namespace mstl::collection {
          * @attention 调用该函数后, 链表将被消耗(或视为已被移动).
          * @return 链表转换而来的迭代器.
          */
-        IntoIter into_iter() {
+        constexpr IntoIter into_iter() {
             return IntoIter{std::move(*this)};
         }
 
@@ -750,7 +751,7 @@ namespace mstl::collection {
          * @return 新构造的链表.
          */
         template<iter::Iterator Iter>
-        static decltype(auto) from_iter(Iter iter) {
+        constexpr static decltype(auto) from_iter(Iter iter) {
             BaseList res;
             Node* p = res.head;
             auto val = iter.next();
@@ -772,76 +773,72 @@ namespace mstl::collection {
          *
          * @return 链表的迭代器.
          */
-        Iter iter() noexcept {
+        constexpr Iter iter() noexcept {
             return {head->next, tail};
         }
 
-        const_iterator iter() const noexcept {
-            return cbegin();
-        }
-
-        iterator before_begin() noexcept {
+        constexpr iterator before_begin() noexcept {
             return ListIterSTL<T, Node>(head);
         }
 
-        const_iterator before_begin() const noexcept {
+        constexpr const_iterator before_begin() const noexcept {
             return cbefore_begin();
         }
 
-        const_iterator cbefore_begin() const noexcept {
+        constexpr const_iterator cbefore_begin() const noexcept {
             return ListIterSTL<const T, Node>(head);
         }
 
-        iterator begin() noexcept{
+        constexpr iterator begin() noexcept{
             return ListIterSTL<T, Node>(head->next);
         }
 
-        const_iterator begin() const noexcept {
+        constexpr const_iterator begin() const noexcept {
             return cbegin();
         }
 
-        const_iterator cbegin() const noexcept{
+        constexpr const_iterator cbegin() const noexcept{
             return ListIterSTL<const T, Node>(head->next);
         }
 
-        iterator end() noexcept{
+        constexpr iterator end() noexcept{
             return ListIterSTL<T, Node>(tail);
         }
 
-        const_iterator end() const noexcept{
+        constexpr const_iterator end() const noexcept{
             return cend();
         }
 
-        const_iterator cend() const noexcept{
+        constexpr const_iterator cend() const noexcept{
             return ListIterSTL<const T, Node>(tail);
         }
 
-        decltype(auto) rbegin() noexcept
+        constexpr decltype(auto) rbegin() noexcept
         requires is_double_linked_list {
             return ListIterSTL<T, Node, true>(tail->prev);
         }
 
-        decltype(auto) rbegin() const noexcept
+        constexpr decltype(auto) rbegin() const noexcept
         requires is_double_linked_list {
             return crbegin();
         }
 
-        decltype(auto) crbegin() const noexcept
+        constexpr decltype(auto) crbegin() const noexcept
         requires is_double_linked_list {
             return ListIterSTL<const T, Node, true>(tail->prev);
         }
 
-        decltype(auto) rend() noexcept
+        constexpr decltype(auto) rend() noexcept
         requires is_double_linked_list {
             return ListIterSTL<T, Node, true>(head);
         }
 
-        decltype(auto) rend() const noexcept
+        constexpr decltype(auto) rend() const noexcept
         requires is_double_linked_list {
             return crend();
         }
 
-        decltype(auto) crend() const noexcept
+        constexpr decltype(auto) crend() const noexcept
         requires is_double_linked_list {
             return ListIterSTL<const T, Node, true>(head);
         }
@@ -851,7 +848,7 @@ namespace mstl::collection {
          * @brief 检查当前链表是否储存有元素.
          * @return 若链表为空, 则返回true; 否则, 返回false.
          */
-        inline bool empty() const noexcept {
+        constexpr inline bool empty() const noexcept {
             return len == 0;
         }
 
@@ -859,7 +856,7 @@ namespace mstl::collection {
          * @brief 检查当前链表储存元素的数量.
          * @return 返回当前链表储存元素的数量.
          */
-        inline usize size() const noexcept {
+        constexpr inline usize size() const noexcept {
             return len;
         }
 
@@ -876,7 +873,7 @@ namespace mstl::collection {
          *      assert(ls.empty());
          * @endcode
          */
-        void clear() noexcept {
+        constexpr void clear() noexcept {
             Node* cur = head->next;
             while (cur != tail) {
                 Node* tmp = cur;
@@ -905,7 +902,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 0);
          * @endcode
          */
-        iterator insert_after(const_iterator pos, const T& val)
+        constexpr iterator insert_after(const_iterator pos, const T& val)
         requires basic::CopyAble<T> {
             return emplace_after(pos, val);
         }
@@ -926,7 +923,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 0);
          * @endcode
          */
-        iterator insert_after(const_iterator pos, T&& val)
+        constexpr iterator insert_after(const_iterator pos, T&& val)
         {
             return emplace_after(pos, std::forward<T>(val));
         }
@@ -941,7 +938,7 @@ namespace mstl::collection {
          * @param val 要插入的值
          * @return 指向第一个插入的元素的迭代器
          */
-        iterator insert_after(const_iterator pos, usize count, const T& val)
+        constexpr iterator insert_after(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (count == 0) {
@@ -971,7 +968,7 @@ namespace mstl::collection {
          * @return 指向第一个插入的元素的迭代器
          */
         template<iter::LegacyInputIterator InputIt>
-        iterator insert_after(const_iterator pos, InputIt first, InputIt last) {
+        constexpr iterator insert_after(const_iterator pos, InputIt first, InputIt last) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             if (first == last) {
                 return {pos.cur};
@@ -990,7 +987,7 @@ namespace mstl::collection {
             return {r->next};
         }
 
-        iterator insert_after(const_iterator pos, std::initializer_list<T> ilist) {
+        constexpr iterator insert_after(const_iterator pos, std::initializer_list<T> ilist) {
             return insert_after(pos, ilist.begin(), ilist.end());
         }
 
@@ -1008,7 +1005,7 @@ namespace mstl::collection {
          * @endcode
          */
         template<typename ...Args>
-        iterator emplace_after(const_iterator pos, Args&& ...args) {
+        constexpr iterator emplace_after(const_iterator pos, Args&& ...args) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to emplace element after the tail.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
             tmp->set_next(pos.cur->next);
@@ -1029,7 +1026,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 2);
          * @endcode
          */
-        iterator erase_after(const_iterator pos) {
+        constexpr iterator erase_after(const_iterator pos) {
             MSTL_DEBUG_ASSERT(pos != end(), "Trying to erase element after the tail.");
             if (pos.cur->next == tail) {
                 return end();
@@ -1056,7 +1053,7 @@ namespace mstl::collection {
          *      assert(ls.empty());
          * @endcode
          */
-        iterator erase_after(const_iterator first, const_iterator last) {
+        constexpr iterator erase_after(const_iterator first, const_iterator last) {
             while (true) {
                 if (first == last || first.cur->next == last.cur)
                     break;
@@ -1079,7 +1076,7 @@ namespace mstl::collection {
          * @endcode
          */
         template<class ...Args>
-        iterator emplace(const_iterator pos, Args&& ...args)
+        constexpr iterator emplace(const_iterator pos, Args&& ...args)
         requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             Node* tmp = construct_node(std::forward<Args>(args)...);
@@ -1110,7 +1107,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 0);
          * @endcode
          */
-        iterator insert(const_iterator pos, const T& val)
+        constexpr iterator insert(const_iterator pos, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             return emplace(pos, val);
         }
@@ -1133,7 +1130,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 0);
          * @endcode
          */
-        iterator insert(const_iterator pos, T&& val)
+        constexpr iterator insert(const_iterator pos, T&& val)
             requires is_double_linked_list {
             return emplace(pos, std::forward<T>(val));
         }
@@ -1151,7 +1148,7 @@ namespace mstl::collection {
          * @param val 要插入的值
          * @return 指向第一个插入的元素的迭代器
          */
-        iterator insert(const_iterator pos, usize count, const T& val)
+        constexpr iterator insert(const_iterator pos, usize count, const T& val)
         requires basic::CopyAble<T> && is_double_linked_list {
             MSTL_DEBUG_ASSERT(pos != before_begin(), "Trying to emplace element before the head.");
             if (count == 0) {
@@ -1184,7 +1181,7 @@ namespace mstl::collection {
          * @return 指向第一个插入的元素的迭代器
          */
         template<iter::LegacyInputIterator InputIt>
-        iterator insert(const_iterator pos, InputIt first, InputIt last)
+        constexpr iterator insert(const_iterator pos, InputIt first, InputIt last)
         requires is_double_linked_list {
             if (first == last) {
                 return {pos.cur};
@@ -1203,7 +1200,7 @@ namespace mstl::collection {
             return {r->next};
         }
 
-        iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
+        constexpr iterator insert(const_iterator pos, std::initializer_list<T> ilist) {
             return insert(pos, ilist.begin(), ilist.end());
         }
 
@@ -1223,7 +1220,7 @@ namespace mstl::collection {
          *      assert(ls.front_unchecked() == 2);
          * @endcode
          */
-        iterator erase(const_iterator pos)
+        constexpr iterator erase(const_iterator pos)
         requires is_double_linked_list {
             if (pos.cur == tail || pos.cur == head) {
                 return {pos.cur};
@@ -1254,7 +1251,7 @@ namespace mstl::collection {
          *      assert(ls.empty());
          * @endcode
          */
-        iterator erase(const_iterator first, const_iterator last)
+        constexpr iterator erase(const_iterator first, const_iterator last)
         requires is_double_linked_list {
             if (first == last) {
                 return {last.cur};
@@ -1277,7 +1274,7 @@ namespace mstl::collection {
          * @brief 在链表前以移动的方式插入一个元素.
          * @param value 欲插入的元素.
          */
-        void push_front(T&& value) noexcept
+        constexpr void push_front(T&& value) noexcept
         {
             emplace_front(std::forward<T>(value));
         }
@@ -1286,7 +1283,7 @@ namespace mstl::collection {
          * @brief 在链表前以复制的方式插入一个元素.
          * @param value 欲插入的元素.
          */
-        void push_front(const T& value) noexcept
+        constexpr void push_front(const T& value) noexcept
         requires basic::CopyAble<T> {
             emplace_front(value);
         }
@@ -1296,7 +1293,7 @@ namespace mstl::collection {
          * @return 所插入的元素的引用.
          */
         template<typename ...Args>
-        Reference emplace_front(Args&& ...args) noexcept {
+        constexpr Reference emplace_front(Args&& ...args) noexcept {
             Node* node = construct_node(std::forward<Args>(args)...);
 
             node->set_next(head->next);
@@ -1308,7 +1305,7 @@ namespace mstl::collection {
         /**
          * @brief 在链表前删除一个元素.
          */
-        void pop_front() noexcept {
+        constexpr void pop_front() noexcept {
             Node* tmp = head->next;
             MSTL_DEBUG_ASSERT(tmp != nullptr, "Trying to pop front at an empty list.");
             head->set_next(tmp->next);
@@ -1324,7 +1321,7 @@ namespace mstl::collection {
          *
          * @param value 欲插入的元素.
          */
-        void push_back(T&& val) noexcept
+        constexpr void push_back(T&& val) noexcept
         requires is_double_linked_list {
             emplace_back(std::forward<T>(val));
         }
@@ -1337,7 +1334,7 @@ namespace mstl::collection {
          *
          * @param value 欲插入的元素.
          */
-        void push_back(const T& val) noexcept
+        constexpr void push_back(const T& val) noexcept
         requires basic::CopyAble<T> && is_double_linked_list {
             emplace_back(val);
         }
@@ -1351,7 +1348,7 @@ namespace mstl::collection {
          * @return 新插入的元素的引用.
          */
         template<typename ...Args>
-        Reference emplace_back(Args&&... args) noexcept
+        constexpr Reference emplace_back(Args&&... args) noexcept
         requires is_double_linked_list {
             Node* node = construct_node(std::forward<Args>(args)...);
 
@@ -1368,7 +1365,7 @@ namespace mstl::collection {
          * ## 约束
          * 节点必须满足`Node`. 即, 链表必须是双链表.
          */
-        void pop_back() noexcept
+        constexpr void pop_back() noexcept
         requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             MSTL_DEBUG_ASSERT(!empty(), "Trying to pop back at an empty list.");
@@ -1383,7 +1380,7 @@ namespace mstl::collection {
          *
          * 若count < `size()`, 则缩小链表到count, 并销毁多余的元素; 否则, 扩大链表到count, 并在尾部填充默认构造的元素.
          */
-        void resize(usize count) noexcept {
+        constexpr void resize(usize count) noexcept {
             if (count == 0) {
                 clear();
             } else if (count == len) {
@@ -1400,7 +1397,7 @@ namespace mstl::collection {
          *
          * 若count < `size()`, 则缩小链表到count, 并销毁多余的元素; 否则, 扩大链表到count, 并在尾部以复制的方法填充r.
          */
-        void resize(usize count, const T& val) noexcept {
+        constexpr void resize(usize count, const T& val) noexcept {
             if (count == 0) {
                 clear();
             } else if (count == len) {
@@ -1422,7 +1419,7 @@ namespace mstl::collection {
          *      assert(to_string(b) == "List [1, 2, 3]");
          * @endcode
          */
-        void swap(BaseList& list) noexcept {
+        constexpr void swap(BaseList& list) noexcept {
             std::swap(alloc, list.alloc);
             std::swap(head, list.head);
             std::swap(tail, list.tail);
@@ -1445,7 +1442,7 @@ namespace mstl::collection {
          *
          * @param other 欲合并的链表
          */
-        void merge(BaseList& other) {
+        constexpr void merge(BaseList& other) {
             merge(other, std::less<T>{});
         }
 
@@ -1465,7 +1462,7 @@ namespace mstl::collection {
          * @param p 谓词. 比较两个元素, 若元素a应在元素b前, 则返回true; 否则返回false.
          */
         template<class Compare>
-        void merge(BaseList& other, Compare p)
+        constexpr void merge(BaseList& other, Compare p)
         requires ops::Predicate<Compare, T, T> {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             MSTL_DEBUG_ASSERT(other.head != nullptr, "The list has been moved.");
@@ -1495,7 +1492,7 @@ namespace mstl::collection {
          *
          * @param other
          */
-        void merge(BaseList&& other) {
+        constexpr void merge(BaseList&& other) {
             merge(std::forward<BaseList>(other), std::less<T>{});
         }
 
@@ -1509,7 +1506,7 @@ namespace mstl::collection {
          * @param p 谓词. 比较两个元素, 若元素a应在元素b前, 则返回true; 否则返回false.
          */
         template<class Compare>
-        void merge(BaseList&& other, Compare p)
+        constexpr void merge(BaseList&& other, Compare p)
         requires ops::Predicate<Compare, T, T> {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             MSTL_DEBUG_ASSERT(other.head != nullptr, "The list has been moved.");
@@ -1535,7 +1532,7 @@ namespace mstl::collection {
             }
         }
 
-        void splice_after(const_iterator pos, BaseList& other) noexcept {
+        constexpr void splice_after(const_iterator pos, BaseList& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = other.real_tail();
 
@@ -1547,7 +1544,7 @@ namespace mstl::collection {
             other.len = 0;
         }
 
-        void splice(const_iterator pos, BaseList& other) noexcept
+        constexpr void splice(const_iterator pos, BaseList& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = other.real_tail();
@@ -1560,7 +1557,7 @@ namespace mstl::collection {
             other.len = 0;
         }
 
-        void splice_after(const_iterator pos, BaseList&& other) noexcept {
+        constexpr void splice_after(const_iterator pos, BaseList&& other) noexcept {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = other.real_tail();
 
@@ -1574,7 +1571,7 @@ namespace mstl::collection {
             other.head = other.tail = nullptr;
         }
 
-        void splice(const_iterator pos, BaseList&& other) noexcept
+        constexpr void splice(const_iterator pos, BaseList&& other) noexcept
         requires is_double_linked_list {
             Node* h = other.head->next;  // the start of the inserting nodes
             Node* t = other.real_tail();
@@ -1598,7 +1595,7 @@ namespace mstl::collection {
          * @param val 欲删除的元素.
          * @return 删除的元素的数量.
          */
-        usize remove(const T& val) noexcept requires ops::Eq<T, T> {
+        constexpr usize remove(const T& val) noexcept requires ops::Eq<T, T> {
             return remove_if([&](const T& val1) {
                 return val == val1;
             });
@@ -1611,7 +1608,7 @@ namespace mstl::collection {
          * @return 删除的元素的数量.
          */
         template<typename P>
-        usize remove_if(P predicate) noexcept
+        constexpr usize remove_if(P predicate) noexcept
         requires ops::Predicate<P, T>{
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             if (empty()) {
@@ -1640,7 +1637,7 @@ namespace mstl::collection {
         /**
          * @brief 逆转一个链表.
          */
-        void reverse() requires (!is_double_linked_list) {
+        constexpr void reverse() requires (!is_double_linked_list) {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             if (len < 2) {
                 return;
@@ -1660,7 +1657,7 @@ namespace mstl::collection {
         /**
          * @brief 逆转一个链表.
          */
-        void reverse() requires is_double_linked_list {
+        constexpr void reverse() requires is_double_linked_list {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             Node* p = head;
             Node* ap = head->next;
@@ -1677,7 +1674,7 @@ namespace mstl::collection {
          * @brief 删除相邻的相同元素, 仅保留一个.
          * @return 删除的元素的数量
          */
-        usize unique() requires ops::Eq<T, T> {
+        constexpr usize unique() requires ops::Eq<T, T> {
             return unique(std::equal_to<T>());
         }
 
@@ -1691,7 +1688,7 @@ namespace mstl::collection {
          * @return
          */
         template<class BinaryPredicate>
-        usize unique(BinaryPredicate p) requires ops::Predicate<BinaryPredicate, const T&, const T&> {
+        constexpr usize unique(BinaryPredicate p) requires ops::Predicate<BinaryPredicate, const T&, const T&> {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             if (len < 2) {
                 return 0;
@@ -1719,7 +1716,7 @@ namespace mstl::collection {
         /**
          * @brief 对链表进行排序.
          */
-        void sort() {
+        constexpr void sort() {
             sort(std::less<T>());
         }
 
@@ -1729,7 +1726,7 @@ namespace mstl::collection {
          * @param predicate 谓词
          */
         template<typename P>
-        void sort(P predicate)
+        constexpr void sort(P predicate)
         requires ops::Predicate<P, T, T> {
             MSTL_DEBUG_ASSERT(head != nullptr, "The list has been moved.");
             auto r = _private::mergeSort(head->next, predicate);
@@ -1757,20 +1754,27 @@ namespace mstl::collection {
         }
 
         // allocate data node without initialize it
-        Node* alloc_node() {
-            Node* node = static_cast<Node*>(alloc.allocate(get_node_layout(), 1));
+        constexpr Node* alloc_node() {
+            Node* node = alloc.template allocate<Node>(1);
             return node;
         }
 
         // allocate node and data within a continious space
-        Node* alloc_node_with_data() {
-            Node* node = (Node*)(alloc.allocate(get_data_node_layout(), 1));
-            T* data = (T*)((usize)node + get_data_offset());
+        constexpr Node* alloc_node_with_data() {
+            Node* node;
+            T* data;
+            if (std::is_constant_evaluated()) {
+                node = alloc.template allocate<Node>(1);
+                data = alloc.template allocate<T>(1);
+            } else {
+                node = (Node*)(alloc.allocate(get_data_node_layout(), 1));
+                data = (T*)((usize)node + get_data_offset());
+            }
             node->data = data;
             return node;
         }
 
-        Node* build_virtual_node() {
+        constexpr Node* build_virtual_node() {
             Node* r = alloc_node();
             r->next = nullptr;
             r->data = nullptr;
@@ -1781,23 +1785,28 @@ namespace mstl::collection {
         }
 
         // deallocate the node without destroy it.
-        void dealloc_node(Node* node) {
-            alloc.deallocate(node, get_node_layout(), 1);
+        constexpr void dealloc_node(Node* node) {
+            alloc.template deallocate(node, 1);
         }
 
-        void dealloc_node_with_data(Node* node) {
-            alloc.deallocate(node, get_data_node_layout(), 1);
+        constexpr void dealloc_node_with_data(Node* node) {
+            if (std::is_constant_evaluated()) {
+                alloc.template deallocate(node->data, 1);
+                dealloc_node(node);
+            } else {
+                alloc.deallocate(node, get_data_node_layout(), 1);
+            }
         }
 
         template<typename ...Args>
-        Node* construct_node(Args&& ...args) {
+        constexpr Node* construct_node(Args&& ...args) {
             Node* n = alloc_node_with_data();
             n->construct(std::forward<Args>(args)...);
             return n;
         }
 
         // Destroy data and the node
-        void destroy_node(Node* node) {
+        constexpr void destroy_node(Node* node) {
             if (node->data != nullptr) {
                 node->destroy();  // destroy data
                 dealloc_node_with_data(node);
@@ -1808,7 +1817,7 @@ namespace mstl::collection {
         }
 
         // DO NOT INVOKE when the list is not empty
-        void init_empty_list() {
+        constexpr void init_empty_list() {
             Node* h = build_virtual_node();
             head = h;
             Node* t = build_virtual_node();
@@ -1816,7 +1825,7 @@ namespace mstl::collection {
             head->set_next(tail);
         }
 
-        void copy_impl(const BaseList& other)
+        constexpr void copy_impl(const BaseList& other)
         requires basic::CopyAble<T>{
             MSTL_DEBUG_ASSERT(other.head != nullptr, "The list has been moved.");
             len = 0;
@@ -1844,7 +1853,7 @@ namespace mstl::collection {
             tail->set_next(nullptr);
         }
 
-        void shorten(usize count) {
+        constexpr void shorten(usize count) {
             Node* t;
             usize d = len - count;
             if constexpr (is_double_linked_list) {
@@ -1876,7 +1885,7 @@ namespace mstl::collection {
             len = count;
         }
 
-        void extend(usize count) {
+        constexpr void extend(usize count) {
             usize d = count - len;
             Node* p;
             if constexpr (is_double_linked_list) {
@@ -1896,7 +1905,7 @@ namespace mstl::collection {
             len = count;
         }
 
-        void extend(usize count, const T& val) {
+        constexpr void extend(usize count, const T& val) {
             usize d = count - len;
             Node* p;
             if constexpr (is_double_linked_list) {
@@ -1916,7 +1925,7 @@ namespace mstl::collection {
             len = count;
         }
 
-        Node* real_tail() const {
+        constexpr Node* real_tail() const {
             Node* p = head;
             while (p->next != tail) {
                 p = p->next;
@@ -1924,7 +1933,7 @@ namespace mstl::collection {
             return p;
         }
 
-        Node* real_tail() const requires is_double_linked_list {
+        constexpr Node* real_tail() const requires is_double_linked_list {
             return tail->prev;
         }
     };
@@ -1981,9 +1990,9 @@ namespace mstl::collection {
     public:
         using Item = T;
 
-        explicit ListIntoIter(BaseList<T, Node, A> &&list) : list(std::forward<BaseList<T, Node, A>>(list)) {}
+        constexpr explicit ListIntoIter(BaseList<T, Node, A> &&list) : list(std::forward<BaseList<T, Node, A>>(list)) {}
 
-        Option<Item> next() {
+        constexpr Option<Item> next() {
             if (!list.empty()) {
                 auto res = Option<T>::some(std::move(list.front().unwrap_uncheck()));
                 list.pop_front();
@@ -1993,7 +2002,7 @@ namespace mstl::collection {
             }
         }
 
-        Option<Item> prev()
+        constexpr Option<Item> prev()
         requires concepts::Node<Node> {
             if (!list.empty()) {
                 auto res = Option<T>::some(std::move(list.back().unwrap_uncheck()));

@@ -3,6 +3,7 @@
 //
 
 #include <collection/linked_list.h>
+#include <collection/array.h>
 #include <collection/vector.h>
 #include <iter/iterator.h>
 #include <string>
@@ -255,4 +256,32 @@ BOOST_AUTO_TEST_CASE(MEMORY_TRACK) {
     std::cout << "================= MEMORY TRACK =================" << std::endl;
 
     BOOST_REQUIRE(TrackingAllocator<>::get_beholding_memory() == 0);
+}
+
+consteval usize pow(const usize b, const usize ex) {
+    usize res = 1;
+    for (usize i = 0; i < ex; i++) {
+        res *= b;
+    }
+    return res;
+}
+
+template<usize b>
+consteval auto get_pows(const usize ex) {
+    mstl::collection::List<usize> tmp;
+    mstl::collection::Array<usize, b + 1> res = {0};
+    for (usize i = 0; i <= b; i++) {
+        tmp.push_back(pow(i, ex));
+    }
+    std::copy(tmp.begin(), tmp.end(), res.begin());
+    return res;
+}
+
+BOOST_AUTO_TEST_CASE(CONSTEXPR_TEST) {
+    constexpr auto pows = get_pows<100>(2);
+    for (auto &i : pows) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    static_assert(pows[2] == 4);
 }
