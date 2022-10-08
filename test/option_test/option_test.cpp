@@ -42,6 +42,7 @@ BOOST_AUTO_TEST_CASE(TEST_REF){
     BOOST_CHECK(op.is_none());
 }
 
+/*
 BOOST_AUTO_TEST_CASE(TEST_BOOL) {
     bool f = false;
     bool t = true;
@@ -75,6 +76,7 @@ BOOST_AUTO_TEST_CASE(TEST_BOOL) {
     BOOST_CHECK(!copy.is_some());
     BOOST_CHECK(copy.is_none());
 }
+*/
 
 BOOST_AUTO_TEST_CASE(TEST_MOVABLE) {
     static_assert(mstl::basic::Movable<Option<Movable>>);
@@ -93,4 +95,50 @@ BOOST_AUTO_TEST_CASE(TEST_MOVABLE) {
 
     movable = op_1_move.unwrap();
     BOOST_CHECK(movable.num == op_2.as_ref().num);
+}
+
+BOOST_AUTO_TEST_CASE(TEST_COPYABLE) {
+    auto op_1 = Option<int>::some(20);
+    auto op_2 = Option<int>::some(10);
+    auto op_3 = Option<int>::none();
+
+    op_2 = op_1;
+    BOOST_TEST_CHECK(op_2.unwrap_uncheck() == 20);
+    BOOST_CHECK(op_2.is_none());
+
+    op_1 = op_2;
+    BOOST_CHECK(op_1.is_none());
+
+    op_3 = Option<int>::some(5);
+    BOOST_REQUIRE(op_3.is_some());
+    BOOST_TEST_CHECK(op_3.unwrap_uncheck() == 5);
+}
+
+struct DivT {
+    i32 q, r;
+};
+
+constexpr Option<DivT> mstl_div(i32 a, i32 b) {
+    if (b == 0) {
+        return Option<DivT>::none();
+    } else {
+        return Option<DivT>::some({a / b, a % b});
+    }
+}
+
+constexpr i32 get_q(Option<DivT> t) {
+    return t.unwrap().q;
+}
+
+BOOST_AUTO_TEST_CASE(CONSTEXPR_TEST) {
+    constexpr auto op_1 = Option<int>::some(20);
+    constexpr auto op_2 = Option<int>::none();
+
+    static_assert(op_1.is_some());
+    static_assert(op_1.as_ref() == 20);
+
+    static_assert(op_2.is_none());
+
+    constexpr i32 q = get_q(mstl_div(10, 3));
+    static_assert(q == 3);
 }

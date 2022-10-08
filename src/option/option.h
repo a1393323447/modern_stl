@@ -13,14 +13,16 @@
 namespace mstl {
     template<typename T>
     class Option {
+        class NoneType{};
+
     public:
         template<typename... Args>
         MSTL_INLINE constexpr
         static Option<T> emplace(Args&&... args) {
-            return { T{ std::forward<Args&&>(args)... } };
+            return { T{ std::forward<Args>(args)... } };
         }
         MSTL_INLINE constexpr static Option<T> some(T&& t)
-        { return { std::forward<T&&>(t) }; }
+        { return { std::forward<T>(t) }; }
         MSTL_INLINE constexpr static Option<T> some(const T& t)
         { return { t }; }
         MSTL_INLINE constexpr static Option<T> none()
@@ -32,8 +34,7 @@ namespace mstl {
         MSTL_INLINE constexpr
         T unwrap() {
             if (this->hold_value) {
-                this->hold_value = false;
-                return std::move(this->value);
+                return unwrap_uncheck();
             } else {
                 MSTL_PANIC("unwrap at a none value.");
             }
@@ -41,14 +42,15 @@ namespace mstl {
 
         MSTL_INLINE constexpr
         T unwrap_uncheck() {
-            this->hold_value = false;
-            return std::move(this->value);
+            T res = std::move(value);
+            reset();
+            return res;
         }
 
         MSTL_INLINE constexpr
         T& as_ref() {
             if (this->hold_value) {
-                return this->value;
+                return as_ref_uncheck();
             } else {
                 MSTL_PANIC("get a ref of none value.");
             }
@@ -57,7 +59,7 @@ namespace mstl {
         MSTL_INLINE constexpr
         const T& as_ref() const {
             if (this->hold_value) {
-                return this->value;
+                return as_ref_uncheck();
             } else {
                 MSTL_PANIC("get a ref of none value.");
             }
@@ -91,12 +93,14 @@ namespace mstl {
 
         constexpr Option(Option&& other) noexcept
         requires basic::Movable<T> {
-            if (other.is_some()) {
-                this->value = std::move(other.value);
+            hold_value = other.hold_value;
+
+            if (hold_value) {
+                construct_val(std::move(other.value));
+                other.reset();
+            } else {
+                construct_non();
             }
-            // 注意: 此处可能会导致 Some 中的 T 延迟析构 -> Some = std::move(None)
-            this->hold_value = other.hold_value;
-            other.hold_value = false;
         }
 
         constexpr Option& operator=(Option&& other) noexcept
@@ -104,13 +108,25 @@ namespace mstl {
 
         constexpr Option& operator=(Option&& other) noexcept
         requires basic::Movable<T> {
-            this->hold_value = other.hold_value;
-            if (other.is_none() || this == &other) { // 防止重复移动
-                // 注意: 此处可能会导致 Some 中的 T 延迟析构 -> Some = std::move(None)
+            if (this == &other) {
                 return *this;
             }
-            other.hold_value = false;
-            this->value = std::move(other.value);
+            if (hold_value == other.hold_value) {
+                if (hold_value) {
+                    value = std::move(other.hold_value);
+                }
+            } else {
+                hold_value = other.hold_value;
+                if (hold_value) {
+                    destroy_non();
+                    construct_val(std::move(other.value));
+
+                    other.reset();      // set other to none
+                } else {
+                    destroy_val();
+                    construct_non();
+                }
+            }
             return *this;
         }
 
@@ -119,11 +135,13 @@ namespace mstl {
 
         constexpr Option(const Option& other)
         requires basic::CopyAble<T> {
-            if (other.is_some()) {
-                this->value = other.value;
+            hold_value = other.hold_value;
+
+            if (hold_value) {
+                construct_val(other.value);
+            } else {
+                construct_non();
             }
-            // 注意: 此处可能会导致 Some 中的 T 延迟析构
-            this->hold_value = other.hold_value;
         }
 
         constexpr Option& operator=(const Option& other)
@@ -131,21 +149,67 @@ namespace mstl {
 
         constexpr Option& operator=(const Option& other)
         requires basic::CopyAble<T> {
-            this->hold_value = other.hold_value;
-            if (other.is_none() || this == &other) { // 防止重复赋值
-                // 注意: 此处可能会导致 Some 中的 T 延迟析构
+            if (this == &other) {
                 return *this;
             }
-            this->value = other.value;
+            if (hold_value == other.hold_value) {
+                if (hold_value) {
+                    value = other.value;
+                }
+            } else {
+                hold_value = other.hold_value;
+                if (hold_value) {
+                    destroy_non();
+                    construct_val(other.value);
+                } else {
+                    destroy_val();
+                    construct_non();
+                }
+            }
             return *this;
+        }
+
+        constexpr ~Option() {
+            if (hold_value) {
+                destroy_val();
+            } else {
+                destroy_non();
+            }
         }
 
     private:
         constexpr Option(T&& t): value(std::forward<T&&>(t)), hold_value(true) {}
         constexpr Option(const T& t):   value(t), hold_value(true) {}
-        constexpr Option(): value(T{}), hold_value(false) {}
+        constexpr Option(): non_value{}, hold_value(false) {}
 
-        T value;
+        template<typename ...Args>
+        constexpr void construct_val(Args&& ...args) {
+            std::construct_at(&value, std::forward<Args>(args)...);
+        }
+
+        constexpr void destroy_val() {
+            std::destroy_at(&value);
+        }
+
+        constexpr void construct_non() {
+            std::construct_at(&non_value);
+        }
+
+        constexpr void destroy_non() {
+            std::destroy_at(&non_value);
+        }
+
+        constexpr void reset() {
+            destroy_val();
+            construct_non();
+            hold_value = false;
+        }
+
+        union {
+            T value;
+            NoneType non_value;
+        };
+
         bool hold_value = false;
     };
 
