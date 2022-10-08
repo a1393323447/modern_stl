@@ -160,41 +160,43 @@ namespace mstl {
     template<basic::LValRefType T>
     class Option<T> {
     public:
-        using StoreT = std::remove_cvref_t<T>;
+        using StoreT = std::remove_reference_t<T>;
+        using Item = StoreT&;
+        using ConstItem = const StoreT&;
         MSTL_INLINE constexpr
-        static Option<T> some(T t) {
+        static Option some(T t) {
             auto *p = const_cast<StoreT*>(std::addressof(t));
             return { p };
         }
-        MSTL_INLINE constexpr static Option<T> none()
+        MSTL_INLINE constexpr static Option none()
         { return { }; }
 
         MSTL_INLINE constexpr bool is_some() const
-        { return this->hold_value; }
+        { return ptr != nullptr; }
         MSTL_INLINE constexpr bool is_none() const
-        { return !this->hold_value; }
+        { return !is_some(); }
 
         MSTL_INLINE constexpr
-        T unwrap() {
-            if (this->hold_value) {
-                this->hold_value = false;
-                T ref = *this->ptr;
+        Item unwrap() {
+            if (is_some()) {
+                Item ref = *this->ptr;
                 this->ptr = nullptr;
                 return ref;
             } else {
-                MSTL_PANIC("unwrap at a none value.");
+                MSTL_PANIC("unwrap is at a none value.");
             }
         }
 
         MSTL_INLINE constexpr
-        T unwrap_uncheck() {
-            this->hold_value = false;
-            return *this->ptr;
+        Item unwrap_uncheck() {
+            auto* tmp = ptr;
+            this->ptr = nullptr;
+            return *tmp;
         }
 
         MSTL_INLINE constexpr
-        T as_ref() {
-            if (this->hold_value) {
+        Item as_ref() {
+            if (is_some()) {
                 return *this->ptr;
             } else {
                 MSTL_PANIC("try to get a None value ref.");
@@ -202,8 +204,8 @@ namespace mstl {
         }
 
         MSTL_INLINE constexpr
-        const T as_ref() const {
-            if (this->hold_value) {
+        ConstItem as_ref() const {
+            if (is_some()) {
                 return *this->ptr;
             } else {
                 MSTL_PANIC("try to get a None value ref.");
@@ -211,12 +213,12 @@ namespace mstl {
         }
 
         MSTL_INLINE constexpr
-        T as_ref_uncheck() {
+        Item as_ref_uncheck() {
             return *this->ptr;
         }
 
         MSTL_INLINE constexpr
-        const T as_ref_uncheck() const {
+        ConstItem as_ref_uncheck() const {
             return *this->ptr;
         }
 
@@ -226,7 +228,7 @@ namespace mstl {
         MSTL_INLINE constexpr
         decltype(auto) map(Lambda m) {
             using AfterMap = std::invoke_result_t<Lambda, T>;
-            if (hold_value) {
+            if (is_some()) {
                 return Option<AfterMap>::some(m(*ptr));
             } else {
                 return Option<AfterMap>::none();
@@ -236,13 +238,11 @@ namespace mstl {
         constexpr Option(const Option& other) {
             // 不需要判断对方是否是 Some
             this->ptr = other.ptr;
-            this->hold_value = other.hold_value;
         }
 
-        constexpr Option& operator=(const Option& other) {
+        constexpr Option& operator=(const Option& other) { // NOLINT(bugprone-unhandled-self-assignment)
             // 没必要为了处理 this == &other 而引入分支
             this->ptr = other.ptr;
-            this->hold_value = other.hold_value;
 
             return *this;
         }
@@ -250,9 +250,7 @@ namespace mstl {
         constexpr Option(Option&& other) noexcept {
             // 不需要判断对方是否是 Some
             this->ptr = other.ptr;
-            this->hold_value = other.hold_value;
             other.ptr = nullptr;
-            other.hold_value = false;
         }
 
         constexpr Option& operator=(Option&& other) noexcept {
@@ -260,18 +258,15 @@ namespace mstl {
                 return *this;
             }
             this->ptr = other.ptr;
-            this->hold_value = other.hold_value;
             other.ptr = nullptr;
-            other.hold_value = false;
             return *this;
         }
 
     private:
-        constexpr Option(StoreT* p): ptr(p), hold_value(true) {}
-        constexpr Option(): ptr(nullptr), hold_value(false) {}
+        constexpr Option(StoreT* p): ptr(p) {}
+        constexpr Option(): ptr(nullptr) {}
 
         StoreT *ptr = nullptr;
-        bool hold_value = false;
     };
 }
 

@@ -1,7 +1,6 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/14.
 //
-#define DEBUG
 #include <option/option.h>
 #include <string>
 
@@ -34,9 +33,11 @@ BOOST_AUTO_TEST_CASE(TEST_REF){
     static_assert(mstl::basic::Movable<Option<std::string&>>);
     static_assert(mstl::basic::CopyAble<Option<std::string&>>);
 
-    std::string str = "123";
+    std::string str = "foo";
     Option<std::string&> op = Option<std::string&>::some(str);
     std::string& ref = op.unwrap_uncheck();
+    BOOST_CHECK_EQUAL(ref, str);
+    str = "bar";
     BOOST_CHECK_EQUAL(ref, str);
     BOOST_CHECK(op.is_none());
 }
