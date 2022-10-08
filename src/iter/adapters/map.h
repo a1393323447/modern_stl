@@ -30,7 +30,7 @@ namespace mstl::iter {
             Option<Item> next() noexcept {
                 auto next_item = iter.next();
                 if (next_item.is_some()) {
-                    Item item = func(next_item.unwrap_uncheck());
+                    Item item = func(next_item.unwrap_unchecked());
                     return Option<Item>::some(item);
                 } else {
                     return Option<Item>::none();

@@ -18,7 +18,7 @@ namespace mstl::iter {
         while (next.is_some()) {
             init = std::move(lambda(
                     std::move(init),
-                    next.unwrap_uncheck()
+                    next.unwrap_unchecked()
             ));
             next = iter.next();
         }

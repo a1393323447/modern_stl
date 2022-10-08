@@ -236,7 +236,7 @@ namespace mstl::collection {
             Array<typename Iter::Item, N> arr{};
             Option<typename Iter::Item> next = iter.next();
             while (next.is_some() && pos < N) {
-                arr[pos] = next.unwrap_uncheck();
+                arr[pos] = next.unwrap_unchecked();
                 next = iter.next();
                 pos++;
             }

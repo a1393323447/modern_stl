@@ -79,13 +79,13 @@ BOOST_AUTO_TEST_CASE(BASIC_TEST, * utf::tolerance(1e-6)) {
     BOOST_CHECK(b.is_err());
     BOOST_CHECK(a != b);
 
-    BOOST_CHECK(a.ok_ref().unwrap_uncheck() == 10);
+    BOOST_CHECK(a.ok_ref().unwrap_unchecked() == 10);
     BOOST_CHECK(a.ok_ref_unchecked() == 10);
     BOOST_CHECK(a.unwrap() == 10);
     BOOST_CHECK(a.err().is_none());
 
-    BOOST_CHECK(b.err_ref().unwrap_uncheck() == 1.08);
-    BOOST_CHECK(b.err().unwrap_uncheck() == 1.08);
+    BOOST_CHECK(b.err_ref().unwrap_unchecked() == 1.08);
+    BOOST_CHECK(b.err().unwrap_unchecked() == 1.08);
     BOOST_CHECK(b.err_unchecked() == 1.08);
 
     Result<std::string, int> c("Hello"), d("Hello");

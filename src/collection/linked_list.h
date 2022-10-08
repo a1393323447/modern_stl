@@ -756,7 +756,7 @@ namespace mstl::collection {
             Node* p = res.head;
             auto val = iter.next();
             while (val.is_some()) {
-                Node* tmp = res.template construct_node(val.unwrap_uncheck());
+                Node* tmp = res.template construct_node(val.unwrap_unchecked());
                 p->set_next(tmp);
                 p = tmp;
                 val = iter.next();
@@ -1994,7 +1994,7 @@ namespace mstl::collection {
 
         constexpr Option<Item> next() {
             if (!list.empty()) {
-                auto res = Option<T>::some(std::move(list.front().unwrap_uncheck()));
+                auto res = Option<T>::some(std::move(list.front().unwrap_unchecked()));
                 list.pop_front();
                 return res;
             } else {
@@ -2005,7 +2005,7 @@ namespace mstl::collection {
         constexpr Option<Item> prev()
         requires concepts::Node<Node> {
             if (!list.empty()) {
-                auto res = Option<T>::some(std::move(list.back().unwrap_uncheck()));
+                auto res = Option<T>::some(std::move(list.back().unwrap_unchecked()));
                 list.pop_back();
                 return res;
             } else {

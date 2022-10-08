@@ -25,7 +25,7 @@ namespace mstl::str::encoding {
         Option<Char> next(Iter &iter) {
             Option<const u8 &> next_byte = iter.next();
             if (next_byte.is_some()) {
-                Char ascii_char = ValidBytes<1> {{next_byte.unwrap_uncheck()} };
+                Char ascii_char = ValidBytes<1> {{next_byte.unwrap_unchecked()} };
                 return Option<Char>::some(ascii_char);
             } else {
                 return Option<Char>::none();
@@ -38,7 +38,7 @@ namespace mstl::str::encoding {
         Option<Char> last(Iter &iter) {
             Option<const u8 &> last_byte = iter.prev();
             if (last_byte.is_some()) {
-                Char ascii_char = ValidBytes<1> {{last_byte.unwrap_uncheck()} };
+                Char ascii_char = ValidBytes<1> {{last_byte.unwrap_unchecked()} };
                 return Option<Char>::some(ascii_char);
             } else {
                 return Option<Char>::none();
