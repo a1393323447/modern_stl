@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE(TEST_REF){
 
     std::string str = "foo";
     Option<std::string&> op = Option<std::string&>::some(str);
-    std::string& ref = op.unwrap_uncheck();
+    std::string& ref = op.unwrap_unchecked();
     BOOST_CHECK_EQUAL(ref, str);
     str = "bar";
     BOOST_CHECK_EQUAL(ref, str);
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TEST_COPYABLE) {
     auto op_3 = Option<int>::none();
 
     op_2 = op_1;
-    BOOST_TEST_CHECK(op_2.unwrap_uncheck() == 20);
+    BOOST_TEST_CHECK(op_2.unwrap_unchecked() == 20);
     BOOST_CHECK(op_2.is_none());
 
     op_1 = op_2;
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TEST_COPYABLE) {
 
     op_3 = Option<int>::some(5);
     BOOST_REQUIRE(op_3.is_some());
-    BOOST_TEST_CHECK(op_3.unwrap_uncheck() == 5);
+    BOOST_TEST_CHECK(op_3.unwrap_unchecked() == 5);
 }
 
 struct DivT {

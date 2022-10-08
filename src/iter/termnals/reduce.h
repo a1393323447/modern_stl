@@ -19,7 +19,7 @@ namespace mstl::iter {
         using ReturnType = Option<typename Iter::Item>;
         auto first = iter.next();
         if (first.is_some()) [[likely]] {
-            return ReturnType::some(fold(iter, first.unwrap_uncheck(), lambda));
+            return ReturnType::some(fold(iter, first.unwrap_unchecked(), lambda));
         } else {
             return ReturnType::none();
         }

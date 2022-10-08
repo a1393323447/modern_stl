@@ -430,7 +430,7 @@ namespace mstl::collection {
             Vector v;
             auto val = iter.next();
             while (val.is_some()) {
-                v.push_back(val.unwrap_uncheck());
+                v.push_back(val.unwrap_unchecked());
                 val = iter.next();
             }
             return v;

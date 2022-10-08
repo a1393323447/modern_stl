@@ -34,14 +34,14 @@ namespace mstl {
         MSTL_INLINE constexpr
         T unwrap() {
             if (this->hold_value) {
-                return unwrap_uncheck();
+                return unwrap_unchecked();
             } else {
                 MSTL_PANIC("unwrap at a none value.");
             }
         }
 
         MSTL_INLINE constexpr
-        T unwrap_uncheck() {
+        T unwrap_unchecked() {
             T res = std::move(value);
             reset();
             return res;
@@ -113,7 +113,7 @@ namespace mstl {
             }
             if (hold_value == other.hold_value) {
                 if (hold_value) {
-                    value = std::move(other.hold_value);
+                    value = std::move(other.value);
                 }
             } else {
                 hold_value = other.hold_value;
@@ -252,7 +252,7 @@ namespace mstl {
         }
 
         MSTL_INLINE constexpr
-        Item unwrap_uncheck() {
+        Item unwrap_unchecked() {
             auto* tmp = ptr;
             this->ptr = nullptr;
             return *tmp;

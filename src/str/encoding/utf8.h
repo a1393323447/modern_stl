@@ -22,7 +22,7 @@ namespace mstl::str::encoding {
             u8 x;
             auto next = iter.next();
             if (next.is_some()) {
-                x = next.unwrap_uncheck();
+                x = next.unwrap_unchecked();
             } else {
                 return Option<Char>::none();
             }
@@ -33,25 +33,25 @@ namespace mstl::str::encoding {
 
             // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
-            const u8 y = iter.next().unwrap_uncheck();
+            const u8 y = iter.next().unwrap_unchecked();
             if (x < 0XE0) {
                 const auto ascii_case = ValidBytes<2>{{ x, y }};
                 return Option<Char>::some(ascii_case);
             }
 
             // [[x y z] w] case
-            // SAFETY: `bytes` produces an UTF-8-like string,
+            // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
-            const u8 z = iter.next().unwrap_uncheck();
+            const u8 z = iter.next().unwrap_unchecked();
             if (x < 0XF0) {
                 const auto ascii_case = ValidBytes<3>{{ x, y, z }};
                 return Option<Char>::some(ascii_case);
             }
 
             // [x y z w] case
-            // SAFETY: `bytes` produces an UTF-8-like string,
+            // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
-            const u8 w = iter.next().unwrap_uncheck();
+            const u8 w = iter.next().unwrap_unchecked();
             const auto ascii_case = ValidBytes<4>{{ x, y, z, w }};
             return Option<Char>::some(ascii_case);
         }
@@ -64,26 +64,26 @@ namespace mstl::str::encoding {
             if (byte.is_none) {
                 return Option<Char>::none();
             }
-            const u8 w = byte.unwrap_uncheck();
+            const u8 w = byte.unwrap_unchecked();
             if (w < 0x7F) {
                 const auto ch = ValidBytes<1>{{ w }};
                 return Option<Char>::some(ch);
             }
-            // SAFETY: `bytes` produces an UTF-8-like string,
+            // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
-            const u8 z = iter.next().unwrap_uncheck();
+            const u8 z = iter.next().unwrap_unchecked();
             if (!utf8_is_cont_byte(z)) {
                 const auto ch = ValidBytes<2>{{ z, w }};
                 return Option<Char>::some(ch);
             }
-            // SAFETY: `bytes` produces an UTF-8-like string,
+            // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
-            const u8 y = iter.next().unwrap_uncheck();
+            const u8 y = iter.next().unwrap_unchecked();
             if (!utf8_is_cont_byte(y)) {
                 const auto ch = ValidBytes<3>{{ y, z, w }};
                 return Option<Char>::some(ch);
             }
-            const u8 x = iter.next().unwrap_uncheck();
+            const u8 x = iter.next().unwrap_unchecked();
             const auto ch = ValidBytes<4>{{ x, y, z, w }};
             return Option<Char>::some(ch);
         }
@@ -99,7 +99,7 @@ namespace mstl::str::encoding {
             next = iter.next();                             \
             if (next.is_some()) {                           \
                 offset++;                                   \
-                val = next.unwrap_uncheck();                \
+                val = next.unwrap_unchecked();                \
             } else {                                        \
                 return Option<DecodeError>::some({offset}); \
             }
@@ -109,7 +109,7 @@ namespace mstl::str::encoding {
             usize offset = 0;
             Option<const u8&> next = iter.next();
             while (next.is_some()) {
-                const u8 first_byte = next.unwrap_uncheck();
+                const u8 first_byte = next.unwrap_unchecked();
                 const usize width = utf8_char_width(first_byte);
                 // 1-byte encoding is for codepoints  \u{0000} to  \u{007f}
                 //        first  00                7F

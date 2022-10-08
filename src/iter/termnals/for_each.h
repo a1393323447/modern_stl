@@ -15,7 +15,7 @@ namespace mstl::iter {
     void for_each(Iter iter, F lambda) noexcept {
         Option<typename Iter::Item> next = iter.next();
         while (next.is_some()) {
-            lambda(next.unwrap_uncheck());
+            lambda(next.unwrap_unchecked());
             next = iter.next();
         }
     }
