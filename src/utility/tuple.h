@@ -123,6 +123,12 @@ namespace mstl::utility {
             return r;
         }
 
+        template<typename F>
+        constexpr void for_each(F&& fun) {
+            fun(f);
+            r.for_each(std::forward<F>(fun));
+        }
+
         /**
          * @brief 获取元组所容纳的特定元素.
          * @tparam pos 元素的索引
@@ -203,6 +209,9 @@ namespace mstl::utility {
         constexpr bool operator==(const Tuple &) const {
             return true;
         }
+
+        template<class F>
+        constexpr void for_each(F &&) {}
     };
 
     using Unit = Tuple<>;
