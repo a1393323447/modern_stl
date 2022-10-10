@@ -5,6 +5,8 @@ add_executable(fold_test iter_test/fold_test.cpp)
 
 find_package(Boost COMPONENTS unit_test_framework)
 
+add_executable(type_list_test utility_test/type_list_test.cpp)
+
 if (Boost_FOUND)
     # For Unit Test Frame of Boost
 
