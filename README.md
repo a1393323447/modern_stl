@@ -42,12 +42,63 @@
    9. Option
    10. Slice
 
-## 使用方法
-`mstl`是纯头文件 (header-only) 库, 要使用`mstl`, 仅需要clone本仓库, 并在您的项目中包括`src/mstl.h`.
+## 开始使用
+`mstl`是纯头文件库, 使用`CMake`进行管理进行构建. 
+因此, 我们建议您在使用本库时, 也尝试使用`CMake`构建您的项目.
 
-```c++
-#include "mstl.h"
+### 需求
+| 包     | 版本         | 备注                      |
+|-------|------------|-------------------------|
+| CMake | \>=3.14    | 若您使用`CMake`构建本项目和您的其他项目 |
+ | GCC   | \>= 12.2.0 | 暂不支持 `MSVC`             |
+
+### 准备工作
+Clone本仓库, 并Checkout `main` 分支.
+```shell
+git clone https://github.com/a1393323447/modern_stl.git 
+cd modern_stl
+git checkout main
 ```
+
+### 构建与使用(通过`CMake`)
+进入项目目录, 使用`CMake`构建并安装项目
+```shell
+# 假设您处于modern_stl目录下
+md build
+cd build
+cmake ..  # 若您使用Windows操作系统, 还应该添加 -G "Unix Makefiles". MSTL还不支持MSVC
+          # 若您需要指定安装路径, 还应该添加 -DCMAKE_INSTALL_PREFIX:PATH=...
+cmake --build . --config Release --target install
+```
+
+然后您便可以在新的项目中使用`mstl`. 您需要在`CMakeLists.txt`文件中引入`mstl`.
+```cmake
+set(CMAKE_CXX_STANDARD 20)
+
+# 若您安装的路径不在PATH环境变量内, 您可能还需要使用如下语句设置搜索路径
+# list(APPEND CMAKE_PREFIX_PATH "...")  # 把 ... 替换为mstl的安装路径
+
+find_package(mstl REQUIRED)
+add_executable(mstl_test src/main.cpp)
+target_link_libraries(mstl_test mstl::mstl)
+```
+
+接着, 在您的项目文件中包含`mstl/mstl.h`
+```c++
+#include <mstl/mstl.h>
+```
+
+### 构建与使用(不通过`CMake`)
+您可以直接把`include/mstl`目录复制到任意地方.
+在您的项目文件中包含`mstl/mstl.h`
+```c++
+#include <mstl/mstl.h>
+```
+并在编译时指定`mstl`目录所在的目录.
+```shell
+g++ main.cpp -o main -I/path/to/the/directory
+```
+您也可以使用任何支持指定包含目录的构建工具.
 
 ## 目标🎯
 - [x] 实现自己的*Allocator*.
