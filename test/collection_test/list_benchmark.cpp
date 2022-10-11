@@ -11,8 +11,7 @@
 #include <list>
 #include <forward_list>
 
-#include <collection/linked_list.h>
-#include <iter/iterator.h>
+#include <mstl.h>
 
 extern std::initializer_list<std::string> list;
 

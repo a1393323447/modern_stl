@@ -103,7 +103,7 @@ namespace mstl::str::encoding {
             } else {                                        \
                 return Option<DecodeError>::some({offset}); \
             }
-            #define err()                                   \
+            #define ERR()                                   \
             return Option<DecodeError>::some({offset})
 
             usize offset = 0;
@@ -138,7 +138,7 @@ namespace mstl::str::encoding {
                     u8 next_byte;
                     get_next(next, next_byte)
                     if (!utf8_is_cont_byte(next_byte)) {
-                        err();
+                        ERR();
                     }
                     break;
                 }
@@ -151,11 +151,11 @@ namespace mstl::str::encoding {
                         (0xED == first_byte                       && 0x80 <= next_byte && next_byte <= 0x9F) ||
                         (0XEE <= first_byte && first_byte <= 0xEF && 0x80 <= next_byte && next_byte <= 0xBF);
                     if (!check) {
-                        err();
+                        ERR();
                     }
                     get_next(next, next_byte)
                     if (!utf8_is_cont_byte(next_byte)) {
-                        err();
+                        ERR();
                     }
                     break;
                 }
@@ -167,21 +167,21 @@ namespace mstl::str::encoding {
                         (0XF1 <= first_byte && first_byte <= 0xF3 && 0x80 <= next_byte && next_byte <= 0xBF) ||
                         (0xF4 == first_byte                       && 0x80 <= next_byte && next_byte <= 0x8F);
                     if (!check) {
-                        err();
+                        ERR();
                     }
                     get_next(next, next_byte)
                     if (!utf8_is_cont_byte(next_byte)) {
-                        err();
+                        ERR();
                     }
 
                     get_next(next, next_byte)
                     if (!utf8_is_cont_byte(next_byte)) {
-                        err();
+                        ERR();
                     }
                     break;
                 }
                 default:
-                    err();
+                    ERR();
                 }
                 offset++;
                 next = iter.next();

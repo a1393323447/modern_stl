@@ -3,10 +3,7 @@
 //
 
 #include <iostream>
-#include <collection/vector.h>
-#include <collection/array.h>
-#include <iter/iterator.h>
-#include <collection/array.h>
+#include <mstl.h>
 #include "../TrackingAllocator.h"
 
 #define BOOST_TEST_MODULE Vector Test

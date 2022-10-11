@@ -1,9 +1,7 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/24.
 //
-#include <ops/range.h>
-#include <collection/array.h>
-#include <iter/iterator.h>
+#include <mstl.h>
 
 using namespace mstl;
 using namespace mstl::iter;
@@ -25,5 +23,5 @@ int main() {
     Option<i32> red = ops::Range<i32>(0, 10) |
     reduce([](auto acc, auto num) { return  acc + num; });
 
-    return sum + total + red.unwrap_uncheck();
+    return sum + total + red.unwrap_unchecked();
 }

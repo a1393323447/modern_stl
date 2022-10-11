@@ -1,9 +1,7 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/21.
 //
-#include <global.h>
-#include <ops/range.h>
-#include <iter/iterator.h>
+#include <mstl.h>
 
 #define BOOST_TEST_MODULE Range Test
 #include <boost/test/unit_test.hpp>

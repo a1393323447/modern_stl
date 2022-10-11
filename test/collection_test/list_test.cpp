@@ -2,13 +2,11 @@
 // Created by Shiroan on 2022/9/22.
 //
 
-#include <collection/linked_list.h>
-#include <collection/array.h>
-#include <collection/vector.h>
-#include <iter/iterator.h>
+#include <mstl.h>
 #include <string>
 #include "../TrackingAllocator.h"
-#include <utility/utility.h>
+
+
 #define BOOST_TEST_MODULE Vector Test
 #include <boost/test/unit_test.hpp>
 namespace utf = boost::unit_test;

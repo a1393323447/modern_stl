@@ -1,8 +1,7 @@
 //
 // Created by 朕与将军解战袍 on 2022/9/14.
 //
-#include <collection/array.h>
-#include <iter/iterator.h>
+#include <mstl.h>
 #include <iostream>
 #include <chrono>
 #include <vector>

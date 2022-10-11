@@ -1,8 +1,7 @@
 //
 // Created by Shiroan on 2022/10/6.
 //
-#include <utility/utility.h>
-#include <ops/ops.h>
+#include <mstl.h>
 
 #define BOOST_TEST_MODULE Tuple Test
 #include <boost/test/unit_test.hpp>
