@@ -66,7 +66,7 @@ namespace mstl::str {
 
         template<usize N>
         requires (N > 0)
-        constexpr BasicChar(const ValidBytes<N>& valid) {
+        constexpr BasicChar(const encoding::ValidBytes<N>& valid) {
             static_assert(N <= Encoding::MAX_LEN, "too many letter in a char");
             for (usize i = 0; i < N; i++) {
                 bytes[i] = valid.arr[i];
@@ -88,7 +88,7 @@ namespace mstl::str {
 
         template<usize N>
         requires (N > 0)
-        constexpr BasicChar(const ValidBytes<N>& valid) {
+        constexpr BasicChar(const encoding::ValidBytes<N>& valid) {
             static_assert(N <= Encoding::MAX_LEN, "too many letter in a char");
             len = N;
             for (usize i = 0; i < N; i++) {

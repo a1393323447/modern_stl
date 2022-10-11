@@ -61,7 +61,7 @@ namespace mstl::str {
         }
 
         template<usize N>
-        BasicString(const ValidBytes<N>& bytes, const Allocator& a = {}): alloc(a) {
+        BasicString(const encoding::ValidBytes<N>& bytes, const Allocator& a = {}): alloc(a) {
             this->len = N;
 
             if constexpr (N <= LOCAL_STORAGE_SIZE) {

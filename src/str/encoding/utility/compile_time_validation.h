@@ -9,21 +9,21 @@
 #include "global.h"
 #include "collection/array.h"
 
-#define define_str_suffix(name, encoding, msg)                                 \
-template<mstl::str::CharsWrap wrap>                                            \
+#define define_str_suffix(name, encode, msg)                                   \
+template<mstl::str::encoding::CharsWrap wrap>                                  \
 constexpr                                                                      \
 decltype(auto) operator ""_##name() noexcept {                                 \
     constexpr usize LEN = decltype(wrap)::LEN - 1;                             \
     static_assert(LEN > 0, "empty string.\n");                                 \
-    using ReturnType =  mstl::str::ValidBytes<LEN>;                            \
+    using ReturnType =  mstl::str::encoding::ValidBytes<LEN>;                  \
     constexpr mstl::collection::Array <u8, LEN> arr { wrap.chars };            \
-    constexpr auto op = encoding::validate(arr.iter());                        \
+    constexpr auto op = encode::validate(arr.iter());                          \
     static_assert(op.is_none(), msg);                                          \
     return ReturnType{ arr };                                                  \
 }                                                                              \
 static_assert(true)
 
-namespace mstl::str {
+namespace mstl::str::encoding {
     template<usize N>
     struct ValidBytes {
         const collection::Array<u8, N> arr;
