@@ -36,6 +36,8 @@
    5. ops
    6. result
    7. str
+      1. encoding
+      2. concepts
    8. utility
    9. Option
    10. Slice
@@ -51,7 +53,7 @@
   - [ ] Map
   - [ ] Set
 - [x] 重构Tuple为可常量求值.
-- [ ] 实现带编码的字符串.
+- [x] 实现带编码的字符串.
 
 ## 示例
 #### 容器类 (以`Array<T>`为例) 及迭代器
@@ -92,6 +94,45 @@ int main() {
     );
     return 0;
 }
+```
+
+#### 字符串
+`mstl` 提供了可扩展的字符 `BasicChar<Encoding>` 和 `BasicString<Encoding>`。
+现已实现的编码为:
+- `Ascii` : 对应 `AsciiChar` 和 `AsciiString`
+- `UTF8` : 对应 `UTF8Char` 和 `UTF8String`
+
+```cpp
+#include <iter/iterator.h>
+#include <str/string.h>
+#include <iostream>
+
+using namespace mstl::iter; // 迭代器相关功能
+using namespace mstl::str; // 字符串相关功能
+using namespace mstl::str::encoding; // 后缀运算符
+
+UTF8Char utf8_ch = "你"_utf8;
+std::cout << utf8_ch << '\n';
+
+UTF8String str = "你好啊\xf0\xa0\x80\x80"_utf8;
+str.chars() | for_each([](auto ch) {
+    std::cout << ch << '\n';
+});
+std::cout << str << std::endl;
+
+str.push_back("!"_utf8);
+str.push_back("哈"_utf8);
+std::cout << str << std::endl;
+```
+输出如下:
+```text
+你
+你
+好
+啊
+𠀀
+你好啊𠀀
+你好啊𠀀!哈
 ```
 
 #### 类型运算

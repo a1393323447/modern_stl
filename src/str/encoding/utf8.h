@@ -27,7 +27,7 @@ namespace mstl::str::encoding {
                 return Option<Char>::none();
             }
             if (x < 0x7F) {
-                const auto ascii_case = ValidBytes<1>{{ x }};
+                const auto ascii_case = ValidBytes<1, UTF8>{{ x }};
                 return Option<Char>::some(ascii_case);
             }
 
@@ -35,7 +35,7 @@ namespace mstl::str::encoding {
             // so the iterator must produce a value here.
             const u8 y = iter.next().unwrap_unchecked();
             if (x < 0XE0) {
-                const auto ascii_case = ValidBytes<2>{{ x, y }};
+                const auto ascii_case = ValidBytes<2, UTF8>{{ x, y }};
                 return Option<Char>::some(ascii_case);
             }
 
@@ -44,7 +44,7 @@ namespace mstl::str::encoding {
             // so the iterator must produce a value here.
             const u8 z = iter.next().unwrap_unchecked();
             if (x < 0XF0) {
-                const auto ascii_case = ValidBytes<3>{{ x, y, z }};
+                const auto ascii_case = ValidBytes<3, UTF8>{{ x, y, z }};
                 return Option<Char>::some(ascii_case);
             }
 
@@ -52,7 +52,7 @@ namespace mstl::str::encoding {
             // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
             const u8 w = iter.next().unwrap_unchecked();
-            const auto ascii_case = ValidBytes<4>{{ x, y, z, w }};
+            const auto ascii_case = ValidBytes<4, UTF8>{{ x, y, z, w }};
             return Option<Char>::some(ascii_case);
         }
 
@@ -66,25 +66,25 @@ namespace mstl::str::encoding {
             }
             const u8 w = byte.unwrap_unchecked();
             if (w < 0x7F) {
-                const auto ch = ValidBytes<1>{{ w }};
+                const auto ch = ValidBytes<1, UTF8>{{ w }};
                 return Option<Char>::some(ch);
             }
             // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
             const u8 z = iter.next().unwrap_unchecked();
             if (!utf8_is_cont_byte(z)) {
-                const auto ch = ValidBytes<2>{{ z, w }};
+                const auto ch = ValidBytes<2, UTF8>{{ z, w }};
                 return Option<Char>::some(ch);
             }
             // SAFETY: `bytes` produces a UTF-8-like string,
             // so the iterator must produce a value here.
             const u8 y = iter.next().unwrap_unchecked();
             if (!utf8_is_cont_byte(y)) {
-                const auto ch = ValidBytes<3>{{ y, z, w }};
+                const auto ch = ValidBytes<3, UTF8>{{ y, z, w }};
                 return Option<Char>::some(ch);
             }
             const u8 x = iter.next().unwrap_unchecked();
-            const auto ch = ValidBytes<4>{{ x, y, z, w }};
+            const auto ch = ValidBytes<4, UTF8>{{ x, y, z, w }};
             return Option<Char>::some(ch);
         }
 
