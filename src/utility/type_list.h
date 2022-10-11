@@ -51,7 +51,7 @@ namespace mstl::utility::type_list {
      */
     template<typename T>
     struct TypeConst {
-        using type = T;  // < 被包装的类型.
+        using type = T;
 
         /**
          * 判断两类型是否相等.
@@ -70,7 +70,7 @@ namespace mstl::utility::type_list {
     };
 
     /**
-     * 编译期常量值的包装类. 等价于std::integral_constant<decltype(V), V>.
+     * 编译期常量值的包装类. 等价于`std::integral_constant<decltype(V), V>`.
      */
     template<auto V>
     using ValueConst = std::integral_constant<decltype(V), V>;
@@ -197,9 +197,9 @@ namespace mstl::utility::type_list {
     template <typename F, typename ...Ts>
     consteval auto map_impl (TypeListImpl<Ts...>, F) -> TypeListImpl<std::invoke_result_t<F, Ts>...> {
         return {};
-    };
+    }
 
-    template <typename F>
+    template <typename>
     struct MapHolder {};
 
     template<typename F>
