@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <concepts>
 #include <utility>
+#include <functional>
 
 #include <mstl/ops/ops.h>
 #include <mstl/global.h>

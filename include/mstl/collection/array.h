@@ -228,6 +228,17 @@ namespace mstl::collection {
         IterRef iter() const {
             return IterRef { const_cast<T*>(values) };
         }
+
+        constexpr bool operator==(const Array& ohs) const {
+            for (usize i = 0; i < N; i++) {
+                if (values[i] != ohs.values[i]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /// impl FromIter
         template<iter::Iterator Iter>
         MSTL_INLINE
