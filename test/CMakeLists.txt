@@ -72,15 +72,15 @@ if (benchmark_FOUND)
     link_directories(lib)
 
     add_executable(try_benchmark collection_test/try_benchmark.cpp)
-    target_link_libraries(try_benchmark benchmark::benchmark)
+    target_link_libraries(try_benchmark PRIVATE benchmark::benchmark)
 
     add_executable(array_benchmark_2 collection_test/array_benchmark_2.cpp)
-    target_link_libraries(array_benchmark_2 benchmark::benchmark)
+    target_link_libraries(array_benchmark_2 PRIVATE benchmark::benchmark)
 
     add_executable(vector_benchmark collection_test/vector_benchmark.cpp)
-    target_link_libraries(vector_benchmark benchmark::benchmark init_list)
+    target_link_libraries(vector_benchmark PRIVATE benchmark::benchmark init_list)
 
     add_executable(list_benchmark collection_test/list_benchmark.cpp)
-    target_link_libraries(list_benchmark benchmark::benchmark init_list)
+    target_link_libraries(list_benchmark PRIVATE benchmark::benchmark init_list)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
 endif()
