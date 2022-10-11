@@ -15,7 +15,7 @@ constexpr                                                                      \
 decltype(auto) operator ""_##name() noexcept {                                 \
     constexpr usize LEN = decltype(wrap)::LEN - 1;                             \
     static_assert(LEN > 0, "empty string.\n");                                 \
-    using ReturnType =  mstl::str::encoding::ValidBytes<LEN>;                  \
+    using ReturnType =  mstl::str::encoding::ValidBytes<LEN, encode>;          \
     constexpr mstl::collection::Array <u8, LEN> arr { wrap.chars };            \
     constexpr auto op = encode::validate(arr.iter());                          \
     static_assert(op.is_none(), msg);                                          \
@@ -24,8 +24,9 @@ decltype(auto) operator ""_##name() noexcept {                                 \
 static_assert(true)
 
 namespace mstl::str::encoding {
-    template<usize N>
+    template<usize N, typename E>
     struct ValidBytes {
+        using Encoding = E;
         const collection::Array<u8, N> arr;
     };
 
