@@ -78,6 +78,8 @@ set(CMAKE_CXX_STANDARD 20)
 # 若您安装的路径不在PATH环境变量内, 您可能还需要使用如下语句设置搜索路径
 # list(APPEND CMAKE_PREFIX_PATH "...")  # 把 ... 替换为mstl的安装路径
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")  # 开启调试模式下的部分运行时检查功能
+
 find_package(mstl REQUIRED)
 add_executable(mstl_test src/main.cpp)
 target_link_libraries(mstl_test mstl::mstl)
@@ -100,6 +102,13 @@ g++ main.cpp -o main -I/path/to/the/directory
 ```
 您也可以使用任何支持指定包含目录的构建工具.
 
+## 关于文档
+本项目的文档预计以仓库Wiki的形式提供. 由于工作量较大, 我们目前还没能开始撰写Wiji页面.
+
+目前, 我们已经在头文件中撰写了部分类的文档, 您可以使用`Doxygen`构建它们.
+
+您也可以参见`test`目录下的单元测试用例, 这些用例覆盖了库中组件的大多数用法.
+
 ## 目标🎯
 - [x] 实现自己的*Allocator*.
 - [x] 实现可常量求值的Result.
@@ -112,6 +121,7 @@ g++ main.cpp -o main -I/path/to/the/directory
   - [ ] Set
 - [x] 重构Tuple为可常量求值.
 - [x] 实现带编码的字符串.
+- [ ] Wiki页面.
 
 ## 示例
 #### 容器类 (以`Array<T>`为例) 及迭代器
@@ -450,3 +460,5 @@ unique<ForwardList<std::string>>                      3.1%
 1. 就您认为可改进的地方, 希望实现的功能等提出issue, 我们随时欢迎您的指教.
 2. fork本仓库, 帮助我们完善文档和代码, 实现新功能. 
 
+作为一个全新的项目, `mstl`还有很多不足. 
+我们期待您的加入, 让我们一起打造更强大的Library!
