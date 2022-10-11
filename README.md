@@ -115,10 +115,10 @@ int main() {
 
     constexpr auto ls5 = ls4
                        | filter([]<typename T>(TypeConst<T>) {  // 过滤类型元素, 如同普通元素那样
-                           return_v<(sizeof(T) < 8)>;           // 使用return_v返回一个编译期常量值
+                           return_v<(sizeof(T) < 8)>;           // 使用return_v返回一个编译期常量值. 此处返回bool类型, 滤去size小于8的类型
                        })
-                       | map([]<typename T>(TypeConst<T>) {     // 转换类型元素, 如同普通元素那样
-                           return_t<T*>;                        // 使用return_t返回一个类型
+                       | map([]<typename T>(TypeConst<T>) {     // 转换类型元素, 如同普通元素那样.
+                           return_t<T*>;                        // 使用return_t返回一个类型. 此处使列表中的每个元素T转换成T*.
                        });
     static_assert(ls5 == TypeList<int*, char*, float*>);
 ```
