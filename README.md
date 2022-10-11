@@ -15,6 +15,7 @@
 - `utility`: 通用库, 现有:
   - `Tuple`: 可包含任意数量异构类型的容器
   - `Match`: 值匹配工具, 类似于`switch`.
+  - `TypeList`: 类型运算工具.
 - `Option<T>`: 用于表示有或无的类型
 - `ops`: 用于定义一些列操作的 `concept`
 - `result`: 用于表示可能的错误信息
@@ -51,10 +52,9 @@
   - [ ] Set
 - [x] 重构Tuple为可常量求值.
 - [ ] 实现带编码的字符串.
-- [ ] Variant.
 
 ## 示例
-`mstl::collection::Array<T>` 及迭代器的使用:
+#### 容器类 (以`Array<T>`为例) 及迭代器
 ```c++
 #include <iostream>
 #include <iter/iterator.h>
@@ -92,6 +92,35 @@ int main() {
     );
     return 0;
 }
+```
+
+#### 类型运算
+`mstl`提供了一套编译时的类型运算工具.
+``` c++
+    constexpr auto tuple = make_tuple(1, 2.0, 3l);
+    constexpr auto ls1 = extract_from(tuple);       // 从类模板中提取模板参数
+    static_assert(ls1 == TypeList<int, double, long>);
+
+    constexpr auto ls2 = TypeList<int, double>;
+    constexpr auto t1 = ls2 | apply_to<Tuple>();    // 把类型列表应用到类模板中
+    static_assert(t1 == TypeConstInstance<Tuple<int, double>>);
+
+    constexpr auto ls3 = ls2 | append<char, float>(); // 在类型列表后添加元素
+    static_assert(ls3 == TypeList<int, double, char, float>);
+
+    constexpr auto ls4 = ls3 | prepend<double*, const char*>();  // 在类型列表前添加元素
+    static_assert(ls4 == TypeList<double*, const char*, int, double, char, float>);
+
+    static_assert(ls4.at<1>() == TypeConstInstance<const char*>); // 按索引取出元素
+
+    constexpr auto ls5 = ls4
+                       | filter([]<typename T>(TypeConst<T>) {  // 过滤类型元素, 如同普通元素那样
+                           return_v<(sizeof(T) < 8)>;           // 使用return_v返回一个编译期常量值. 此处返回bool类型, 滤去size小于8的类型
+                       })
+                       | map([]<typename T>(TypeConst<T>) {     // 转换类型元素, 如同普通元素那样.
+                           return_t<T*>;                        // 使用return_t返回一个类型. 此处使列表中的每个元素T转换成T*.
+                       });
+    static_assert(ls5 == TypeList<int*, char*, float*>);
 ```
 
 ## Benchmark
