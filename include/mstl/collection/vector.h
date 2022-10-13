@@ -118,21 +118,28 @@ namespace mstl::collection {
             if (&other == this) {
                 return *this;
             }
-            reserve(other.cap);
-            usize common = std::min(len, other.len);
-            std::copy(other.beginPtr, other.beginPtr + common, beginPtr);
 
-            if (len > other.len) {                      // this的长度更长
-                for (usize i = common; i < len; i++) {
-                    destroy_at(i);                      // 销毁多余元素
+            if (alloc == other.alloc) {
+                reserve(other.cap);
+                usize common = std::min(len, other.len);
+                std::copy(other.beginPtr, other.beginPtr + common, beginPtr);
+
+                if (len > other.len) {                      // this的长度更长
+                    for (usize i = common; i < len; i++) {
+                        destroy_at(i);                      // 销毁多余元素
+                    }
+                } else if (len < other.len) {               // other的长度更长
+                    for (usize i = common; i < other.len; i++) {
+                        construct_at(i, other.beginPtr[i]);
+                    }
                 }
-            } else if (len < other.len) {               // other的长度更长
-                for (usize i = common; i < other.len; i++) {
-                    construct_at(i, other.beginPtr[i]);
-                }
+
+                len = other.len;
+            } else {
+                clear();
+                copy_impl(other);
             }
 
-            len = other.len;
 
             return *this;
         }
@@ -148,10 +155,22 @@ namespace mstl::collection {
         }
 
         constexpr Vector &operator=(std::initializer_list<T> list) {
-            clear();
+            reserve(list.size());
+            usize common = std::min(len, list.size());
+            std::copy(list.begin(), list.begin() + common, beginPtr);
 
-            copy_impl(list);
-            return *this;
+            if (len > list.size()) {                      // this的长度更长
+                for (usize i = common; i < len; i++) {
+                    destroy_at(i);                      // 销毁多余元素
+                }
+            } else if (len < list.size()) {               // other的长度更长
+                auto lo = list.begin();
+                for (usize i = common; i < list.size(); i++) {
+                    construct_at(i, *lo++);
+                }
+            }
+
+            len = list.size();
         }
 
         /**
