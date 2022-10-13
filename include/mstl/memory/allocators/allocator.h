@@ -66,6 +66,10 @@ namespace mstl::memory::allocator {
                 deallocate(ptr, layout, len);
             }
         }
+
+        constexpr bool operator==(const Allocator&) const {
+            return true;
+        }
     };
 }
 

@@ -24,6 +24,10 @@ namespace mstl {
         explicit TrackingAllocator(const A& alloc) : alloc(alloc) {}
         explicit TrackingAllocator(A&& alloc) : alloc(alloc) {}
 
+        bool operator==(const TrackingAllocator &rhs) const {
+            return alloc == rhs.alloc;
+        }
+
         void* allocate(const memory::Layout& layout, usize length) noexcept { // NOLINT(readability-convert-member-functions-to-static)
             memory_allocated_cumulative += layout.size * length;
             void* ptr = alloc.allocate(layout, length);
