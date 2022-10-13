@@ -114,14 +114,25 @@ namespace mstl::collection {
             clear();
         }
 
-        // fixme
         constexpr Vector &operator=(const Vector &other) {
             if (&other == this) {
                 return *this;
             }
-            clear();
+            reserve(other.cap);
+            usize common = std::min(len, other.len);
+            std::copy(other.beginPtr, other.beginPtr + common, beginPtr);
 
-            copy_impl(other);
+            if (len > other.len) {                      // this的长度更长
+                for (usize i = common; i < len; i++) {
+                    destroy_at(i);                      // 销毁多余元素
+                }
+            } else if (len < other.len) {               // other的长度更长
+                for (usize i = common; i < other.len; i++) {
+                    construct_at(i, other.beginPtr[i]);
+                }
+            }
+
+            len = other.len;
 
             return *this;
         }
@@ -184,21 +195,23 @@ namespace mstl::collection {
          * @endcode
          */
         constexpr void assign(usize count, const T &val) {
-            clear();  // fixme reuse
+            destroy_all();
 
-            allocate(count);
+            reserve(count);
 
-            len = count;
-
-            for (usize i = 0; i < count; i++) {
-                construct_at(i, val);
+            for (usize i = 0; i < count; ++i) {
+                push_back(val);
             }
         }
 
         constexpr void assign(std::initializer_list<T> list) {
-            clear();
+            destroy_all();
 
-            copy_impl(list);
+            reserve(list.size());
+
+            for (const auto &item: list) {
+                push_back(item);
+            }
         }
 
         /**
@@ -488,9 +501,7 @@ namespace mstl::collection {
          * @endcode
          */
         constexpr void clear() {
-            for (usize i = 0; i < len; i++) {
-                destroy_at(i);
-            }
+            destroy_all();
             deallocate();
         }
 
@@ -852,6 +863,13 @@ namespace mstl::collection {
                 newCap = 2 * cap;
             }
             reserve(newCap);
+        }
+
+        constexpr void destroy_all() {
+            for (usize i = 0; i < len; i++) {
+                destroy_at(i);
+            }
+            len = 0;
         }
     };
 
