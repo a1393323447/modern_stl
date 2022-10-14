@@ -5,6 +5,7 @@
 #ifndef MODERN_STL_TYPE_LIST_H
 #define MODERN_STL_TYPE_LIST_H
 
+#include <concepts>
 #include "type_traits.h"
 
 #define return_t return mstl::utility::type_list::TypeConstInstance
@@ -119,8 +120,13 @@ namespace mstl::utility::type_list {
         using Prepend = TypeListImpl<NTypes..., Types...>;
 
         template<usize pos>
-        consteval auto at() const {
+        static consteval auto at() {
             return At<pos>{};
+        }
+
+        template<class Type>
+        consteval static usize count() {
+            return ((usize)std::same_as<Type, typename Types::type> + ...);
         }
 
         /**
