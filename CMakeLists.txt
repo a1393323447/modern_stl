@@ -3,7 +3,7 @@ project(mstl VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMSTL_DEBUG")  # Debug Mode
-
+set(CMAKE_INSTALL_PREFIX "D:/libs/mstl")
 include(GNUInstallDirs)
 
 add_library(mstl INTERFACE)
@@ -18,6 +18,12 @@ target_include_directories(
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+target_compile_definitions(
+        mstl
+        INTERFACE
+        $<$<CONFIG:Debug>:MSTL_DEBUG>
+        )
 
 install(TARGETS mstl
         EXPORT ${PROJECT_NAME}_Targets
