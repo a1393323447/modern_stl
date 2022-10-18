@@ -7,6 +7,7 @@
 
 #include "find.h"
 #include "fold.h"
+#include "last.h"
 #include "reduce.h"
 #include "collect.h"
 #include "for_each.h"

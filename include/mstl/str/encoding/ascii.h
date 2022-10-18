@@ -59,6 +59,14 @@ namespace mstl::str::encoding {
             }
             return Option<DecodeError>::none();
         }
+
+        template<iter::Iterator Iter>
+        requires std::same_as<typename Iter::Item, const u8 &>
+        MSTL_INLINE constexpr static
+        bool is_char_boundary(Iter&) {
+            // always true
+            return true;
+        }
     };
 
     define_str_suffix(ascii, Ascii, "Invalid ascii code in string literal");

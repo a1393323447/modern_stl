@@ -12,10 +12,17 @@
 
 namespace mstl::str::concepts {
     template<typename E, typename Iter>
-    concept EncodingValidation = requires(Iter &iter) {
+    concept EncodingValidation = requires(Iter &&iter) {
         requires iter::ContinuousIterator<Iter>;
         requires std::same_as<typename Iter::Item, const u8 &>;
         { E::validate(iter) } -> std::same_as<Option<encoding::DecodeError>>;
+    };
+
+    template<typename E, typename Iter>
+    concept CheckCharBoundary = requires(Iter &&iter) {
+        requires iter::ContinuousIterator<Iter>;
+        requires std::same_as<typename Iter::Item, const u8 &>;
+        { E::is_char_boundary(iter) } -> std::same_as<bool>;
     };
 }
 
