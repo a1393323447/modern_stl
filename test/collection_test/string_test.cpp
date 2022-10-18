@@ -27,6 +27,27 @@ BOOST_AUTO_TEST_CASE(ASCII_STR_TEST) {
     str.push_back("1"_ascii);
     str.push_back("1"_ascii);
     str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+    str.push_back("1"_ascii);
+
 
     std::cout << str << std::endl;
 
@@ -35,6 +56,20 @@ BOOST_AUTO_TEST_CASE(ASCII_STR_TEST) {
     });
 
     UTF8String s = "你好啊\xf0\xa0\x80\x80"_utf8;
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+    s.insert("你"_utf8, 3);
+
     s.chars() | for_each([](auto ch) {
         std::cout << ch << std::endl;
     });

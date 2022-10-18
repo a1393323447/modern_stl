@@ -50,6 +50,15 @@ namespace mstl {
             return start == end;
         };
 
+        MSTL_INLINE constexpr
+        Option<Item> last() {
+            if (is_empty()) {
+                return Option<Item>::none();
+            } else {
+                return Option<Item>::some(*(end - 1));
+            }
+        }
+
         /// impl ContinuousIterator
         MSTL_INLINE constexpr
         const T* start_addr() {

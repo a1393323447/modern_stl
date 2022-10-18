@@ -5,6 +5,11 @@
 #ifndef __MODERN_STL_UTF8_H__
 #define __MODERN_STL_UTF8_H__
 
+#include <mstl/global.h>
+#include <mstl/iter/iterator.h>
+#include <mstl/option/option.h>
+
+// std
 #include <bit>
 
 // TODO: UTF-8 string literal. ex. "\U+20AC"
@@ -99,7 +104,7 @@ namespace mstl::str::encoding {
             next = iter.next();                             \
             if (next.is_some()) {                           \
                 offset++;                                   \
-                val = next.unwrap_unchecked();                \
+                val = next.unwrap_unchecked();              \
             } else {                                        \
                 return Option<DecodeError>::some({offset}); \
             }
@@ -188,6 +193,15 @@ namespace mstl::str::encoding {
             }
 
             return Option<DecodeError>::none();
+        }
+
+        template<typename Iter>
+        requires iter::Iterator<std::remove_cvref_t<Iter>> &&
+                 std::same_as<typename std::remove_cvref_t<Iter>::Item, const u8 &>
+        MSTL_INLINE constexpr static
+        bool is_char_boundary(Iter&& iter) {
+            auto last_byte = mstl::iter::last(iter).unwrap();
+            return std::bit_cast<i8>(last_byte) >= -0x40;
         }
 
         /// Checks whether the byte is a UTF-8 continuation byte (i.e., starts with the

@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <source_location>
 #include "utility/print.h"
 #include "intrinsics.h"
 
@@ -56,6 +57,20 @@ namespace mstl {
             std::cerr << "Messages:\n";
         }
         print(std::cerr, std::forward<Args>(args)...);
+        std::exit(101);
+    }
+
+    MSTL_INLINE void assert(
+        const bool condition,
+        const std::source_location location = std::source_location::current()
+    ) {
+        if (condition) {
+            return ;
+        }
+
+        std::cerr << "Assertion failed in function `" << location.function_name()
+                  << "` in file " << location.file_name() << location.line() << ':' << location.column();
+
         std::exit(101);
     }
 }
