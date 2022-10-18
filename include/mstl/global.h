@@ -5,8 +5,10 @@
 #ifndef __MODERN_STL_GLOBAL_H__
 #define __MODERN_STL_GLOBAL_H__
 
+#include <source_location>
+
 /// 引发`panic`, 使程序异常退出, 并打印问题发生的文件, 代码行数以及预先定义的错误信息.
-#define MSTL_PANIC(...) mstl::panic(__FILE__, __LINE__, __VA_ARGS__)
+#define MSTL_PANIC(...) mstl::panic(std::source_location::current(), __VA_ARGS__)
 
 #ifdef DEBUG
 // 如果断言失败, 则panic. 仅在Debug模式下有效.
@@ -50,8 +52,9 @@ namespace mstl {
     }
 
     template <basic::Printable ...Args>
-    MSTL_NORETURN MSTL_INLINE inline void panic(const char* filename, int line, Args&& ...args) noexcept {
-        std::cerr << "Panicked at " << filename << ":" << line << std::endl;
+    MSTL_NORETURN MSTL_INLINE inline void panic(const std::source_location& location, Args&& ...args) noexcept {
+        std::cerr << location.file_name() << ": Panicked at function `"<<  location.function_name() << "`\n"
+                  <<"Line " << location.line() << ", Col " << location.column() << std::endl;
         if constexpr (sizeof...(args)) {
             std::cerr << "Messages:\n";
         }
