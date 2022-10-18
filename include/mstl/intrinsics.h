@@ -29,7 +29,7 @@
     #endif
 #endif
 
-#ifdef DEBUG
+#ifdef MSTL_DEBUG
 #undef MSTL_INLINE
 #define MSTL_INLINE
 #endif

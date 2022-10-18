@@ -10,7 +10,7 @@
 /// 引发`panic`, 使程序异常退出, 并打印问题发生的文件, 代码行数以及预先定义的错误信息.
 #define MSTL_PANIC(...) mstl::panic(std::source_location::current(), __VA_ARGS__)
 
-#ifdef DEBUG
+#ifdef MSTL_DEBUG
 // 如果断言失败, 则panic. 仅在Debug模式下有效.
     #define MSTL_DEBUG_ASSERT(expression, message)  \
     do{                                             \
@@ -20,7 +20,7 @@
     }while(false)
 #else
     #define MSTL_DEBUG_ASSERT(expression, message) do{}while(false)
-#endif // DEBUG
+#endif // MSTL_DEBUG
 
 #include <cstdint>
 #include <cstdio>
