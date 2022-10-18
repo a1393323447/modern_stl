@@ -63,7 +63,7 @@ namespace mstl {
         std::exit(101);
     }
 
-    MSTL_INLINE void assert(
+    MSTL_INLINE void check(
         const bool condition,
         const std::source_location location = std::source_location::current()
     ) {
