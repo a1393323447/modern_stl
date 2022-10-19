@@ -54,8 +54,8 @@ install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/mstl DESTINATION include)
 
-include_directories(include)
 add_executable(modern_stl_test main.cpp)
+target_link_libraries(modern_stl_test mstl)
 enable_testing(true)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

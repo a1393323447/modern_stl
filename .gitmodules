@@ -1,0 +1,3 @@
+[submodule "mini-stacktrace"]
+	path = mini-stacktrace
+	url = git@github.com:Reto911/mini-stacktrace.git
