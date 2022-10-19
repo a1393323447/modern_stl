@@ -1,4 +1,7 @@
-int main() {
+#include <mstl/mstl.h>
+#include <mini-stacktrace/mini-stacktrace>
+using namespace mstl::utility;
 
-    return 0;
+int main() {
+    MSTL_PANIC("FATAL");
 }

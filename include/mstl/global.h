@@ -6,6 +6,7 @@
 #define __MODERN_STL_GLOBAL_H__
 
 #include <source_location>
+#include <mini-stacktrace/mini-stacktrace>
 
 /// 引发`panic`, 使程序异常退出, 并打印问题发生的文件, 代码行数以及预先定义的错误信息.
 #define MSTL_PANIC(...) mstl::panic(std::source_location::current(), __VA_ARGS__)
@@ -45,7 +46,7 @@ namespace mstl {
 
     template <basic::Printable Arg, basic::Printable ...Args>
     MSTL_INLINE inline std::ostream& print(std::ostream& os, Arg&& arg, Args&& ...args) {
-        os << arg << std::endl;
+        os << arg << '\n';
         if constexpr (sizeof...(args) != 0) {
             return print(os, std::forward<Args>(args)...);
         }
@@ -54,12 +55,13 @@ namespace mstl {
 
     template <basic::Printable ...Args>
     MSTL_NORETURN MSTL_INLINE inline void panic(const std::source_location& location, Args&& ...args) noexcept {
-        std::cerr << location.file_name() << ": Panicked at function `"<<  location.function_name() << "`\n"
+        std::cerr << location.file_name() << ": Panicked at function `"<<  location.function_name() << "` at "
                   <<"Line " << location.line() << ", Col " << location.column() << std::endl;
         if constexpr (sizeof...(args)) {
             std::cerr << "Messages:\n";
         }
         print(std::cerr, std::forward<Args>(args)...);
+        std::cerr << "\n" << mini_stacktrace::Stacktrace(1) << std::endl;
         std::exit(101);
     }
 
