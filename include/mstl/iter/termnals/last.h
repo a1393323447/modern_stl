@@ -33,6 +33,33 @@ namespace mstl::iter {
             return prev;
         }
     }
+
+    struct LastHolder {
+        constexpr LastHolder() { }
+
+        template<typename Iter>
+        requires Iterator<std::remove_cvref_t<Iter>>
+        constexpr typename std::remove_cvref_t<Iter>::Item
+        call(Iter&& iter) {
+            return last(std::forward<Iter>(iter));
+        }
+    };
+
+    MSTL_INLINE
+    constexpr LastHolder last() {
+        return LastHolder{};
+    }
+
+    template<Iterator Iter>
+    using LastFuncType = typename Iter::Item(*)(Iter);
+
+    struct Last {
+        template<Iterator Iter>
+        static consteval LastFuncType<Iter>
+        get_terminal_func() {
+            return last<Iter>;
+        }
+    };
 }
 
 #endif //__MSTL_LAST_H__

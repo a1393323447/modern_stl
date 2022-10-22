@@ -294,9 +294,16 @@ namespace mstl::str {
         constexpr void reserve(usize new_cap) {
             using std::strong_ordering;
             switch (new_cap <=> this->cap) {
-                case strong_ordering::greater:
-                    extent_space(new_cap);
+                case strong_ordering::greater: {
+                    this->storage.cap = new_cap;
+                    u8 *new_space = (u8*)alloc.allocate(LAYOUT, new_cap);
+                    // copy to new space
+                    copy(new_space, alloc.bytes, len);
+                    // deallocate
+                    alloc.deallocate(alloc.bytes, LAYOUT, len);
+                    this->bytes = new_space;
                     break;
+                }
                 case strong_ordering::less:
                     shrink_to_fit();
                     break;
@@ -340,18 +347,6 @@ namespace mstl::str {
         }
 
     private:
-        /// 扩大空间, 要求 new_cap > this->cap
-        constexpr void extent_space(usize new_cap) {
-            this->storage.cap = new_cap;
-            u8 *new_space = (u8*)alloc.allocate(LAYOUT, new_cap);
-            // copy to new space
-            copy(new_space, alloc.bytes, len);
-            // deallocate
-            alloc.deallocate(alloc.bytes, LAYOUT, len);
-
-            this->bytes = new_space;
-        }
-
         MSTL_INLINE constexpr
         Slice<u8> make_slice() {
             if (this->len > LOCAL_STORAGE_SIZE) {
