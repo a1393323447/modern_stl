@@ -4,21 +4,22 @@ project(mstl VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMSTL_DEBUG")  # Debug Mode
 
-add_subdirectory(mini-stacktrace)
-
-set(MSTL_ENABLE_STACKTRACE TRUE)  # enable stacktrace when panic
-
 if ((CMAKE_SYSTEM_NAME MATCHES "Windows")
         AND NOT("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         AND ((NOT DEFINED MSTL_ENABLE_STACKTRACE_ON_WINDOWS_WITHOUT_MSVC) OR NOT ${MSTL_ENABLE_STACKTRACE_ON_WINDOWS_WITHOUT_MSVC}))
         set(MSTL_ENABLE_STACKTRACE FALSE)  # If the target OS is Windows and the compiler is not MSVC, disable stacktrace default
+else()
+        set(MSTL_ENABLE_STACKTRACE TRUE)  # enable stacktrace when panic
 endif()
 
 include(GNUInstallDirs)
 
 add_library(mstl INTERFACE)
 
-target_link_libraries(mstl INTERFACE mini_stacktrace)
+if (${MSTL_ENABLE_STACKTRACE})
+        add_subdirectory(mini-stacktrace)
+        target_link_libraries(mstl INTERFACE mini_stacktrace)
+endif()
 
 target_compile_features(mstl INTERFACE
         cxx_std_20
@@ -37,8 +38,8 @@ target_compile_definitions(
         $<$<CONFIG:Debug>:MSTL_DEBUG>
         )
 
-if (NOT ${MSTL_ENABLE_STACKTRACE})
-        target_compile_definitions(mstl INTERFACE MINI_STACKTRACE_DISABLED)
+if (${MSTL_ENABLE_STACKTRACE})
+        target_compile_definitions(mstl INTERFACE MINI_STACKTRACE_ENABLE)
 endif()
 
 install(TARGETS mstl
