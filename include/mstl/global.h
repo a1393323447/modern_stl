@@ -6,10 +6,7 @@
 #define __MODERN_STL_GLOBAL_H__
 
 #include <source_location>
-
-#if MINI_STACKTRACE_ENABLE
 #include <mini-stacktrace/mini-stacktrace>
-#endif
 
 /// 引发`panic`, 使程序异常退出, 并打印问题发生的文件, 代码行数以及预先定义的错误信息.
 #define MSTL_PANIC(...) mstl::panic(std::source_location::current(), __VA_ARGS__)
@@ -18,7 +15,7 @@
 // 如果断言失败, 则panic. 仅在Debug模式下有效.
     #define MSTL_DEBUG_ASSERT(expression, message)  \
     do{                                             \
-        if (!(expression)) {                        \
+        if (!(expression)) {                         \
             MSTL_PANIC(message);                    \
         }                                           \
     }while(false)
@@ -64,10 +61,7 @@ namespace mstl {
             std::cerr << "Messages:\n";
         }
         print(std::cerr, std::forward<Args>(args)...);
-
-#if MINI_STACKTRACE_ENABLE
         std::cerr << "\n" << mini_stacktrace::Stacktrace(1) << std::endl;
-#endif
         std::exit(101);
     }
 
