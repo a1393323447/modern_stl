@@ -57,7 +57,7 @@
 ### 准备工作
 Clone本仓库, 并Checkout `main` 分支.
 ```shell
-git clone https://github.com/a1393323447/modern_stl.git 
+git clone --recursive https://github.com/a1393323447/modern_stl.git 
 cd modern_stl
 git checkout main
 ```
