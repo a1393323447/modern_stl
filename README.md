@@ -79,7 +79,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # 若您安装的路径不在PATH环境变量内, 您可能还需要使用如下语句设置搜索路径
 # list(APPEND CMAKE_PREFIX_PATH "...")  # 把 ... 替换为mstl的安装路径
-
+find_package(mini-stacktrace REQUIRED)  # 必须先引入mini-stacktrace
 find_package(mstl REQUIRED)
 add_executable(mstl_test src/main.cpp)
 target_link_libraries(mstl_test mstl::mstl)
