@@ -71,6 +71,7 @@ namespace mstl::result {
                         destroy_e();
                     }
                     move_impl(std::forward<ResultBase<T, E>>(rhs));
+                    type = rhs.type;
                 } else {
                     if (this->is_ok()) {
                         this->ok_ref_unchecked() = rhs.unwrap();
@@ -93,6 +94,7 @@ namespace mstl::result {
                         destroy_e();
                     }
                     copy_impl(rhs);
+                    type = rhs.type;
                 } else {
                     if (this->is_ok()) {
                         this->ok_ref_unchecked() = rhs.ok_ref_unchecked();
