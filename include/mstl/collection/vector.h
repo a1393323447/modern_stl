@@ -541,11 +541,11 @@ namespace mstl::collection {
          */
         template<typename ...Args>
         constexpr void emplace(ConstIter pos, Args...vs) {
+            auto p = pos.pos();
             if (len == cap) {
                 extend_space();
             }
 
-            auto p = pos.pos();
             move_elements_back(p, 1);
             construct_at(p, std::forward<Args>(vs)...);
         }
@@ -859,17 +859,15 @@ namespace mstl::collection {
         // 把元素向后移动n个位置, 改变len
         // 这将导致[pos, pos + count)范围内的元素为无效元素(垂悬引用)
         constexpr void move_elements_back(usize pos, usize count) {
-            if (len == 0) {
+            if (count == 0) {
                 return;
             }
             if (len + count > cap) {
                 reserve(len + count);
             }
-            auto hi = len - 1;
-            while (hi >= pos) {
-                construct_at(hi + count, std::move(beginPtr[hi]));
-                destroy_at(hi);
-                hi--;
+            for (usize hi = len; hi > pos; --hi) {
+                construct_at(hi - 1 + count, std::move(beginPtr[hi - 1]));
+                destroy_at(hi - 1);
             }
             len += count;
         }
