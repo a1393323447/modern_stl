@@ -589,13 +589,7 @@ namespace mstl::collection {
         constexpr BaseList(std::initializer_list<T> init, const A& allocator=A{}): BaseList(init.begin(), init.end(), allocator) {}
 
         constexpr ~BaseList() {
-            if (head == nullptr) {  // head should not be nullptr
-                return;             // unless the list has been moved
-            } else {
-                clear();              // clear all elements int the list
-                destroy_node(head);  // and finally release the virtual head node
-                destroy_node(tail);  // and the virtual tail node.
-            }
+            release_nodes();
         }
 
         constexpr BaseList& operator=(const BaseList& rhs)
@@ -603,7 +597,7 @@ namespace mstl::collection {
             if (&rhs == this) {
                 return *this;
             }
-            this->~BaseList();
+            release_nodes();
             alloc = rhs.alloc;
             copy_impl(rhs);
             return *this;
@@ -613,7 +607,7 @@ namespace mstl::collection {
             if (&rhs == this) {
                 return *this;
             }
-            this->~BaseList();
+            release_nodes();
             alloc = std::move(rhs.alloc);
             head = rhs.head;
             rhs.head = nullptr;
@@ -1814,6 +1808,16 @@ namespace mstl::collection {
                 dealloc_node(node);
             }
 
+        }
+
+        constexpr void release_nodes() {
+            if (head == nullptr) {
+                return;
+            }
+            clear();
+            destroy_node(head);
+            destroy_node(tail);
+            head = tail = nullptr;
         }
 
         // DO NOT INVOKE when the list is not empty
