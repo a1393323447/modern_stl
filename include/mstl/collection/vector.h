@@ -672,22 +672,14 @@ namespace mstl::collection {
          * @brief 在末尾以复制的方法插入一个元素.
          */
         constexpr void push_back(const T &v) {
-            if (len >= cap) {
-                extend_space();
-            }
-
-            construct_at(len++, v);
+            emplace_back(v);
         }
 
         /**
          * @brief 在末尾以移动的方法插入一个元素.
          */
         constexpr void push_back(T &&v) {
-            if (len >= cap) {
-                extend_space();
-            }
-
-            construct_at(len++, std::forward<T>(v));
+            emplace_back(std::forward<T>(v));
         }
 
         /**
@@ -696,10 +688,14 @@ namespace mstl::collection {
         template<typename ... Args>
         constexpr T &emplace_back(Args &&... args) {
             if (len >= cap) {
+                // Preserve arguments that may refer to existing elements.
+                T value(std::forward<Args>(args)...);
                 extend_space();
+                construct_at(len++, std::move(value));
+            } else {
+                construct_at(len++, std::forward<Args>(args)...);
             }
 
-            construct_at(len++, std::forward<Args>(args)...);
             return back_unchecked();
         }
 
